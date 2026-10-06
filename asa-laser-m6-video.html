@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASA LASER M6 - Premium Cinematic Commercial</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #000;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        #ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .text-overlay {
+            position: absolute;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            opacity: 0;
+        }
+        .title-text {
+            font-size: 4rem;
+            color: #fff;
+            text-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            white-space: nowrap;
+        }
+        .benefit-text {
+            font-size: 1.8rem;
+            color: #fff;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .benefit-icon {
+            width: 3rem;
+            height: 3rem;
+            background: rgba(156, 197, 255, 0.2);
+            border: 2px solid rgba(156, 197, 255, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .cta-button {
+            padding: 1rem 2.5rem;
+            background: linear-gradient(135deg, #9cc5ff 0%, #6fa8ff 100%);
+            color: #000;
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 0 40px rgba(111, 168, 255, 0.5);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 40px rgba(111, 168, 255, 0.5); }
+            50% { box-shadow: 0 0 60px rgba(111, 168, 255, 0.8); }
+        }
+        .tagline {
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.8);
+            margin-top: 1rem;
+        }
+        #play-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 5rem;
+            height: 5rem;
+            background: rgba(111, 168, 255, 0.1);
+            border: 2px solid rgba(111, 168, 255, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            pointer-events: auto;
+            transition: all 0.3s ease;
+        }
+        #play-button:hover {
+            background: rgba(111, 168, 255, 0.2);
+            box-shadow: 0 0 30px rgba(111, 168, 255, 0.5);
+        }
+        #play-button::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 1.5rem solid rgba(111, 168, 255, 0.8);
+            border-top: 1rem solid transparent;
+            border-bottom: 1rem solid transparent;
+            margin-left: 0.3rem;
+        }
+        #play-button.playing::after {
+            content: '';
+            width: 0.8rem;
+            height: 1.8rem;
+            background: rgba(111, 168, 255, 0.8);
+            border: none;
+            margin: 0;
+            box-shadow: 1.2rem 0 0 0 rgba(111, 168, 255, 0.8);
+        }
+        #timer {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            color: rgba(255,255,255,0.6);
+            font-size: 1rem;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="ui"></div>
+    <div id="timer"></div>
+    <div id="play-button"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const DURATION = 30;
+        let isPlaying = false;
+        let currentTime = 0;
+        let animationFrameId;
+
+        // Three.js Setup
+        const canvas = document.getElementById('canvas');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0e27);
+        scene.fog = new THREE.Fog(0x0a0e27, 100, 200);
+
+        const camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        camera.position.set(0, 2, 8);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+
+        // Lighting
+        const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        mainLight.position.set(5, 10, 7);
+        mainLight.castShadow = true;
+        mainLight.shadow.mapSize.width = 2048;
+        mainLight.shadow.mapSize.height = 2048;
+        mainLight.shadow.camera.far = 50;
+        scene.add(mainLight);
+
+        const rimLight = new THREE.DirectionalLight(0x9cc5ff, 0.8);
+        rimLight.position.set(-8, 5, -5);
+        scene.add(rimLight);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+
+        // Background gradient
+        const gradientCanvas = document.createElement('canvas');
+        gradientCanvas.width = 512;
+        gradientCanvas.height = 512;
+        const ctx = gradientCanvas.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+        gradient.addColorStop(0, '#0a0e27');
+        gradient.addColorStop(0.5, '#1a2456');
+        gradient.addColorStop(1, '#0f1838');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 512, 512);
+
+        const bgTexture = new THREE.CanvasTexture(gradientCanvas);
+        const bgGeometry = new THREE.SphereGeometry(150, 32, 32);
+        const bgMaterial = new THREE.MeshBasicMaterial({ map: bgTexture, side: THREE.BackSide });
+        const bgSphere = new THREE.Mesh(bgGeometry, bgMaterial);
+        scene.add(bgSphere);
+
+        // M6 Machine Group
+        const machineGroup = new THREE.Group();
+        machineGroup.position.z = 0;
+        scene.add(machineGroup);
+
+        // Base (rotating platform)
+        const baseGeometry = new THREE.CylinderGeometry(2.5, 2.5, 0.4, 32);
+        const baseMaterial = new THREE.MeshStandardMaterial({
+            color: 0x1a1a1a,
+            metalness: 0.6,
+            roughness: 0.3
+        });
+        const base = new THREE.Mesh(baseGeometry, baseMaterial);
+        base.castShadow = true;
+        base.receiveShadow = true;
+        machineGroup.add(base);
+
+        // Arm
+        const armGroup = new THREE.Group();
+        armGroup.position.y = 0.3;
+        machineGroup.add(armGroup);
+
+        // Arm segments
+        const armSegment1 = new THREE.Group();
+        armSegment1.position.y = 0.5;
+
+        const seg1Geo = new THREE.BoxGeometry(0.3, 1.5, 0.3);
+        const armMat = new THREE.MeshStandardMaterial({
+            color: 0x2a2a3a,
+            metalness: 0.7,
+            roughness: 0.2
+        });
+        const seg1 = new THREE.Mesh(seg1Geo, armMat);
+        seg1.castShadow = true;
+        seg1.receiveShadow = true;
+        armSegment1.add(seg1);
+
+        const armSegment2 = new THREE.Group();
+        armSegment2.position.y = 1;
+
+        const seg2Geo = new THREE.BoxGeometry(0.28, 1.8, 0.28);
+        const seg2 = new THREE.Mesh(seg2Geo, armMat);
+        seg2.castShadow = true;
+        seg2.receiveShadow = true;
+        armSegment2.add(seg2);
+
+        armSegment1.add(armSegment2);
+        armGroup.add(armSegment1);
+
+        // Laser head (cone)
+        const laserHeadGroup = new THREE.Group();
+        laserHeadGroup.position.y = 1.5;
+        armSegment2.add(laserHeadGroup);
+
+        const coneGeometry = new THREE.ConeGeometry(0.4, 1.2, 32);
+        const coneMaterial = new THREE.MeshStandardMaterial({
+            color: 0x1a1a1a,
+            metalness: 0.8,
+            roughness: 0.1
+        });
+        const laserCone = new THREE.Mesh(coneGeometry, coneMaterial);
+        laserCone.castShadow = true;
+        laserCone.receiveShadow = true;
+        laserHeadGroup.add(laserCone);
+
+        // Laser glow
+        const glowGeometry = new THREE.SphereGeometry(0.6, 16, 16);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+            color: 0x9cc5ff,
+            transparent: true,
+            opacity: 0
+        });
+        const laserGlow = new THREE.Mesh(glowGeometry, glowMaterial);
+        laserHeadGroup.add(laserGlow);
+
+        // Particle system for energy effects
+        const particleCount = 200;
+        const particleGeometry = new THREE.BufferGeometry();
+        const particlePositions = new Float32Array(particleCount * 3);
+
+        for (let i = 0; i < particleCount * 3; i += 3) {
+            particlePositions[i] = (Math.random() - 0.5) * 2;
+            particlePositions[i + 1] = (Math.random() - 0.5) * 2;
+            particlePositions[i + 2] = (Math.random() - 0.5) * 2;
+        }
+
+        particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+        const particleMaterial = new THREE.PointsMaterial({
+            color: 0x9cc5ff,
+            size: 0.05,
+            sizeAttenuation: true,
+            transparent: true,
+            opacity: 0
+        });
+        const particles = new THREE.Points(particleGeometry, particleMaterial);
+        laserHeadGroup.add(particles);
+
+        // UI Elements
+        const ui = document.getElementById('ui');
+
+        function createTextOverlay(text, x, y, className) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            div.className = `text-overlay ${className}`;
+            div.style.left = x + 'px';
+            div.style.top = y + 'px';
+            ui.appendChild(div);
+            return div;
+        }
+
+        const titleEl = createTextOverlay('THE #1 INVESTMENT',
+            window.innerWidth * 0.5 - 250,
+            window.innerHeight * 0.35,
+            'title-text');
+
+        const benefits = [
+            { text: '3x Faster Healing', icon: '⚡' },
+            { text: 'Zero Side Effects', icon: '✓' },
+            { text: '6-Month ROI', icon: '💰' }
+        ];
+
+        const benefitEls = benefits.map((benefit, i) => {
+            const div = document.createElement('div');
+            div.className = 'benefit-text';
+            div.style.opacity = '0';
+            div.style.left = window.innerWidth * 0.5 - 200 + 'px';
+            div.style.top = (window.innerHeight * 0.6 + i * 80) + 'px';
+            div.innerHTML = `
+                <div class="benefit-icon">${benefit.icon}</div>
+                <span>${benefit.text}</span>
+            `;
+            ui.appendChild(div);
+            return div;
+        });
+
+        const ctaContainer = document.createElement('div');
+        ctaContainer.style.position = 'absolute';
+        ctaContainer.style.left = (window.innerWidth * 0.5 - 150) + 'px';
+        ctaContainer.style.top = (window.innerHeight * 0.82) + 'px';
+        ctaContainer.style.opacity = '0';
+        ctaContainer.style.textAlign = 'center';
+        ctaContainer.innerHTML = `
+            <button class="cta-button">REQUEST EXCLUSIVE DEMO</button>
+            <div class="tagline">Innovation • Reliability • Investment-Worthy</div>
+        `;
+        ui.appendChild(ctaContainer);
+
+        // Animation Timeline
+        function animateScene(time) {
+            const progress = Math.min(time / DURATION, 1);
+
+            // Opening (0-3s): Logo and machine silhouette rotation
+            if (time < 3) {
+                const openProgress = time / 3;
+                machineGroup.rotation.y = openProgress * Math.PI * 2;
+                machineGroup.rotation.x = -0.3 + openProgress * 0.1;
+                mainLight.intensity = 0.5 + openProgress * 0.7;
+            }
+
+            // Intro (3-6s): Title slide in, machine rotate 360
+            if (time >= 3 && time < 6) {
+                const introProgress = (time - 3) / 3;
+                titleEl.style.opacity = Math.min(introProgress * 2, 1);
+                titleEl.style.transform = `translateX(${-500 + introProgress * 500}px)`;
+                machineGroup.rotation.y += 0.01;
+                camera.position.z = 8 - introProgress * 1;
+            }
+
+            // Hero Shot (6-12s): Laser head close-up, arm articulation
+            if (time >= 6 && time < 12) {
+                const heroProgress = (time - 6) / 6;
+                const armRotation = heroProgress * 0.8;
+                armSegment1.rotation.z = armRotation;
+                armSegment2.rotation.z = -armRotation * 0.5;
+
+                // Laser glow
+                glowMaterial.opacity = 0.3 + Math.sin(time * 4) * 0.2;
+
+                // Particles
+                particleMaterial.opacity = 0.4 + Math.sin(time * 3) * 0.2;
+                particles.rotation.x += 0.01;
+                particles.rotation.y += 0.01;
+
+                camera.position.z = 7 - heroProgress * 3;
+                camera.lookAt(laserHeadGroup.getWorldPosition(new THREE.Vector3()));
+            }
+
+            // Benefits Section (12-21s): Text animations
+            if (time >= 12 && time < 21) {
+                benefitEls.forEach((el, i) => {
+                    const benefitTime = time - 12 - (i * 2.66);
+                    if (benefitTime >= 0 && benefitTime < 2.66) {
+                        const benefitProgress = Math.min(benefitTime / 0.5, 1);
+                        el.style.opacity = benefitProgress;
+                        el.style.transform = `scale(${0.8 + benefitProgress * 0.2}) translateY(${20 - benefitProgress * 20}px)`;
+                    }
+                });
+
+                machineGroup.rotation.y += 0.003;
+                glowMaterial.opacity = 0.2 + Math.sin(time * 3) * 0.15;
+            }
+
+            // CTA & Close (21-30s): Button appears, machine zoom
+            if (time >= 21) {
+                const ctaProgress = (time - 21) / 9;
+                ctaContainer.style.opacity = Math.min(ctaProgress * 2, 1);
+
+                if (ctaProgress < 0.8) {
+                    machineGroup.scale.set(
+                        1 + ctaProgress * 0.3,
+                        1 + ctaProgress * 0.3,
+                        1 + ctaProgress * 0.3
+                    );
+                    camera.position.z = 4 - ctaProgress * 0.5;
+                }
+
+                glowMaterial.opacity = 0.4 + Math.sin(time * 4) * 0.3;
+            }
+
+            // Update particles
+            const positions = particles.geometry.attributes.position.array;
+            for (let i = 0; i < positions.length; i += 3) {
+                positions[i] += (Math.random() - 0.5) * 0.02;
+                positions[i + 1] += (Math.random() - 0.5) * 0.02;
+                positions[i + 2] += (Math.random() - 0.5) * 0.02;
+            }
+            particles.geometry.attributes.position.needsUpdate = true;
+
+            renderer.render(scene, camera);
+        }
+
+        function animate() {
+            animationFrameId = requestAnimationFrame(animate);
+
+            if (isPlaying) {
+                currentTime += 1 / 60;
+                if (currentTime > DURATION) {
+                    isPlaying = false;
+                    currentTime = 0;
+                    document.getElementById('play-button').classList.remove('playing');
+                    titleEl.style.opacity = '0';
+                    benefitEls.forEach(el => el.style.opacity = '0');
+                    ctaContainer.style.opacity = '0';
+                }
+            }
+
+            animateScene(currentTime);
+
+            // Update timer
+            document.getElementById('timer').textContent =
+                `${Math.floor(currentTime)}s / ${DURATION}s`;
+        }
+
+        // Play button
+        document.getElementById('play-button').addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            document.getElementById('play-button').classList.toggle('playing');
+            if (!isPlaying) {
+                currentTime = 0;
+                titleEl.style.opacity = '0';
+                benefitEls.forEach(el => el.style.opacity = '0');
+                ctaContainer.style.opacity = '0';
+            }
+        });
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
