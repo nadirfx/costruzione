@@ -33,3 +33,23 @@ Su telefono: apri lo stesso indirizzo dalla rete locale, oppure caricalo su un h
     npm test
 
 Test unitari di logica: importi, date, periodi, P.IVA, aggregazioni, fiscale, settimana.
+
+## Accesso
+
+- Utente e password sono richiesti all'apertura. La password non è in chiaro nel codice: è un hash PBKDF2-SHA256 con sale.
+- "Resta connesso" tiene la sessione su questo dispositivo per 30 giorni. Senza, la sessione finisce chiudendo la scheda.
+- Dopo 5 tentativi sbagliati il login si blocca per 30 secondi.
+- **Limite onesto**: è un blocco dell'app, non una cifratura. Chi ha accesso ai file del browser o al codice può aggirarlo. Cifrare i dati con la password è possibile, ma va deciso esplicitamente.
+- Il login usa la crittografia del browser, disponibile solo in contesto sicuro: `file://`, `localhost` oppure `https`. Da un indirizzo `http://` con IP della rete locale (es. dal telefono) il login non funziona: usa il file singolo oppure un hosting https.
+
+## Dati che non si perdono
+
+- Ogni salvataggio va subito nel database del browser (transazioni atomiche: o si salva tutto, o niente).
+- Prima di ogni eliminazione e ogni 10 minuti mentre lavori, il gestionale salva una **copia di sicurezza** dei record (non dei documenti).
+- Da **Esporta → Copie di sicurezza** puoi vedere le ultime copie (fino a 40) e ripristinarne una. Il ripristino salva prima lo stato attuale, quindi è annullabile.
+- Il **backup JSON** (Esporta → Scarica backup) include anche i documenti: è la copia da tenere fuori dal browser.
+- Il browser può comunque cancellare i dati se pulisci la cronologia o i dati del sito: per questo il backup settimanale resta importante.
+
+## File singolo
+
+`npm run build` crea `dist/gestionale-personale.html`: un unico file con tutto dentro. Si apre con un doppio clic, senza server né connessione.

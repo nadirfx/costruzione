@@ -5,7 +5,7 @@
 (function (root) {
   'use strict';
 
-  const { Core, UI, App } = root;
+  const { Core, UI, App, Fiscale } = root;
   const { esc, fmtDate } = UI;
   const V = App.views;
 
@@ -181,6 +181,34 @@
       </section>`;
   }
 
+  function fiscalYear(year) {
+    const cfg = App.settings().fiscal || {};
+    const ricavi = Fiscale.ricaviIncassati(App.data(), year);
+    return Fiscale.taxEstimate({ anno: year, ricaviCents: ricavi, cfg });
+  }
+
+  // Task aperti: prima quelli in ritardo, poi quelli di oggi e i prossimi
+  function taskCard(today) {
+    const open = App.state.tasks.filter((t) => t.stato !== 'fatto');
+    const order = { scaduto: 0, oggi: 1, prossimo: 2, senza: 3 };
+    const list = open
+      .map((t) => ({ t, b: Fiscale.taskBucket(t, today) }))
+      .sort((a, b) => (order[a.b] - order[b.b]) || ((a.t.scadenza || '9999') < (b.t.scadenza || '9999') ? -1 : 1))
+      .slice(0, 7);
+    const late = open.filter((t) => t.scadenza && t.scadenza < today).length;
+    const rows = list.map(({ t, b }) => `<li class="task ${b}">
+        <button type="button" class="check-btn" data-action="task-toggle" data-id="${esc(t.id)}" aria-label="Segna fatto"></button>
+        <div class="task-body"><b>${esc(t.titolo)}</b><div class="muted small-note">${t.scadenza ? esc(fmtDate(t.scadenza)) : 'senza scadenza'}</div></div>
+        <span class="badge ${b === 'scaduto' ? 'danger' : b === 'oggi' ? 'info' : 'muted'}">${b === 'scaduto' ? 'in ritardo' : b === 'oggi' ? 'oggi' : Fiscale.PRIORITA[t.priorita] || ''}</span>
+      </li>`).join('');
+    return `
+      <section class="card">
+        <div class="section-head"><h3>Da fare ${late ? `<span class="count">${late} in ritardo</span>` : ''}</h3>
+          <a class="btn small" href="#/task">Tutti i task</a></div>
+        ${rows ? `<ul class="task-list">${rows}</ul>` : UI.empty('Nessun task aperto. Ottimo.')}
+      </section>`;
+  }
+
   function clientName(c) {
     return c.tipo === 'azienda' ? c.ragioneSociale : `${c.nome || ''} ${c.cognome || ''}`.trim();
   }
@@ -222,6 +250,7 @@
       kpi('Da incassare', Core.formatEuro(rec.daIncassare), `<span class="delta muted">saldo positivo di tutti i clienti</span>`, rec.daIncassare > 0 ? 'warn' : ''),
       kpi('Acconti / crediti', Core.formatEuro(rec.crediti), `<span class="delta muted">incassato in più del dovuto</span>`),
       kpi('Fatture scadute', `${overdue.length}`, `<span class="delta ${overdue.length ? 'bad' : 'muted'}">${esc(Core.formatEuro(overdueSum))} da incassare</span>`, overdue.length ? 'bad' : ''),
+      kpi(`Da versare ${d.year} (stima)`, Core.formatEuro(fiscalYear(d.year).totaleDaPagare), `<span class="delta muted">contributi + imposta sugli incassi</span>`),
     ].join('');
 
     const backup = App.settings().lastBackupAt ? `ultimo backup ${esc(fmtDate(App.settings().lastBackupAt.slice(0, 10)))}` : 'nessun backup ancora';
@@ -260,6 +289,8 @@
         <h3>Dettaglio mese per mese · ${d.year}</h3>
         ${monthTable(d.year, yearAgg.byMonth, period.months)}
       </section>
+
+      ${taskCard(today)}
 
       <div class="two-col">${scadenze(today)}
         <section class="card">

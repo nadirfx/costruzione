@@ -481,6 +481,11 @@
           <div class="form-actions left"><button type="button" class="btn primary" data-action="backup-export">Scarica backup</button></div>
           <p class="small-note muted">${s.lastBackupAt ? `Ultimo backup: ${esc(fmtDate(s.lastBackupAt.slice(0, 10)))}` : 'Nessun backup ancora.'}</p>
           <hr>
+          <h3>Copie di sicurezza automatiche</h3>
+          <p class="muted small-note">Il gestionale salva da solo una copia dei dati prima di ogni eliminazione e ogni 10 minuti mentre lavori. Puoi tornare indietro da qui.</p>
+          <div class="form-actions left"><button type="button" class="btn small" data-action="snap-now">Crea copia ora</button></div>
+          <ul id="snap-list" class="snap-list" aria-live="polite"><li class="muted">Caricamento copie…</li></ul>
+          <hr>
           <h3>Ripristina da backup</h3>
           <form data-form="import-backup" novalidate>
             <label class="field full"><span class="lbl">File di backup (.json)</span><input type="file" name="file" accept="application/json,.json"></label>
@@ -563,6 +568,42 @@
     UI.downloadText(`gestionale-backup-${stamp}.json`, JSON.stringify(backup), 'application/json');
     await App.saveSettings({ lastBackupAt: new Date().toISOString() });
     UI.toast('Backup scaricato');
+    App.refresh();
+  };
+
+  // Elenco delle copie di sicurezza (caricato dopo il render della pagina Esporta)
+  App.loadSnapshotList = async () => {
+    const box = UI.$('#snap-list');
+    if (!box) return;
+    const list = await DB.listSnapshots();
+    if (!list.length) {
+      box.innerHTML = '<li class="muted">Nessuna copia ancora: verrà creata alla prossima modifica.</li>';
+      return;
+    }
+    box.innerHTML = list.slice(0, 40).map((s) => `<li>
+        <div><b>${esc(new Date(s.savedAt).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' }))}</b>
+          <span class="muted"> · ${esc(s.reason)}</span>
+          <div class="muted small-note">${esc(Object.entries(s.counts || {}).map(([k, v]) => `${v} ${k}`).join(' · '))}</div></div>
+        <button type="button" class="btn small ghost" data-action="snap-restore" data-id="${esc(s.id)}">Ripristina</button>
+      </li>`).join('');
+  };
+
+  App.actions['snap-now'] = async () => {
+    await App.snapshot('manuale');
+    UI.toast('Copia di sicurezza creata');
+    App.loadSnapshotList();
+  };
+
+  App.actions['snap-restore'] = async (el) => {
+    const ok = await UI.confirmDialog({
+      title: 'Ripristinare questa copia?',
+      message: 'I record attuali (clienti, fatture, incassi, spese, task) verranno sostituiti. Prima viene salvata una copia dello stato attuale, quindi potrai tornare indietro. I documenti non vengono toccati.',
+      confirmText: 'Ripristina',
+      danger: true,
+    });
+    if (!ok) return;
+    await App.restoreSnapshot(el.dataset.id);
+    UI.toast('Copia ripristinata');
     App.refresh();
   };
 

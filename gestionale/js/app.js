@@ -5,7 +5,7 @@
 (function (root) {
   'use strict';
 
-  const { Core, DB, UI, Fiscale } = root;
+  const { Core, DB, UI, Fiscale, Auth } = root;
   const { $, esc, toast } = UI;
 
   const DEFAULT_SETTINGS = {
@@ -63,12 +63,56 @@
       const i = list.findIndex((r) => r.id === row.id);
       if (i >= 0) list[i] = row;
       else list.push(row);
+      App.maybeSnapshot().catch((err) => console.error('snapshot', err));
       return row;
     },
 
     async remove(store, id) {
+      await App.snapshot(`prima di eliminare (${store})`);
       await DB.remove(store, id);
       App.state[store] = App.state[store].filter((r) => r.id !== id);
+    },
+
+    // Copia di sicurezza dei soli record (i documenti non sono inclusi: restano sempre)
+    async snapshot(reason) {
+      const s = App.state;
+      const records = {
+        clients: s.clients, projects: s.projects, invoices: s.invoices, payments: s.payments,
+        expenses: s.expenses, activities: s.activities, tasks: s.tasks, settings: s.settings,
+      };
+      const savedAt = new Date().toISOString();
+      const snap = {
+        id: `${savedAt}-${Core.uid().slice(0, 8)}`,
+        reason,
+        savedAt,
+        counts: {
+          clienti: s.clients.length, fatture: s.invoices.length, incassi: s.payments.length,
+          spese: s.expenses.length, progetti: s.projects.length, task: s.tasks.length,
+        },
+        records: JSON.parse(JSON.stringify(records)),
+      };
+      await DB.saveSnapshot(snap);
+      App.lastSnapshotAt = Date.parse(savedAt);
+      DB.pruneSnapshots(40).catch(() => {});
+      return snap;
+    },
+
+    // Dopo ogni salvataggio: se l'ultima copia ha più di 10 minuti, ne facciamo una nuova
+    async maybeSnapshot() {
+      if (!App.lastSnapshotAt || Date.now() - App.lastSnapshotAt > 10 * 60 * 1000) {
+        await App.snapshot('automatico');
+      }
+    },
+
+    async restoreSnapshot(id) {
+      const snap = await DB.getSnapshot(id);
+      if (!snap) throw new Error('Copia di sicurezza non trovata');
+      // Lo stato attuale viene salvato prima: anche il ripristino è annullabile
+      await App.snapshot('prima di ripristinare');
+      await DB.restoreRecords(snap.records);
+      App.state = { ...App.state, ...(await DB.loadAll()) };
+      App.state.settings = { ...DEFAULT_SETTINGS, ...App.state.settings, fiscal: { ...DEFAULT_SETTINGS.fiscal, ...((App.state.settings || {}).fiscal || {}) } };
+      return snap;
     },
 
     async saveSettings(patch) {
@@ -152,6 +196,7 @@
         main.dataset.route = location.hash;
         root.scrollTo(0, sameRoute ? y : 0);
         countUp(main);
+        if (main.querySelector('#snap-list') && App.loadSnapshotList) App.loadSnapshotList();
         // Form fattura: calcola subito i totali (nuova fattura o modifica)
         const invForm = main.querySelector('form[data-input="invoice-totals"]');
         if (invForm) App.inputs['invoice-totals'](invForm);
@@ -162,6 +207,7 @@
     },
 
     refresh() {
+      if (App.locked) return;
       App.render();
       App.renderBackupBanner();
     },
@@ -271,7 +317,15 @@
     App.state.settings = { ...DEFAULT_SETTINGS, ...stored, fiscal: { ...DEFAULT_SETTINGS.fiscal, ...(stored.fiscal || {}) } };
     root.addEventListener('hashchange', () => App.refresh());
     if (!root.location.hash) root.location.hash = '#/dashboard';
-    App.refresh();
+    // Ultima copia di sicurezza, per la cadenza automatica
+    DB.listSnapshots()
+      .then((list) => { App.lastSnapshotAt = list[0] ? Date.parse(list[0].savedAt) : null; })
+      .catch(() => {});
+    if (Auth.isLoggedIn()) {
+      App.unlock();
+    } else {
+      App.lock();
+    }
   }
 
   if (root.document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

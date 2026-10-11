@@ -218,7 +218,8 @@
       return await work();
     } finally {
       delete form.dataset.busy;
-      if (btn) btn.disabled = false;
+      // Un pulsante può essere tenuto bloccato da chi lo ha chiamato (es. attesa dopo tentativi di accesso)
+      if (btn && !btn.dataset.hold) btn.disabled = false;
     }
   }
 

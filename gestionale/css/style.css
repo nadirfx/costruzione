@@ -406,3 +406,46 @@ form .card { box-shadow: none; }
   .print-page .muted { color: #666; }
   @page { size: A4; margin: 12mm; }
 }
+
+/* ==========================================================================
+   Accesso (schermata di login)
+   ========================================================================== */
+.login[hidden], #login[hidden] { display: none !important; }
+body.locked .app, body.locked .sidebar { display: none !important; }
+.login {
+  position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; padding: 20px;
+  background: var(--bg); overflow: hidden; animation: fade .6s ease both;
+}
+.login-bg { position: absolute; inset: 0; pointer-events: none; }
+.login-bg i {
+  position: absolute; border-radius: 50%; filter: blur(60px); opacity: .55;
+  animation: drift 18s ease-in-out infinite alternate;
+}
+.login-bg i:nth-child(1) { width: 46vmax; height: 46vmax; left: -12vmax; top: -14vmax; background: radial-gradient(circle, #5ee7ff, transparent 65%); }
+.login-bg i:nth-child(2) { width: 40vmax; height: 40vmax; right: -10vmax; bottom: -12vmax; background: radial-gradient(circle, #9b7bff, transparent 65%); animation-delay: -6s; }
+.login-bg i:nth-child(3) { width: 26vmax; height: 26vmax; left: 40%; top: 55%; background: radial-gradient(circle, #ff7ab6, transparent 65%); animation-delay: -11s; opacity: .3; }
+@keyframes drift { to { transform: translate(6vmax, 4vmax) scale(1.12); } }
+.login-card {
+  position: relative; width: min(400px, 100%); display: grid; gap: 14px; padding: 34px 30px 26px;
+  background: linear-gradient(180deg, rgba(20, 26, 42, .82), rgba(9, 12, 20, .9));
+  border: 1px solid rgba(94, 231, 255, .22); border-radius: 26px; box-shadow: 0 40px 120px -30px #000, var(--glow);
+  backdrop-filter: blur(20px); animation: rise .8s var(--ease) both;
+}
+.login-card h1 { text-align: center; margin: 4px 0 0; font-size: 1.6rem; }
+.login-card > p.muted { text-align: center; margin: -6px 0 4px; }
+.login-card .field { gap: 6px; }
+.login-card .check { margin-top: 2px; font-size: .84rem; }
+.brand-mark.big { width: 64px; height: 64px; border-radius: 20px; font-size: 1.6rem; margin: 0 auto 4px; }
+.btn.wide { width: 100%; padding: 13px; font-size: 1rem; }
+.btn:disabled.primary { opacity: .45; }
+.login-msg { min-height: 1.3em; margin: 0; font-size: .88rem; color: var(--muted); text-align: center; }
+.login-msg.err { color: var(--danger); }
+form.shake { animation: shake .45s var(--ease); }
+
+/* Copie di sicurezza */
+.snap-list { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 8px; max-height: 320px; overflow: auto; }
+.snap-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: rgba(0, 0, 0, .18); font-size: .88rem; }
+
+/* Dashboard: task e fisco */
+.dash-split { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; }
+@media (max-width: 900px) { .dash-split { grid-template-columns: 1fr; } }

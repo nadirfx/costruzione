@@ -14,9 +14,11 @@
 
   const DB_NAME = 'gestionale-personale';
   // v2: aggiunto lo store "tasks". onupgradeneeded crea solo gli store mancanti: i dati esistenti restano.
-  const DB_VERSION = 2;
+  // v3: aggiunto lo store "snapshots" (copie di sicurezza dei dati). Mai svuotato dall'import.
+  const DB_VERSION = 3;
   const RECORD_STORES = ['clients', 'projects', 'invoices', 'payments', 'expenses', 'activities', 'tasks', 'files', 'meta'];
-  const ALL_STORES = [...RECORD_STORES, 'blobs'];
+  const ALL_STORES = [...RECORD_STORES, 'blobs', 'snapshots'];
+  const DATA_STORES = [...RECORD_STORES, 'blobs'];
   const BACKUP_FORMAT = 'gestionale-backup';
   const BACKUP_VERSION = 1;
 
@@ -222,7 +224,8 @@
     const blobs = d.files.map((f) => ({ id: f.id, blob: dataURLToBlob(f.dataUrl, f.mime) }));
     const metas = d.files.map(({ dataUrl, ...rest }) => rest);
     await run(ALL_STORES, 'readwrite', (tx) => {
-      for (const s of ALL_STORES) tx.objectStore(s).clear();
+      // Gli snapshot non vengono toccati: l'import può essere annullato ripristinando uno snapshot
+      for (const s of DATA_STORES) tx.objectStore(s).clear();
       for (const c of d.clients) tx.objectStore('clients').put(c);
       for (const p of d.projects) tx.objectStore('projects').put(p);
       for (const i of d.invoices) tx.objectStore('invoices').put(i);
@@ -235,6 +238,52 @@
       tx.objectStore('meta').put({ id: 'settings', ...(d.settings || {}) });
     });
     return d;
+  }
+
+  /* ------------------------------ Snapshot ------------------------------ */
+  // rec: { id (ISO), reason, savedAt, counts, records }  (records = copia JSON di tutti i record, senza documenti)
+  function saveSnapshot(snap) {
+    return put('snapshots', snap).then(() => snap);
+  }
+
+  // Elenco leggero (senza il contenuto dei record), dal più recente
+  function listSnapshots() {
+    return run(['snapshots'], 'readonly', (tx, box) => {
+      const req = tx.objectStore('snapshots').getAll();
+      req.onsuccess = () => {
+        box.value = (req.result || []).map(({ records, ...meta }) => meta).sort((a, b) => (a.id < b.id ? 1 : -1));
+      };
+    });
+  }
+
+  function getSnapshot(id) {
+    return run(['snapshots'], 'readonly', (tx, box) => {
+      const req = tx.objectStore('snapshots').get(id);
+      req.onsuccess = () => { box.value = req.result || null; };
+    });
+  }
+
+  // Mantiene solo gli ultimi `keep` snapshot
+  async function pruneSnapshots(keep = 40) {
+    const all = await listSnapshots();
+    const old = all.slice(keep);
+    if (!old.length) return 0;
+    await run(['snapshots'], 'readwrite', (tx) => {
+      for (const s of old) tx.objectStore('snapshots').delete(s.id);
+    });
+    return old.length;
+  }
+
+  // Ripristina solo i record (clienti, fatture, ...). I documenti restano com'erano.
+  async function restoreRecords(records) {
+    const stores = ['clients', 'projects', 'invoices', 'payments', 'expenses', 'activities', 'tasks', 'meta'];
+    await run(stores, 'readwrite', (tx) => {
+      for (const s of ['clients', 'projects', 'invoices', 'payments', 'expenses', 'activities', 'tasks']) {
+        tx.objectStore(s).clear();
+        for (const r of records[s] || []) tx.objectStore(s).put(r);
+      }
+      tx.objectStore('meta').put({ id: 'settings', ...(records.settings || {}) });
+    });
   }
 
   async function requestPersistence() {
@@ -259,6 +308,7 @@
   root.DB = {
     open, loadAll, put, remove, saveSettings, saveFile, removeFile, getBlob,
     exportAll, importAll, validateBackup, requestPersistence, storageEstimate,
+    saveSnapshot, listSnapshots, getSnapshot, pruneSnapshots, restoreRecords,
     BACKUP_FORMAT, BACKUP_VERSION,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
