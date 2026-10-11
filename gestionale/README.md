@@ -53,3 +53,15 @@ Test unitari di logica: importi, date, periodi, P.IVA, aggregazioni, fiscale, se
 ## File singolo
 
 `npm run build` crea `dist/gestionale-personale.html`: un unico file con tutto dentro. Si apre con un doppio clic, senza server né connessione.
+
+## Risparmi e ETF
+
+- **Risparmi**: movimenti del tuo conto personale (versamenti e prelievi), saldo di partenza, obiettivo con percentuale e andamento a 12 mesi. Non è collegato alla contabilità dell'attività.
+- **ETF**: anagrafica degli ETF, operazioni di acquisto e vendita, costo medio ponderato (commissioni incluse), valore e plus/minusvalenze, utile realizzato dalle vendite.
+- Il valore degli ETF usa il **prezzo che inserisci tu** (Modifica → aggiorna prezzo). Nessuna quotazione automatica.
+- Una vendita non può superare le quote possedute alla data indicata.
+
+## Fattura e stampa
+
+- La stampa/PDF usa un'unica area di stampa. Prima di stampare il gestionale controlla che in Impostazioni ci siano nome, partita IVA e indirizzo: senza, la fattura non è valida e te lo segnala.
+- Il backup JSON è in formato JSON puro: si può sempre riscaricare e ripristinare.

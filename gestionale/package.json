@@ -4,7 +4,7 @@
   "private": true,
   "description": "Gestionale personale e privato: clienti, fatture, incassi, spese, task, report e stima fiscale. Gira nel browser, dati in locale.",
   "scripts": {
-    "test": "node --test tests/core.test.js tests/fiscale.test.js tests/auth.test.js",
+    "test": "node --test tests/core.test.js tests/fiscale.test.js tests/auth.test.js tests/risparmi.test.js",
     "start": "python3 -m http.server 8080",
     "build": "node scripts/build-single.js"
   },

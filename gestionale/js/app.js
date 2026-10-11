@@ -30,10 +30,10 @@
     fiscal: { ...Fiscale.DEFAULT_FISCAL },
   };
 
-  const RECORD_STORES = ['clients', 'projects', 'invoices', 'payments', 'expenses', 'activities', 'tasks'];
+  const RECORD_STORES = ['clients', 'projects', 'invoices', 'payments', 'expenses', 'activities', 'tasks', 'savings', 'etfs', 'investments'];
 
   const App = {
-    state: { clients: [], projects: [], invoices: [], payments: [], expenses: [], activities: [], tasks: [], files: [], settings: {} },
+    state: { clients: [], projects: [], invoices: [], payments: [], expenses: [], activities: [], tasks: [], savings: [], etfs: [], investments: [], files: [], settings: {} },
     ui: { dash: null, clientSearch: '', clientTab: 'panoramica', invSearch: '', invYear: null, invStato: '', payYear: null, payMonth: '', payClient: '', expYear: null, expCat: '' },
     views: {},
     actions: {},
@@ -78,7 +78,8 @@
       const s = App.state;
       const records = {
         clients: s.clients, projects: s.projects, invoices: s.invoices, payments: s.payments,
-        expenses: s.expenses, activities: s.activities, tasks: s.tasks, settings: s.settings,
+        expenses: s.expenses, activities: s.activities, tasks: s.tasks, savings: s.savings, etfs: s.etfs,
+        investments: s.investments, settings: s.settings,
       };
       const savedAt = new Date().toISOString();
       const snap = {
@@ -88,6 +89,7 @@
         counts: {
           clienti: s.clients.length, fatture: s.invoices.length, incassi: s.payments.length,
           spese: s.expenses.length, progetti: s.projects.length, task: s.tasks.length,
+          movimentiConto: s.savings.length, operazioniEtf: s.investments.length,
         },
         records: JSON.parse(JSON.stringify(records)),
       };
@@ -161,6 +163,8 @@
       { re: /^task$/, view: 'tasks', nav: 'task' },
       { re: /^settimana$/, view: 'settimana', nav: 'settimana' },
       { re: /^fiscale$/, view: 'fiscale', nav: 'fiscale' },
+      { re: /^risparmi$/, view: 'risparmi', nav: 'risparmi' },
+      { re: /^etf$/, view: 'etf', nav: 'etf' },
       { re: /^esporta$/, view: 'esporta', nav: 'esporta' },
       { re: /^impostazioni$/, view: 'impostazioni', nav: 'impostazioni' },
     ],

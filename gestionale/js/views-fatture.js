@@ -332,6 +332,23 @@
     });
 
   /* ------------------------------ Dettaglio fattura ------------------------------ */
+  // Dati dell'emittente che una fattura valida deve riportare
+  function issuerMissing() {
+    const s = App.settings();
+    const missing = [];
+    const hasName = s.tipoAttivita === 'azienda' ? !!(s.ragioneSociale || '').trim() : !!((s.nome || '').trim() && (s.cognome || '').trim());
+    if (!hasName) missing.push(s.tipoAttivita === 'azienda' ? 'ragione sociale' : 'nome e cognome');
+    if (!(s.partitaIva || '').trim()) missing.push('partita IVA');
+    if (!(s.indirizzo || '').trim()) missing.push('indirizzo');
+    return missing;
+  }
+
+  function issuerBanner() {
+    const m = issuerMissing();
+    if (!m.length) return '';
+    return `<div class="alert warn"><strong>Mancano i tuoi dati nella fattura:</strong> ${esc(m.join(', '))}.
+      Senza questi dati la fattura stampata non è valida. <a href="#/impostazioni">Completa le Impostazioni</a>.</div>`;
+  }
   function printHTML(inv) {
     const s = App.settings();
     const c = App.clientOf(inv.clientId);
@@ -397,6 +414,7 @@
           ${inv.stato === 'bozza' ? `<button type="button" class="btn danger ghost" data-action="invoice-delete" data-id="${esc(inv.id)}">Elimina bozza</button>` : ''}
         </div>
       </header>
+      ${issuerBanner()}
       ${inv.stato === 'annullata' ? `<div class="alert warn">Fattura annullata: non entra nel fatturato. Il numero resta riservato.</div>` : ''}
       ${inv.stato === 'emessa' && hasPayments ? `<p class="muted small-note">Per annullare questa fattura prima elimina i suoi incassi.</p>` : ''}
       <section class="kpi-grid small">
@@ -432,14 +450,17 @@
         <h3>Documenti collegati (${files.length})</h3>
         ${files.length ? `<ul class="file-list">${files.map(App.fileRow).join('')}</ul>` : UI.empty('Nessun documento. Puoi allegarli dalla scheda cliente, sezione Documenti.')}
       </section>
-      <div id="print-area" aria-hidden="true">${printHTML(inv)}</div>`;
+`;
   };
 
   App.actions['invoice-print'] = () => {
     const id = App.ui.printInvoiceId;
     const inv = id ? invoiceOf(id) : null;
     if (!inv) return;
-    const area = UI.$('#print-area');
+    const m = issuerMissing();
+    if (m.length) UI.toast(`Attenzione: nella fattura mancano ${m.join(', ')}. Completali in Impostazioni.`, 'err');
+    // Unica area di stampa: quella fuori dall'app (un secondo id uguale la rendeva vuota)
+    const area = document.getElementById('print-area');
     if (area) area.innerHTML = printHTML(inv);
     root.print();
   };

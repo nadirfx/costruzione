@@ -250,6 +250,7 @@
       kpi('Da incassare', Core.formatEuro(rec.daIncassare), `<span class="delta muted">saldo positivo di tutti i clienti</span>`, rec.daIncassare > 0 ? 'warn' : ''),
       kpi('Acconti / crediti', Core.formatEuro(rec.crediti), `<span class="delta muted">incassato in più del dovuto</span>`),
       kpi('Fatture scadute', `${overdue.length}`, `<span class="delta ${overdue.length ? 'bad' : 'muted'}">${esc(Core.formatEuro(overdueSum))} da incassare</span>`, overdue.length ? 'bad' : ''),
+      kpi('Patrimonio personale', Core.formatEuro(App.patrimonio().totale), `<span class="delta muted">conto ${esc(Core.formatEuro(App.patrimonio().conto))} · ETF ${esc(Core.formatEuro(App.patrimonio().etf))}</span>`, 'accent'),
       kpi(`Da versare ${d.year} (stima)`, Core.formatEuro(fiscalYear(d.year).totaleDaPagare), `<span class="delta muted">contributi + imposta sugli incassi</span>`),
     ].join('');
 

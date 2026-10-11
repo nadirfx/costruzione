@@ -62,6 +62,9 @@
     </svg>`;
   }
 
+  App.barsSVG = barsSVG;
+  App.lineSVG = lineSVG;
+
   function fileYear() {
     return App.ui.altroYear || yearNow();
   }
@@ -332,7 +335,7 @@
     const anchor = weekParam();
     const r = Fiscale.weekReport(App.data(), anchor, App.today());
     const s = weekHTML(r, anchor, true);
-    const area = UI.$('#print-area');
+    const area = document.getElementById('print-area');
     if (area) area.innerHTML = `<div class="print-page"><h1>${esc(s.title)}</h1>${s.body}</div>`;
     root.print();
   };
@@ -444,7 +447,7 @@
 
   App.actions['fiscal-print'] = () => {
     const r = fiscalReport(fileYear());
-    const area = UI.$('#print-area');
+    const area = document.getElementById('print-area');
     if (area) area.innerHTML = `<div class="print-page"><h1>${esc(r.title)}</h1>${r.body}</div>`;
     root.print();
   };
@@ -565,7 +568,8 @@
   App.actions['backup-export'] = async () => {
     const backup = await DB.exportAll();
     const stamp = App.today();
-    UI.downloadText(`gestionale-backup-${stamp}.json`, JSON.stringify(backup), 'application/json');
+    // JSON puro, senza BOM: il BOM serve ai CSV per Excel, ma romperebbe la rilettura del backup
+    UI.downloadBlob(`gestionale-backup-${stamp}.json`, new Blob([JSON.stringify(backup)], { type: 'application/json' }));
     await App.saveSettings({ lastBackupAt: new Date().toISOString() });
     UI.toast('Backup scaricato');
     App.refresh();
@@ -613,7 +617,8 @@
       if (!file) return UI.showErrors(form, ['Seleziona un file di backup.']);
       let obj;
       try {
-        obj = JSON.parse(await file.text());
+        // Toglie un eventuale BOM iniziale (es. file salvati da altri programmi)
+        obj = JSON.parse((await file.text()).replace(/^\uFEFF/, ''));
         DB.validateBackup(obj);
       } catch (e) {
         return UI.showErrors(form, [`File non valido: ${e.message}`]);

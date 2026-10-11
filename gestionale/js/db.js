@@ -15,8 +15,10 @@
   const DB_NAME = 'gestionale-personale';
   // v2: aggiunto lo store "tasks". onupgradeneeded crea solo gli store mancanti: i dati esistenti restano.
   // v3: aggiunto lo store "snapshots" (copie di sicurezza dei dati). Mai svuotato dall'import.
-  const DB_VERSION = 3;
-  const RECORD_STORES = ['clients', 'projects', 'invoices', 'payments', 'expenses', 'activities', 'tasks', 'files', 'meta'];
+  const DB_VERSION = 4;
+  // v4: aggiunti "savings" (movimenti conto personale), "etfs" e "investments" (operazioni ETF)
+  const RECORD_STORES = ['clients', 'projects', 'invoices', 'payments', 'expenses', 'activities', 'tasks', 'savings', 'etfs', 'investments', 'files', 'meta'];
+  const LIST_KEYS = ['clients', 'projects', 'invoices', 'payments', 'expenses', 'activities', 'tasks', 'savings', 'etfs', 'investments'];
   const ALL_STORES = [...RECORD_STORES, 'blobs', 'snapshots'];
   const DATA_STORES = [...RECORD_STORES, 'blobs'];
   const BACKUP_FORMAT = 'gestionale-backup';
@@ -184,6 +186,9 @@
         spese: data.expenses.length,
         attivita: data.activities.length,
         task: data.tasks.length,
+        movimentiConto: data.savings.length,
+        etf: data.etfs.length,
+        operazioniEtf: data.investments.length,
         documenti: files.length,
       },
       data: {
@@ -195,6 +200,9 @@
         expenses: data.expenses,
         activities: data.activities,
         tasks: data.tasks,
+        savings: data.savings,
+        etfs: data.etfs,
+        investments: data.investments,
         files,
       },
     };
@@ -206,6 +214,8 @@
     if (obj.version !== BACKUP_VERSION) throw new Error(`Versione di backup non supportata: ${obj.version}`);
     const d = obj.data;
     if (!d || typeof d !== 'object') throw new Error('Backup senza dati.');
+    // Le sezioni nate dopo (task, conto, ETF) sono facoltative: i backup vecchi restano validi
+    for (const k of ['savings', 'etfs', 'investments', 'tasks']) if (d[k] === undefined) d[k] = [];
     for (const k of ['clients', 'projects', 'invoices', 'payments', 'expenses', 'activities', 'files']) {
       if (!Array.isArray(d[k])) throw new Error(`Sezione mancante nel backup: ${k}`);
       for (const r of d[k]) {
@@ -233,6 +243,9 @@
       for (const e of d.expenses) tx.objectStore('expenses').put(e);
       for (const a of d.activities) tx.objectStore('activities').put(a);
       for (const t of d.tasks || []) tx.objectStore('tasks').put(t);
+      for (const x of d.savings) tx.objectStore('savings').put(x);
+      for (const x of d.etfs) tx.objectStore('etfs').put(x);
+      for (const x of d.investments) tx.objectStore('investments').put(x);
       for (const m of metas) tx.objectStore('files').put(m);
       for (const b of blobs) tx.objectStore('blobs').put(b);
       tx.objectStore('meta').put({ id: 'settings', ...(d.settings || {}) });
@@ -276,9 +289,9 @@
 
   // Ripristina solo i record (clienti, fatture, ...). I documenti restano com'erano.
   async function restoreRecords(records) {
-    const stores = ['clients', 'projects', 'invoices', 'payments', 'expenses', 'activities', 'tasks', 'meta'];
+    const stores = [...LIST_KEYS, 'meta'];
     await run(stores, 'readwrite', (tx) => {
-      for (const s of ['clients', 'projects', 'invoices', 'payments', 'expenses', 'activities', 'tasks']) {
+      for (const s of LIST_KEYS) {
         tx.objectStore(s).clear();
         for (const r of records[s] || []) tx.objectStore(s).put(r);
       }
