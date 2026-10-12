@@ -77,6 +77,23 @@
       .filter((r) => r.valoreCents > 0)
       .map((r) => ({ label: r.etf.nome, pct: r.quotaPct, valore: r.valoreCents }));
 
+    const oggi = App.today();
+    const ret = Risparmi.annualReturns(App.state.etfs, App.state.investments, oggi);
+    const retTxt = (v) => (v === null || v === undefined ? 'da 1 anno' : pct(v));
+    const lots = App.state.etfs.flatMap((e) => Risparmi.openLots(App.state.investments.filter((o) => o.etfId === e.id), e.prezzoAttualeCents || 0, oggi).map((l) => ({ ...l, etf: e })))
+      .sort((a, b) => (a.date < b.date ? 1 : -1));
+    const lotRows = lots.map((l) => `<tr>
+        <td>${esc(fmtDate(l.date))}</td>
+        <td><b>${esc(l.etf.nome)}</b></td>
+        <td class="num">${esc(String(l.quantita).replace('.', ','))}</td>
+        <td class="num">${esc(eur(l.costoUnitCents))}<div class="muted small-note">incl. commissioni</div></td>
+        <td class="num">${esc(String(l.giorni))} gg</td>
+        <td class="num">${esc(eur(l.valoreCents))}</td>
+        <td class="num ${l.plusCents >= 0 ? 'good' : 'bad'}">${esc(eur(l.plusCents))}<div class="small-note">${esc(pct(l.plusPct))}</div></td>
+        <td class="num">${esc(retTxt(l.rendAnnuoPct))}</td>
+      </tr>`).join('');
+    const etfRet = ret.perEtf.map((r) => `<li><span>${esc(r.etf.nome)}</span><b class="${(r.rendAnnuoPct || 0) >= 0 ? 'good' : 'bad'}">${esc(retTxt(r.rendAnnuoPct))}</b></li>`).join('');
+
     const cards = pf.rows.map((r, i) => {
       const diff = r.prezzoCents && r.costoMedioCents ? r.prezzoCents - r.costoMedioCents : 0;
       const up = diff >= 0;
@@ -89,6 +106,7 @@
         <div class="inv-row"><span>Costo medio</span><b>${r.quantita ? esc(eur(r.costoMedioCents)) : '—'}</b></div>
         <div class="inv-row"><span>Prezzo attuale</span><b>${r.prezzoCents ? esc(eur(r.prezzoCents)) : 'non inserito'}</b></div>
         ${r.quantita && r.prezzoCents ? `<div class="inv-pl ${up ? 'good' : 'bad'}"><span>${up ? '▲' : '▼'} ${esc(eur(Math.abs(Math.round(diff * r.quantita))))}</span> <small>${esc(pct(r.plusPct))}</small></div>` : ''}
+        <div class="inv-row"><span>Rendimento annuo</span><b class="${((ret.perEtf[i] || {}).rendAnnuoPct || 0) >= 0 ? 'good' : 'bad'}">${esc(retTxt((ret.perEtf[i] || {}).rendAnnuoPct))}</b></div>
         <div class="inv-bar" title="Quota nel portafoglio"><i style="width:${bar}%"></i></div>
         <div class="inv-foot">${esc(String(r.quotaPct).replace('.', ','))}% del portafoglio</div>
       </article>`;
@@ -130,6 +148,7 @@
         <article class="inv-stat"><span>Realizzato dalle vendite</span><b class="${realizedAll >= 0 ? 'good' : 'bad'}">${esc(eur(realizedAll))}</b></article>
         <article class="inv-stat"><span>Versato ultimi 12 mesi</span><b>${esc(eur(contribTot))}</b><small>${contribMonths} mesi con acquisti</small></article>
         <article class="inv-stat"><span>Media mensile reale</span><b>${esc(eur(avgMonthly))}</b><small>solo mesi con acquisti</small></article>
+        <article class="inv-stat"><span>Rendimento annuo (XIRR)</span><b class="${(ret.totale || 0) >= 0 ? 'good' : 'bad'}">${esc(retTxt(ret.totale))}</b><small>tiene conto di quando hai comprato</small></article>
         <article class="inv-stat"><span>ETF in portafoglio</span><b>${held.length}</b><small>${firstOp ? `dal ${esc(fmtDate(firstOp.date))}` : ''}</small></article>
       </section>
 
@@ -167,6 +186,15 @@
           <input type="hidden" name="start" value="${startCents}">
         </form>
         <div id="sim-out">${simOutput(startCents, projDefaults.mensile * 100, projDefaults.rendimento, projDefaults.anni)}</div>
+      </section>
+
+      <section class="card inv-panel">
+        <div class="section-head"><h3>Lotti di acquisto</h3>
+          <span class="muted small-note">ogni acquisto ancora in mano, col prezzo che hai pagato</span></div>
+        ${lots.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>Acquisto</th><th>ETF</th><th class="num">Quote</th><th class="num">Prezzo pagato</th><th class="num">Possesso</th><th class="num">Valore</th><th class="num">Guadagno</th><th class="num">Annuo</th></tr></thead><tbody>${lotRows}</tbody></table></div>` : UI.empty('Nessun lotto in mano.')}
+        <h3 class="mt">Rendimento annuo per ETF</h3>
+        <ul class="plain-list inv-ret">${etfRet || '<li class="muted">Nessun dato.</li>'}</ul>
+        <p class="muted small-note">Il rendimento annuo è calcolato dai tuoi acquisti e vendite con la data reale (XIRR). Sotto un anno di possesso non viene mostrato, perché annualizzare periodi brevi dà numeri fuorvianti. I lotti servono per analizzare le singole scelte; il costo fiscale resta il costo medio ponderato.</p>
       </section>
 
       <section class="card inv-panel">

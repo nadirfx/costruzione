@@ -136,3 +136,56 @@ test('simulazione: senza rendimento = versato; con rendimento cresce e resta coe
   // 10 anni con 100 €/mese al 6%: circa 16.390 €
   assert.ok(Math.abs(g[10].valore / 100 - 16387) < 60, 'valore atteso ~16.390 €, ottenuto ' + g[10].valore / 100);
 });
+
+test('lotti: ogni acquisto con prezzo e commissioni; vendita consuma FIFO', () => {
+  const ops = [
+    { id: 'a', date: '2026-01-10', tipo: 'acquisto', quantita: 10, prezzoCents: 10000, commissioniCents: 1000 },
+    { id: 'b', date: '2026-03-10', tipo: 'acquisto', quantita: 5, prezzoCents: 12000, commissioniCents: 0 },
+    { id: 'c', date: '2026-06-10', tipo: 'vendita', quantita: 12, prezzoCents: 13000, commissioniCents: 0 },
+  ];
+  const lots = R.openLots(ops, 14000, '2026-10-12');
+  assert.equal(lots.length, 1);
+  assert.equal(lots[0].id, 'b');
+  assert.equal(lots[0].quantita, 3); // 10 del primo lotto + 2 del secondo venduti FIFO
+  assert.equal(lots[0].prezzoAcquistoCents, 12000);
+});
+
+test('lotti: prezzo medio per quota include le commissioni e giorni di possesso', () => {
+  const ops = [{ id: 'a', date: '2026-01-01', tipo: 'acquisto', quantita: 10, prezzoCents: 10000, commissioniCents: 1000 }];
+  const [l] = R.openLots(ops, 11000, '2026-01-31');
+  assert.equal(l.costoUnitCents, 10100);
+  assert.equal(l.costoCents, 101000);
+  assert.equal(l.valoreCents, 110000);
+  assert.equal(l.giorni, 30);
+  assert.equal(l.rendAnnuoPct, null, 'sotto un anno il rendimento annuo non si mostra');
+});
+
+test('XIRR: un anno con +10% dà circa 10% annuo; flussi multipli ponderati', () => {
+  const ops = [{ date: '2025-01-01', tipo: 'acquisto', quantita: 10, prezzoCents: 10000, commissioniCents: 0 }];
+  const r = R.xirr(ops, 110000, '2026-01-01');
+  assert.ok(Math.abs(r - 10) < 0.2, 'atteso ~10%, ottenuto ' + r);
+  // due acquisti, valore finale: il rendimento annuo non è la media semplice
+  const ops2 = [
+    { date: '2025-01-01', tipo: 'acquisto', quantita: 10, prezzoCents: 10000, commissioniCents: 0 },
+    { date: '2026-01-01', tipo: 'acquisto', quantita: 10, prezzoCents: 12000, commissioniCents: 0 },
+  ];
+  const r2 = R.xirr(ops2, 230000, '2026-06-01'); // 1.000 € + 1.200 € investiti, 2.300 € oggi
+  assert.ok(Number.isFinite(r2) && r2 > -50 && r2 < 200, 'valore plausibile, ottenuto ' + r2);
+});
+
+test('XIRR: senza investimenti o con valore nullo restituisce null, mai NaN', () => {
+  assert.equal(R.xirr([], 1000, '2026-01-01'), null);
+  assert.equal(R.xirr([{ date: '2026-01-01', tipo: 'acquisto', quantita: 1, prezzoCents: 100, commissioniCents: 0 }], 0, '2026-02-01'), null);
+});
+
+test('rendimento annuo per ETF e totale', () => {
+  const etfs = [{ id: 'a', nome: 'A', prezzoAttualeCents: 11000 }, { id: 'b', nome: 'B', prezzoAttualeCents: 9000 }];
+  const inv = [
+    { id: '1', etfId: 'a', date: '2025-01-01', tipo: 'acquisto', quantita: 10, prezzoCents: 10000, commissioniCents: 0 },
+    { id: '2', etfId: 'b', date: '2025-01-01', tipo: 'acquisto', quantita: 10, prezzoCents: 10000, commissioniCents: 0 },
+  ];
+  const r = R.annualReturns(etfs, inv, '2026-01-01');
+  assert.ok(Math.abs(r.perEtf[0].rendAnnuoPct - 10) < 0.2);
+  assert.ok(Math.abs(r.perEtf[1].rendAnnuoPct + 10) < 0.2);
+  assert.ok(Math.abs(r.totale) < 0.5, 'totale ~0: +10% e −10% sullo stesso capitale');
+});

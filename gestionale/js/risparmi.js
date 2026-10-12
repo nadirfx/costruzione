@@ -199,8 +199,97 @@
     return out;
   }
 
+  /* ------------------------------ Lotti e rendimento annuo ------------------------------ */
+  const MS_DAY = 86400000;
+  const daysBetweenIso = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / MS_DAY);
+
+  // Lotti ancora in mano: ogni acquisto con il prezzo pagato. Le vendite consumano i lotti in ordine FIFO
+  // (solo per l'analisi dei lotti: il costo fiscale resta il costo medio ponderato di etfPosition).
+  // oggi: data di valutazione (YYYY-MM-DD). prezzoAttualeCents: prezzo per quota oggi.
+  function openLots(ops, prezzoAttualeCents, oggi) {
+    const sorted = [...ops].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    let lots = [];
+    for (const o of sorted) {
+      const q = Number(o.quantita) || 0;
+      if (o.tipo === 'acquisto') {
+        const fees = o.commissioniCents || 0;
+        lots.push({ id: o.id, date: o.date, qty: q, prezzoCents: o.prezzoCents, feesCents: fees,
+          costoUnitCents: (Math.round(q * o.prezzoCents) + fees) / q });
+      } else {
+        let residuo = q;
+        lots = lots.map((l) => {
+          if (residuo <= 0 || l.qty <= 0) return l;
+          const take = Math.min(l.qty, residuo);
+          residuo = round6(residuo - take);
+          return { ...l, qty: round6(l.qty - take) };
+        }).filter((l) => l.qty > 0);
+      }
+    }
+    return lots.map((l) => {
+      const costo = Math.round(l.qty * l.costoUnitCents);
+      const valore = Math.round(l.qty * (prezzoAttualeCents || 0));
+      const giorni = daysBetweenIso(l.date, oggi);
+      const rendTot = costo > 0 ? (valore - costo) / costo : 0;
+      // Annualizzare periodi brevi dà numeri fuorvianti: il rendimento annuo si mostra da 1 anno in su
+      const rendAnnuo = giorni >= 365 && costo > 0 && valore > 0 ? (Math.pow(valore / costo, 365 / giorni) - 1) * 100 : null;
+      return {
+        id: l.id,
+        date: l.date,
+        quantita: l.qty,
+        prezzoAcquistoCents: l.prezzoCents,
+        commissioniCents: l.feesCents,
+        costoUnitCents: Math.round(l.costoUnitCents),
+        costoCents: costo,
+        valoreCents: valore,
+        plusCents: valore - costo,
+        plusPct: Math.round(rendTot * 1000) / 10,
+        giorni,
+        rendAnnuoPct: rendAnnuo === null ? null : Math.round(rendAnnuo * 10) / 10,
+      };
+    });
+  }
+
+  // XIRR: tasso annuo che azzera il valore attuale dei flussi.
+  // ops: operazioni di un insieme di ETF (acquisti negativi, vendite positive), finale = valore attuale a oggi.
+  // Ritorna percentuale annua oppure null se non calcolabile (es. nessun investimento).
+  function xirr(ops, valoreAttualeCents, oggi) {
+    const flows = ops.map((o) => {
+      const importo = Math.round(Number(o.quantita) * o.prezzoCents) + (o.commissioniCents || 0);
+      return { date: o.date, amount: o.tipo === 'acquisto' ? -importo : importo - 2 * (o.commissioniCents || 0) };
+    });
+    if (!flows.length || valoreAttualeCents <= 0) return null;
+    if (!flows.some((f) => f.amount < 0)) return null;
+    flows.push({ date: oggi, amount: valoreAttualeCents });
+    const npv = (r) => flows.reduce((s, f) => s + f.amount / Math.pow(1 + r, daysBetweenIso(flows[0].date, f.date) / 365), 0);
+    let lo = -0.99;
+    let hi = 10;
+    if (npv(lo) * npv(hi) > 0) return null;
+    for (let i = 0; i < 200; i++) {
+      const mid = (lo + hi) / 2;
+      if (npv(lo) * npv(mid) <= 0) hi = mid;
+      else lo = mid;
+      if (hi - lo < 1e-9) break;
+    }
+    return Math.round(((lo + hi) / 2) * 1000) / 10;
+  }
+
+  // Rendimento annuo per ETF e totale, con tutte le operazioni e il valore attuale
+  function annualReturns(etfs, investments, oggi) {
+    const rows = etfs.map((e) => {
+      const ops = investments.filter((o) => o.etfId === e.id);
+      const pos = etfPosition(ops);
+      const valore = Math.round(pos.quantita * (Number(e.prezzoAttualeCents) || 0));
+      return { etf: e, rendAnnuoPct: xirr(ops, valore, oggi), valoreCents: valore };
+    });
+    const totValore = rows.reduce((s, r) => s + r.valoreCents, 0);
+    return {
+      perEtf: rows,
+      totale: xirr(investments, totValore, oggi),
+    };
+  }
+
   return {
-    TIPI_MOVIMENTO, TIPI_OPERAZIONE, holdingsCostSeries, monthlyContributions, projectGrowth,
+    TIPI_MOVIMENTO, TIPI_OPERAZIONE, openLots, xirr, annualReturns, holdingsCostSeries, monthlyContributions, projectGrowth,
     savingsBalance, savingsByMonth, goalProgress,
     etfPosition, portfolio,
     validateMovement, validateEtf, validateInvestment,

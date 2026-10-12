@@ -567,3 +567,7 @@ input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border: 0; bo
 .donut { width: 150px; height: 150px; }
 .legend-list li { grid-template-columns: 12px minmax(0, 1fr) auto; font-size: .84rem; }
 .legend-list li > span, .legend-list li { min-width: 0; overflow-wrap: anywhere; }
+.inv-ret li { display: flex; justify-content: space-between; gap: 12px; }
+.inv-ret b { font-variant-numeric: tabular-nums; }
+.inv-ret b.good, .table td.good { color: var(--ok); }
+.inv-ret b.bad, .table td.bad { color: var(--danger); }
