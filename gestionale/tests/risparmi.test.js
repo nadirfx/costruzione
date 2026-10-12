@@ -106,3 +106,33 @@ test('validazione: conto ed ETF', () => {
   assert.ok(R.validateEtf({ nome: 'VWCE', isin: 'nonvalido' }).length > 0);
   assert.deepEqual(R.validateEtf({ nome: 'VWCE', isin: 'IE00BK5BQT80', prezzoAttualeCents: 11234 }), []);
 });
+
+test('serie costo in mano: cresce con gli acquisti e scende con le vendite', () => {
+  const inv = [
+    { id: '1', etfId: 'a', date: '2026-01-05', tipo: 'acquisto', quantita: 10, prezzoCents: 10000, commissioniCents: 0 },
+    { id: '2', etfId: 'a', date: '2026-03-05', tipo: 'acquisto', quantita: 10, prezzoCents: 12000, commissioniCents: 0 },
+    { id: '3', etfId: 'a', date: '2026-06-05', tipo: 'vendita', quantita: 10, prezzoCents: 13000, commissioniCents: 0 },
+  ];
+  const s = R.holdingsCostSeries(inv, ['a'], ['2026-01', '2026-02', '2026-03', '2026-06']);
+  assert.deepEqual(s, [100000, 100000, 220000, 110000]);
+});
+
+test('contributi mensili: solo acquisti, commissioni incluse', () => {
+  const inv = [
+    { date: '2026-02-03', tipo: 'acquisto', quantita: 2, prezzoCents: 5000, commissioniCents: 100 },
+    { date: '2026-02-20', tipo: 'vendita', quantita: 1, prezzoCents: 9000, commissioniCents: 0 },
+  ];
+  assert.equal(R.monthlyContributions(inv, ['2026-02'])['2026-02'], 10100);
+});
+
+test('simulazione: senza rendimento = versato; con rendimento cresce e resta coerente', () => {
+  const zero = R.projectGrowth({ startCents: 100000, monthlyCents: 10000, annualRatePct: 0, years: 2 });
+  assert.equal(zero[2].valore, 100000 + 10000 * 24);
+  assert.equal(zero[2].interessi, 0);
+  const g = R.projectGrowth({ startCents: 0, monthlyCents: 10000, annualRatePct: 6, years: 10 });
+  assert.equal(g[0].valore, 0);
+  assert.ok(g[10].valore > g[10].versato, 'con rendimento positivo gli interessi sono positivi');
+  assert.equal(g[10].valore - g[10].versato, g[10].interessi);
+  // 10 anni con 100 €/mese al 6%: circa 16.390 €
+  assert.ok(Math.abs(g[10].valore / 100 - 16387) < 60, 'valore atteso ~16.390 €, ottenuto ' + g[10].valore / 100);
+});

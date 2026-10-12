@@ -222,6 +222,7 @@
         <div><p class="eyebrow">Investimenti</p><h1>ETF</h1>
           <p class="muted">Costo medio, valore e plus/minusvalenze. Il valore usa i prezzi che inserisci tu.</p></div>
         <div class="head-actions">
+          <a class="btn" href="#/investimenti">Vista portafoglio ✦</a>
           <button type="button" class="btn" data-action="etf-new">+ ETF</button>
           <button type="button" class="btn primary" data-action="op-new">+ Operazione</button>
         </div>

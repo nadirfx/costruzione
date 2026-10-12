@@ -165,6 +165,7 @@
       { re: /^fiscale$/, view: 'fiscale', nav: 'fiscale' },
       { re: /^risparmi$/, view: 'risparmi', nav: 'risparmi' },
       { re: /^etf$/, view: 'etf', nav: 'etf' },
+      { re: /^investimenti$/, view: 'investimenti', nav: 'investimenti' },
       { re: /^esporta$/, view: 'esporta', nav: 'esporta' },
       { re: /^impostazioni$/, view: 'impostazioni', nav: 'impostazioni' },
     ],

@@ -156,8 +156,51 @@
     return err;
   }
 
+  /* ------------------------------ Portafoglio nel tempo ------------------------------ */
+  // Costo delle quote in mano alla fine di ogni mese (somma dei costi residui di tutti gli ETF)
+  function holdingsCostSeries(investments, etfIds, months) {
+    return months.map((m) => {
+      const end = Core.lastDayOf(m);
+      let costo = 0;
+      for (const id of etfIds) {
+        const ops = investments.filter((o) => o.etfId === id && o.date <= end);
+        costo += etfPosition(ops).costoCents;
+      }
+      return costo;
+    });
+  }
+
+  // Quanto hai investito (acquisti netti di commissioni) per mese
+  function monthlyContributions(investments, months) {
+    const out = {};
+    for (const m of months) out[m] = 0;
+    for (const o of investments) {
+      const k = Core.monthKey(o.date);
+      if (out[k] === undefined || o.tipo !== 'acquisto') continue;
+      out[k] += Math.round(Number(o.quantita) * o.prezzoCents) + (o.commissioniCents || 0);
+    }
+    return out;
+  }
+
+  // Simulazione a interesse composto mensile. NON è una previsione: il rendimento lo scegli tu.
+  // Ritorna un punto per anno: { anno, valore, versato, interessi }
+  function projectGrowth({ startCents = 0, monthlyCents = 0, annualRatePct = 0, years = 10 }) {
+    const i = annualRatePct / 100 / 12;
+    const out = [];
+    for (let y = 0; y <= years; y++) {
+      const n = y * 12;
+      const growth = i === 0 ? 1 : Math.pow(1 + i, n);
+      const fvStart = startCents * growth;
+      const fvMonthly = i === 0 ? monthlyCents * n : monthlyCents * ((growth - 1) / i);
+      const valore = Math.round(fvStart + fvMonthly);
+      const versato = Math.round(startCents + monthlyCents * n);
+      out.push({ anno: y, valore, versato, interessi: valore - versato });
+    }
+    return out;
+  }
+
   return {
-    TIPI_MOVIMENTO, TIPI_OPERAZIONE,
+    TIPI_MOVIMENTO, TIPI_OPERAZIONE, holdingsCostSeries, monthlyContributions, projectGrowth,
     savingsBalance, savingsByMonth, goalProgress,
     etfPosition, portfolio,
     validateMovement, validateEtf, validateInvestment,

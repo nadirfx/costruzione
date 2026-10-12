@@ -461,6 +461,124 @@ form.shake { animation: shake .45s var(--ease); }
 .dash-split { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; }
 @media (max-width: 900px) { .dash-split { grid-template-columns: 1fr; } }
 
+/* ==========================================================================
+   Portafoglio ETF · vista dedicata
+   ========================================================================== */
+.inv-hero {
+  position: relative; overflow: hidden; border-radius: 26px; padding: 34px clamp(20px, 4vw, 44px);
+  display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: center; margin-bottom: 18px;
+  border: 1px solid rgba(94, 231, 255, .22); background: linear-gradient(160deg, rgba(20, 26, 46, .9), rgba(7, 9, 15, .95));
+  box-shadow: 0 40px 120px -40px #000, var(--glow); animation: rise .9s var(--ease) both;
+}
+.inv-hero-bg { position: absolute; inset: 0; pointer-events: none; }
+.inv-hero-bg i { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .5; animation: drift 16s ease-in-out infinite alternate; }
+.inv-hero-bg i:nth-child(1) { width: 380px; height: 380px; left: -90px; top: -120px; background: radial-gradient(circle, #5ee7ff, transparent 65%); }
+.inv-hero-bg i:nth-child(2) { width: 340px; height: 340px; right: -60px; bottom: -120px; background: radial-gradient(circle, #9b7bff, transparent 65%); animation-delay: -5s; }
+.inv-hero-bg i:nth-child(3) { width: 240px; height: 240px; left: 45%; top: 40%; background: radial-gradient(circle, #ff7ab6, transparent 65%); opacity: .25; animation-delay: -9s; }
+.inv-hero-copy, .inv-hero-gauge { position: relative; }
+.inv-title { font-size: clamp(1.2rem, 2.2vw, 1.6rem); color: #dfe6f6; margin-bottom: 6px; }
+.inv-big {
+  font-size: clamp(2.6rem, 6.5vw, 4.8rem); font-weight: 800; letter-spacing: -.03em; line-height: 1.02;
+  background: linear-gradient(100deg, #ffffff 0%, var(--accent) 45%, var(--accent-2) 80%, var(--accent-3) 100%);
+  background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: sheen 6s linear infinite; font-variant-numeric: tabular-nums;
+}
+@keyframes sheen { to { background-position: -200% 0; } }
+.inv-sub { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; font-weight: 650; font-size: .92rem; border: 1px solid; }
+.pill.good { color: var(--ok); border-color: rgba(61, 220, 151, .4); background: rgba(61, 220, 151, .1); }
+.pill.bad { color: var(--danger); border-color: rgba(255, 93, 115, .45); background: rgba(255, 93, 115, .1); }
+.inv-hero-gauge { display: grid; place-items: center; }
+.gauge { width: min(260px, 100%); height: auto; overflow: visible; }
+.gauge .g-track { fill: none; stroke: rgba(255, 255, 255, .08); stroke-width: 9; stroke-linecap: round; }
+.gauge .g-fill { fill: none; stroke-width: 9; stroke-linecap: round; stroke: var(--ok); filter: drop-shadow(0 0 8px rgba(61, 220, 151, .6)); animation: gauge-in 1.4s var(--ease) both; }
+.gauge.bad .g-fill { stroke: var(--danger); filter: drop-shadow(0 0 8px rgba(255, 93, 115, .6)); }
+.gauge .g-val { fill: #fff; font-size: 13px; font-weight: 750; }
+.gauge .g-lbl { fill: var(--muted); font-size: 6.5px; letter-spacing: .12em; text-transform: uppercase; }
+@keyframes gauge-in { from { stroke-dasharray: 0 100; } }
+
+.inv-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.inv-stat {
+  padding: 16px 18px; border-radius: 18px; border: 1px solid var(--line); background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  transition: transform .4s var(--ease), border-color .3s; animation: rise .7s var(--ease) both;
+}
+.inv-stat:hover { transform: translateY(-3px); border-color: rgba(94, 231, 255, .35); }
+.inv-stat span { display: block; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.inv-stat b { display: block; font-size: 1.25rem; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.inv-stat small { color: var(--muted); font-size: .76rem; }
+.inv-stat b.good { color: var(--ok); } .inv-stat b.bad { color: var(--danger); }
+
+.inv-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 18px; }
+.inv-panel.wide { min-width: 0; }
+@media (max-width: 900px) { .inv-grid { grid-template-columns: 1fr; } .inv-hero { grid-template-columns: 1fr; } }
+.donut-wrap { display: grid; grid-template-columns: 180px 1fr; gap: 18px; align-items: center; }
+@media (max-width: 520px) { .donut-wrap { grid-template-columns: 1fr; justify-items: center; } }
+.donut { width: 180px; height: 180px; transform: rotate(-90deg); overflow: visible; }
+.donut .track { fill: none; stroke: rgba(255, 255, 255, .06); stroke-width: 4.2; }
+.donut .seg { fill: none; stroke-width: 4.2; stroke-linecap: butt; filter: drop-shadow(0 0 4px rgba(255, 255, 255, .15)); animation: seg-in 1.1s var(--ease) both; transition: stroke-width .25s; }
+.donut .seg:hover { stroke-width: 5.6; }
+.donut text { transform: rotate(90deg); transform-origin: 21px 21px; }
+.donut .d-val { fill: #fff; font-size: 6px; font-weight: 750; }
+.donut .d-lbl { fill: var(--muted); font-size: 2.6px; letter-spacing: .15em; text-transform: uppercase; }
+@keyframes seg-in { from { stroke-dasharray: 0 100; } }
+.legend-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: .9rem; }
+.legend-list li { display: grid; grid-template-columns: 12px 1fr auto; gap: 10px; align-items: center; }
+.legend-list i { width: 12px; height: 12px; border-radius: 4px; box-shadow: 0 0 10px currentColor; }
+.legend-list b { font-variant-numeric: tabular-nums; }
+
+.inv-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.inv-card {
+  position: relative; overflow: hidden; padding: 18px; border-radius: 20px; border: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--surface-2), rgba(0, 0, 0, .25)); transition: transform .45s var(--ease), box-shadow .45s;
+  animation: rise .7s var(--ease) both; animation-delay: calc(var(--i) * 90ms);
+}
+.inv-card::before { content: ""; position: absolute; inset: -1px; border-radius: 20px; padding: 1px; background: linear-gradient(135deg, var(--c), transparent 55%); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: .7; pointer-events: none; }
+.inv-card:hover { transform: translateY(-4px); box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .8), 0 0 0 1px var(--c); }
+.inv-card header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.inv-card header > div { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.inv-card header b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inv-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 12px var(--c); flex: 0 0 auto; }
+.inv-tkr { font-size: .72rem; letter-spacing: .14em; color: var(--muted); }
+.inv-val { font-size: 1.6rem; font-weight: 750; margin: 12px 0 10px; font-variant-numeric: tabular-nums; }
+.inv-row { display: flex; justify-content: space-between; font-size: .86rem; color: var(--muted); padding: 4px 0; }
+.inv-row b { color: var(--text); font-variant-numeric: tabular-nums; }
+.inv-pl { margin-top: 8px; font-size: .9rem; font-weight: 650; } .inv-pl small { font-weight: 500; opacity: .85; }
+.inv-pl.good { color: var(--ok); } .inv-pl.bad { color: var(--danger); }
+.inv-bar { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, .07); margin-top: 14px; overflow: hidden; }
+.inv-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--c), #fff3); border-radius: 99px; animation: grow-x 1.2s var(--ease) both; transform-origin: left; }
+@keyframes grow-x { from { transform: scaleX(0); } }
+.inv-foot { font-size: .75rem; color: var(--muted); margin-top: 6px; }
+
+.sim-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 14px; }
+.sim-field { display: grid; gap: 10px; font-size: .86rem; color: var(--muted); }
+.sim-field span { display: flex; justify-content: space-between; gap: 8px; }
+.sim-field b { color: #fff; font-variant-numeric: tabular-nums; }
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); outline: none; padding: 0; border: 0; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(94, 231, 255, .3), 0 0 18px var(--accent); cursor: pointer; }
+input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 0 18px var(--accent); }
+.sim-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 8px; }
+.sim-kpis article { padding: 12px 14px; border-radius: 14px; background: rgba(0, 0, 0, .25); border: 1px solid var(--line); }
+.sim-kpis span { display: block; font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.sim-kpis b { display: block; font-size: 1.2rem; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.sim-kpis article.good b { color: var(--ok); }
+
+.inv-timeline { list-style: none; padding: 0; margin: 0; position: relative; }
+.inv-timeline::before { content: ""; position: absolute; left: 6px; top: 6px; bottom: 6px; width: 2px; background: linear-gradient(var(--accent), var(--accent-2), transparent); }
+.inv-timeline li { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 10px 0 10px 28px; animation: rise .6s var(--ease) both; animation-delay: var(--d); }
+.inv-timeline .tl-dot { position: absolute; left: 0; top: 16px; width: 14px; height: 14px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 14px var(--ok); }
+.inv-timeline li.vendita .tl-dot { background: var(--warn); box-shadow: 0 0 14px var(--warn); }
+.inv-timeline li b.neg { color: var(--warn); }
+
+.inv-empty { text-align: center; padding: 60px 20px; position: relative; overflow: hidden; border-radius: 26px; border: 1px dashed rgba(94, 231, 255, .3); animation: rise .8s var(--ease) both; }
+.inv-orb { width: 140px; height: 140px; margin: 0 auto 18px; border-radius: 50%; background: conic-gradient(var(--accent), var(--accent-2), var(--accent-3), var(--accent)); filter: blur(2px); animation: spin-slow 9s linear infinite; box-shadow: 0 0 60px rgba(94, 231, 255, .35); }
+.inv-disc { margin-top: 10px; }
+/* Allocazione: legenda contenuta nel riquadro */
+.inv-panel { min-width: 0; }
+.donut-wrap { grid-template-columns: 150px minmax(0, 1fr); }
+.donut { width: 150px; height: 150px; }
+.legend-list li { grid-template-columns: 12px minmax(0, 1fr) auto; font-size: .84rem; }
+.legend-list li > span, .legend-list li { min-width: 0; overflow-wrap: anywhere; }
+
 </style>
 </head>
 <body>
@@ -486,6 +604,7 @@ form.shake { animation: shake .45s var(--ease); }
         <div class="nav-sep"></div>
         <a href="#/risparmi" data-nav="risparmi"><span class="ico" aria-hidden="true">◍</span>Risparmi</a>
         <a href="#/etf" data-nav="etf"><span class="ico" aria-hidden="true">◈</span>ETF</a>
+        <a href="#/investimenti" data-nav="investimenti"><span class="ico" aria-hidden="true">✦</span>Portafoglio ETF</a>
         <div class="nav-sep"></div>
         <a href="#/fiscale" data-nav="fiscale"><span class="ico" aria-hidden="true">€</span>Fiscale</a>
         <a href="#/esporta" data-nav="esporta"><span class="ico" aria-hidden="true">⇅</span>Esporta</a>
@@ -2150,6 +2269,7 @@ form.shake { animation: shake .45s var(--ease); }
       { re: /^fiscale$/, view: 'fiscale', nav: 'fiscale' },
       { re: /^risparmi$/, view: 'risparmi', nav: 'risparmi' },
       { re: /^etf$/, view: 'etf', nav: 'etf' },
+      { re: /^investimenti$/, view: 'investimenti', nav: 'investimenti' },
       { re: /^esporta$/, view: 'esporta', nav: 'esporta' },
       { re: /^impostazioni$/, view: 'impostazioni', nav: 'impostazioni' },
     ],
@@ -5052,8 +5172,51 @@ form.shake { animation: shake .45s var(--ease); }
     return err;
   }
 
+  /* ------------------------------ Portafoglio nel tempo ------------------------------ */
+  // Costo delle quote in mano alla fine di ogni mese (somma dei costi residui di tutti gli ETF)
+  function holdingsCostSeries(investments, etfIds, months) {
+    return months.map((m) => {
+      const end = Core.lastDayOf(m);
+      let costo = 0;
+      for (const id of etfIds) {
+        const ops = investments.filter((o) => o.etfId === id && o.date <= end);
+        costo += etfPosition(ops).costoCents;
+      }
+      return costo;
+    });
+  }
+
+  // Quanto hai investito (acquisti netti di commissioni) per mese
+  function monthlyContributions(investments, months) {
+    const out = {};
+    for (const m of months) out[m] = 0;
+    for (const o of investments) {
+      const k = Core.monthKey(o.date);
+      if (out[k] === undefined || o.tipo !== 'acquisto') continue;
+      out[k] += Math.round(Number(o.quantita) * o.prezzoCents) + (o.commissioniCents || 0);
+    }
+    return out;
+  }
+
+  // Simulazione a interesse composto mensile. NON è una previsione: il rendimento lo scegli tu.
+  // Ritorna un punto per anno: { anno, valore, versato, interessi }
+  function projectGrowth({ startCents = 0, monthlyCents = 0, annualRatePct = 0, years = 10 }) {
+    const i = annualRatePct / 100 / 12;
+    const out = [];
+    for (let y = 0; y <= years; y++) {
+      const n = y * 12;
+      const growth = i === 0 ? 1 : Math.pow(1 + i, n);
+      const fvStart = startCents * growth;
+      const fvMonthly = i === 0 ? monthlyCents * n : monthlyCents * ((growth - 1) / i);
+      const valore = Math.round(fvStart + fvMonthly);
+      const versato = Math.round(startCents + monthlyCents * n);
+      out.push({ anno: y, valore, versato, interessi: valore - versato });
+    }
+    return out;
+  }
+
   return {
-    TIPI_MOVIMENTO, TIPI_OPERAZIONE,
+    TIPI_MOVIMENTO, TIPI_OPERAZIONE, holdingsCostSeries, monthlyContributions, projectGrowth,
     savingsBalance, savingsByMonth, goalProgress,
     etfPosition, portfolio,
     validateMovement, validateEtf, validateInvestment,
@@ -5287,6 +5450,7 @@ form.shake { animation: shake .45s var(--ease); }
         <div><p class="eyebrow">Investimenti</p><h1>ETF</h1>
           <p class="muted">Costo medio, valore e plus/minusvalenze. Il valore usa i prezzi che inserisci tu.</p></div>
         <div class="head-actions">
+          <a class="btn" href="#/investimenti">Vista portafoglio ✦</a>
           <button type="button" class="btn" data-action="etf-new">+ ETF</button>
           <button type="button" class="btn primary" data-action="op-new">+ Operazione</button>
         </div>
@@ -5447,6 +5611,218 @@ form.shake { animation: shake .45s var(--ease); }
     return { conto: saldo, etf, totale: saldo + etf };
   };
 
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+  <script>
+/* js/views-investimenti.js */
+/*
+ * Portafoglio ETF: pagina dedicata e visiva. Legge gli stessi dati di "ETF" e "Risparmi":
+ * ogni modifica fatta lì si vede qui al refresh, nessun dato duplicato.
+ * La pagina ETF e la dashboard restano invariate.
+ */
+(function (root) {
+  'use strict';
+
+  const { Core, UI, App, Risparmi } = root;
+  const { esc, fmtDate } = UI;
+  const V = App.views;
+
+  const eur = (c) => Core.formatEuro(c);
+  const pct = (p) => Core.formatPercent(p);
+  const PALETTE = ['#5ee7ff', '#9b7bff', '#ff7ab6', '#3ddc97', '#ffc15e', '#6ea8ff', '#ff8a5c', '#c3f56b'];
+
+  function donut(segments, centerLabel, centerValue) {
+    const R = 15.915;
+    let acc = 0;
+    const arcs = segments.map((s, i) => {
+      const dash = `${s.pct} ${100 - s.pct}`;
+      const offset = -acc;
+      acc += s.pct;
+      return `<circle class="seg" r="${R}" cx="21" cy="21" pathLength="100" stroke="${PALETTE[i % PALETTE.length]}"
+        stroke-dasharray="${dash}" stroke-dashoffset="${offset}" style="animation-delay:${i * 140}ms"><title>${esc(s.label)}: ${esc(String(s.pct).replace('.', ','))}%</title></circle>`;
+    }).join('');
+    return `<svg class="donut" viewBox="0 0 42 42" role="img" aria-label="Allocazione del portafoglio">
+      <circle class="track" r="${R}" cx="21" cy="21"></circle>${arcs}
+      <text x="21" y="20" text-anchor="middle" class="d-val">${esc(centerValue)}</text>
+      <text x="21" y="26" text-anchor="middle" class="d-lbl">${esc(centerLabel)}</text></svg>`;
+  }
+
+  function gauge(p) {
+    const clamped = Math.max(-100, Math.min(100, p));
+    const len = 100;
+    const fill = Math.min(100, Math.abs(clamped));
+    const tone = p >= 0 ? 'good' : 'bad';
+    return `<svg class="gauge ${tone}" viewBox="0 0 120 70" role="img" aria-label="Rendimento ${esc(pct(p))}">
+      <path class="g-track" d="M10,60 A50,50 0 0 1 110,60" pathLength="${len}"></path>
+      <path class="g-fill" d="M10,60 A50,50 0 0 1 110,60" pathLength="${len}" stroke-dasharray="${fill} ${len}"></path>
+      <text x="60" y="52" text-anchor="middle" class="g-val">${esc(pct(p))}</text>
+      <text x="60" y="66" text-anchor="middle" class="g-lbl">rendimento</text></svg>`;
+  }
+
+  function monthsWindow(n = 12) {
+    const cur = App.today().slice(0, 7);
+    return Array.from({ length: n }, (_, i) => Core.shiftMonth(cur, i - (n - 1)));
+  }
+
+  function emptyState() {
+    return `
+      <div class="inv-empty">
+        <div class="inv-orb" aria-hidden="true"></div>
+        <h1>Il tuo portafoglio ETF</h1>
+        <p class="muted">Aggiungi il primo ETF e il primo acquisto: qui vedrai valore, costo medio, plus/minusvalenze e la crescita nel tempo.</p>
+        <div class="head-actions"><a class="btn primary" href="#/etf">Vai alla gestione ETF</a></div>
+      </div>`;
+  }
+
+  V.investimenti = () => {
+    if (!App.state.etfs.length) return emptyState();
+    const etfIds = App.state.etfs.map((e) => e.id);
+    const pf = Risparmi.portfolio(App.state.etfs, App.state.investments);
+    const t = pf.totali;
+    const held = pf.rows.filter((r) => r.quantita > 0);
+    const months = monthsWindow(12);
+    const costSeries = Risparmi.holdingsCostSeries(App.state.investments, etfIds, months);
+    const contrib = Risparmi.monthlyContributions(App.state.investments, months);
+    const contribValues = months.map((m) => contrib[m]);
+    const contribTot = contribValues.reduce((s, v) => s + v, 0);
+    const contribMonths = contribValues.filter((v) => v > 0).length;
+    const avgMonthly = contribMonths ? Math.round(contribTot / contribMonths) : 0;
+    const firstOp = [...App.state.investments].sort((a, b) => (a.date < b.date ? -1 : 1))[0];
+    const realizedAll = t.realizzato;
+    const gaugeVal = t.plusPct;
+    const segs = held
+      .filter((r) => r.valoreCents > 0)
+      .map((r) => ({ label: r.etf.nome, pct: r.quotaPct, valore: r.valoreCents }));
+
+    const cards = pf.rows.map((r, i) => {
+      const diff = r.prezzoCents && r.costoMedioCents ? r.prezzoCents - r.costoMedioCents : 0;
+      const up = diff >= 0;
+      const bar = Math.max(4, Math.min(100, r.quotaPct));
+      return `<article class="inv-card" style="--i:${i}; --c:${PALETTE[i % PALETTE.length]}">
+        <header><div><span class="inv-dot"></span><b>${esc(r.etf.nome)}</b></div>
+          <span class="inv-tkr">${esc(r.etf.ticker || '')}</span></header>
+        <div class="inv-val">${esc(eur(r.valoreCents))}</div>
+        <div class="inv-row"><span>Quote</span><b>${esc(String(r.quantita).replace('.', ','))}</b></div>
+        <div class="inv-row"><span>Costo medio</span><b>${r.quantita ? esc(eur(r.costoMedioCents)) : '—'}</b></div>
+        <div class="inv-row"><span>Prezzo attuale</span><b>${r.prezzoCents ? esc(eur(r.prezzoCents)) : 'non inserito'}</b></div>
+        ${r.quantita && r.prezzoCents ? `<div class="inv-pl ${up ? 'good' : 'bad'}"><span>${up ? '▲' : '▼'} ${esc(eur(Math.abs(Math.round(diff * r.quantita))))}</span> <small>${esc(pct(r.plusPct))}</small></div>` : ''}
+        <div class="inv-bar" title="Quota nel portafoglio"><i style="width:${bar}%"></i></div>
+        <div class="inv-foot">${esc(String(r.quotaPct).replace('.', ','))}% del portafoglio</div>
+      </article>`;
+    }).join('');
+
+    const timeline = [...App.state.investments]
+      .sort((a, b) => (a.date < b.date ? 1 : -1))
+      .slice(0, 12)
+      .map((o, i) => {
+        const e = App.byId('etfs', o.etfId);
+        const importo = Math.round(Number(o.quantita) * o.prezzoCents) + (o.commissioniCents || 0);
+        return `<li style="--d:${i * 70}ms" class="${o.tipo}">
+          <span class="tl-dot"></span>
+          <div><b>${o.tipo === 'vendita' ? 'Vendita' : 'Acquisto'}</b> · ${esc(e ? e.nome : '—')}
+            <div class="muted small-note">${esc(fmtDate(o.date))} · ${esc(String(o.quantita).replace('.', ','))} quote a ${esc(eur(o.prezzoCents))}</div></div>
+          <b class="${o.tipo === 'vendita' ? 'neg' : ''}">${o.tipo === 'vendita' ? '−' : '+'}${esc(eur(importo))}</b></li>`;
+      }).join('');
+
+    const projDefaults = { mensile: 200, rendimento: 6, anni: 15 };
+    const startCents = t.valore;
+
+    return `
+      <header class="inv-hero">
+        <div class="inv-hero-bg" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="inv-hero-copy">
+          <p class="eyebrow">Portafoglio ETF · ${esc(App.today().slice(0, 4))}</p>
+          <h1 class="inv-title">Il tuo patrimonio investito</h1>
+          <div class="inv-big" data-count-eur="${t.valore}">${esc(eur(t.valore))}</div>
+          <p class="inv-sub">
+            <span class="pill ${t.plus >= 0 ? 'good' : 'bad'}">${t.plus >= 0 ? '▲' : '▼'} ${esc(eur(Math.abs(t.plus)))} · ${esc(pct(t.plusPct))}</span>
+            <span class="muted">rispetto al costo di ${esc(eur(t.costo))}</span>
+          </p>
+        </div>
+        <div class="inv-hero-gauge">${gauge(gaugeVal)}</div>
+      </header>
+
+      <section class="inv-stats stagger">
+        <article class="inv-stat"><span>Investito in totale</span><b data-count-eur="${t.investitoTotale}">${esc(eur(t.investitoTotale))}</b></article>
+        <article class="inv-stat"><span>Realizzato dalle vendite</span><b class="${realizedAll >= 0 ? 'good' : 'bad'}">${esc(eur(realizedAll))}</b></article>
+        <article class="inv-stat"><span>Versato ultimi 12 mesi</span><b>${esc(eur(contribTot))}</b><small>${contribMonths} mesi con acquisti</small></article>
+        <article class="inv-stat"><span>Media mensile reale</span><b>${esc(eur(avgMonthly))}</b><small>solo mesi con acquisti</small></article>
+        <article class="inv-stat"><span>ETF in portafoglio</span><b>${held.length}</b><small>${firstOp ? `dal ${esc(fmtDate(firstOp.date))}` : ''}</small></article>
+      </section>
+
+      <div class="inv-grid">
+        <section class="card inv-panel">
+          <div class="section-head"><h3>Allocazione</h3></div>
+          <div class="donut-wrap">
+            ${segs.length ? donut(segs, 'ETF', `${segs.length}`) : '<p class="muted">Nessuna quota in portafoglio.</p>'}
+            <ul class="legend-list">${segs.map((s, i) => `<li><i style="background:${PALETTE[i % PALETTE.length]}"></i>${esc(s.label)}<b>${esc(String(s.pct).replace('.', ','))}%</b></li>`).join('')}</ul>
+          </div>
+        </section>
+        <section class="card inv-panel wide">
+          <div class="section-head"><h3>Capitale in mano nel tempo</h3><span class="muted small-note">costo delle quote ancora possedute, fine mese</span></div>
+          ${App.lineSVG(months.map((m) => Core.monthShort(m)), costSeries, 'Costo delle quote in mano per mese')}
+        </section>
+      </div>
+
+      <section class="card inv-panel">
+        <div class="section-head"><h3>Versamenti mensili · ultimi 12 mesi</h3></div>
+        ${App.barsSVG(months.map((m) => Core.monthShort(m)), [{ name: 'Versato', cls: 'inc', values: contribValues }], { ariaLabel: 'Versamenti mensili negli ultimi 12 mesi', height: 220, fmt: (v) => (v / 100 >= 1000 ? `${Math.round(v / 100000)}k` : String(Math.round(v / 100))) })}
+      </section>
+
+      <section class="inv-cards stagger">${cards || UI.empty('Nessuna posizione.')}</section>
+
+      <section class="card inv-panel">
+        <div class="section-head"><h3>Simulatore · quanto potrebbe diventare</h3>
+          <span class="muted small-note">Simulazione a interesse composto. Non è una previsione: il rendimento lo scegli tu.</span></div>
+        <form class="sim-form" data-input="proj" aria-label="Parametri simulazione">
+          <label class="sim-field"><span>Versamento mensile <b data-out="mensile">${esc(eur(projDefaults.mensile * 100))}</b></span>
+            <input type="range" min="0" max="2000" step="10" value="${projDefaults.mensile}" name="mensile"></label>
+          <label class="sim-field"><span>Rendimento annuo ipotizzato <b data-out="rendimento">${esc(projDefaults.rendimento)}%</b></span>
+            <input type="range" min="0" max="12" step="0.5" value="${projDefaults.rendimento}" name="rendimento"></label>
+          <label class="sim-field"><span>Orizzonte <b data-out="anni">${projDefaults.anni} anni</b></span>
+            <input type="range" min="1" max="40" step="1" value="${projDefaults.anni}" name="anni"></label>
+          <input type="hidden" name="start" value="${startCents}">
+        </form>
+        <div id="sim-out">${simOutput(startCents, projDefaults.mensile * 100, projDefaults.rendimento, projDefaults.anni)}</div>
+      </section>
+
+      <section class="card inv-panel">
+        <div class="section-head"><h3>Ultime operazioni</h3></div>
+        ${timeline ? `<ol class="inv-timeline">${timeline}</ol>` : UI.empty('Nessuna operazione.')}
+      </section>
+
+      <p class="muted small-note inv-disc">Valori calcolati sui prezzi che inserisci tu. Questa pagina non è consulenza finanziaria.</p>`;
+  };
+
+  function simOutput(startCents, monthlyCents, rate, years) {
+    const pts = Risparmi.projectGrowth({ startCents, monthlyCents, annualRatePct: rate, years });
+    const last = pts[pts.length - 1];
+    const labels = pts.map((p) => (p.anno % 5 === 0 || p.anno === years ? `${p.anno}a` : ''));
+    return `
+      <div class="sim-kpis">
+        <article><span>Valore a ${years} anni</span><b data-count-eur="${last.valore}">${esc(eur(last.valore))}</b></article>
+        <article><span>Versato</span><b>${esc(eur(last.versato))}</b></article>
+        <article class="good"><span>Interessi stimati</span><b>${esc(eur(last.interessi))}</b></article>
+      </div>
+      ${App.lineSVG(labels, pts.map((p) => p.valore), `Crescita simulata in ${years} anni`)}`;
+  }
+
+  App.inputs.proj = (el) => {
+    const form = el.closest('form') || el;
+    const v = (n) => Number(form.elements[n].value);
+    const mensile = v('mensile');
+    const rendimento = v('rendimento');
+    const anni = v('anni');
+    const start = Number(form.elements.start.value) || 0;
+    form.querySelector('[data-out="mensile"]').textContent = eur(mensile * 100);
+    form.querySelector('[data-out="rendimento"]').textContent = `${String(rendimento).replace('.', ',')}%`;
+    form.querySelector('[data-out="anni"]').textContent = `${anni} ${anni === 1 ? 'anno' : 'anni'}`;
+    const out = document.getElementById('sim-out');
+    if (out) out.innerHTML = simOutput(start, mensile * 100, rendimento, anni);
+  };
+
+  App.views.investimenti = V.investimenti;
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>
