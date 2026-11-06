@@ -31,3 +31,7 @@
 
 ## Montaggio (gratis, lo fa Claude)
 - Taglio pezzi fermi/errori, audio a -14 LUFS 48 kHz, prompt che scorre aggiornato alla durata reale.
+
+## Consegna prompt
+- Ogni modifica richiesta: ridare SEMPRE il prompt completo, unico, pronto da incollare (regole budget + prompt). Mai pezzi separati.
+- Logo/ricamo: le immagini di riferimento mostrano solo il risultato finale; nel prompt dire esplicitamente quando il logo NON esiste ancora.
