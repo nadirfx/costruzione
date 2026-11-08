@@ -29,6 +29,9 @@ Nadir vuole lavorare **gratis** dove possibile.
 - `open-generative-ai`: immagini (e video solo a pagamento via MuAPI).
 - `openwhispr-cli` / `openwhispr-api`: dettatura vocale e note (OpenWhispr, gratis in locale).
 - `openproject`: gestione progetti/cantieri, attività, Gantt (gratis in locale con Docker).
+- `calcom-api`: appuntamenti e prenotazioni (Cal.diy, gratis in locale con Docker).
+- `chatwoot`: casella unica per i messaggi dei clienti (chat sito, WhatsApp, Instagram, email);
+  gratis in locale, ma per riceverli 24/7 serve un server. Mai inviare risposte ai clienti senza il suo ok.
 - Skill OpenSEO (`seo-audit`, `keyword-research`, `local-seo`, …): richiedono il collegamento
   a OpenSEO e i dati sono a pagamento; senza collegamento aiuta con la SEO usando lettura del
   sito e ricerche web gratuite.
