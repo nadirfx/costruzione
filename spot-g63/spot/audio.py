@@ -160,108 +160,116 @@ def drone(length, f=41.2, gain=0.3):
     return s / 3 * fade * gain
 
 
-# ---------------- timeline ----------------
-# 0–4: gancio — faro che si accende, avviamento, carrellata indietro
-add(clank(1.8, 360, 1.0, seed=10), 0.25, 0.9)
-add(zap(0.3, 0.6), 0.25, 0.7)
-add(zap(0.15, 0.3), 0.44)
-start_len = 4.0
-rpm = np.full(int(start_len * SR), 750.0)
-tt = np.arange(len(rpm)) / SR
-rpm += 2600 * np.exp(-((tt - 0.75) / 0.22) ** 2)  # colpo di gas all'avviamento
-crank = (tt < 0.45) & (tt > 0.15)
-eng = engine(rpm, 0.55)
-eng[: int(0.5 * SR)] *= np.linspace(0, 1, int(0.5 * SR)) ** 2
-eng += crank * np.sin(2 * np.pi * 11 * tt) * 0.25 * onepole_lp(rng.standard_normal(len(tt)), 900)
-eng *= np.where(tt > 2.2, np.exp(-(tt - 2.2) * 0.9), 1)
-add(eng, 0.5, 0.8)
-add(boom(3.0, 120, 32, 1.0), 1.0, 1.1)
-add(whoosh(1.1, 0.5, 0.25), 0.95)
+def main(out):
+    # ---------------- timeline ----------------
+    # 0–4: gancio — faro che si accende, avviamento, carrellata indietro
+    add(clank(1.8, 360, 1.0, seed=10), 0.25, 0.9)
+    add(zap(0.3, 0.6), 0.25, 0.7)
+    add(zap(0.15, 0.3), 0.44)
+    start_len = 4.0
+    rpm = np.full(int(start_len * SR), 750.0)
+    tt = np.arange(len(rpm)) / SR
+    rpm += 2600 * np.exp(-((tt - 0.75) / 0.22) ** 2)  # colpo di gas all'avviamento
+    crank = (tt < 0.45) & (tt > 0.15)
+    eng = engine(rpm, 0.55)
+    eng[: int(0.5 * SR)] *= np.linspace(0, 1, int(0.5 * SR)) ** 2
+    eng += crank * np.sin(2 * np.pi * 11 * tt) * 0.25 * onepole_lp(rng.standard_normal(len(tt)), 900)
+    eng *= np.where(tt > 2.2, np.exp(-(tt - 2.2) * 0.9), 1)
+    add(eng, 0.5, 0.8)
+    add(boom(3.0, 120, 32, 1.0), 1.0, 1.1)
+    add(whoosh(1.1, 0.5, 0.25), 0.95)
 
-# 1–12: tappeto di bassi
-add(drone(10.8, 41.2, 0.32), 1.0)
+    # 1–12: tappeto di bassi
+    add(drone(10.8, 41.2, 0.32), 1.0)
 
-# 4–10: montaggio — un colpo per pezzo, cricchetti al riempimento
-build = [(0.15, 0.9), (0.5, 1.2), (0.75, 1.45), (1.25, 2.0), (1.8, 2.55), (2.4, 3.0), (2.5, 3.2), (3.1, 3.8)]
-for k, (w, f) in enumerate(build):
-    pan = [-0.5, 0.4, -0.3, 0.5, -0.4, 0.3, -0.2, 0.2][k]
-    add(clank(1.4, 300 + 70 * (k % 4), 0.55, seed=20 + k), 4 + w, 1.0, pan)
-    add(ratchet(5 + k % 3, 16, 0.35, seed=40 + k), 4 + f, 1.0, -pan)
-add(zap(0.35, 0.6), 4 + 4.2)
-add(boom(2.0, 90, 38, 0.6), 4 + 4.2)
+    # 4–10: montaggio — un colpo per pezzo, cricchetti al riempimento
+    build = [(0.15, 0.9), (0.5, 1.2), (0.75, 1.45), (1.25, 2.0), (1.8, 2.55), (2.4, 3.0), (2.5, 3.2), (3.1, 3.8)]
+    for k, (w, f) in enumerate(build):
+        pan = [-0.5, 0.4, -0.3, 0.5, -0.4, 0.3, -0.2, 0.2][k]
+        add(clank(1.4, 300 + 70 * (k % 4), 0.55, seed=20 + k), 4 + w, 1.0, pan)
+        add(ratchet(5 + k % 3, 16, 0.35, seed=40 + k), 4 + f, 1.0, -pan)
+    add(zap(0.35, 0.6), 4 + 4.2)
+    add(boom(2.0, 90, 38, 0.6), 4 + 4.2)
 
-# 10–12: ruota che gira, riser verso l'HUD
-n = int(2.0 * SR)
-x = np.linspace(0, 1, n)
-whine = np.sin(2 * np.pi * np.cumsum(180 + 900 * x ** 2) / SR) * x ** 1.5 * 0.18
-add(whine, 10.0)
-add(riser(2.0, 200, 7000, 0.45), 10.0)
+    # 10–12: ruota che gira, riser verso l'HUD
+    n = int(2.0 * SR)
+    x = np.linspace(0, 1, n)
+    whine = np.sin(2 * np.pi * np.cumsum(180 + 900 * x ** 2) / SR) * x ** 1.5 * 0.18
+    add(whine, 10.0)
+    add(riser(2.0, 200, 7000, 0.45), 10.0)
 
-# 12–20: HUD
-add(zap(0.25, 0.35), 12.05)
-for k, g in enumerate([0.9, 1.35, 1.8]):
-    add(ping(1100 + 220 * k, 0.6, 0.3), 12 + g, 1.0, [-0.6, 0, 0.6][k])
-    add(ratchet(10, 30, 0.12, seed=60 + k), 12 + g + 0.2, 1.0, [-0.6, 0, 0.6][k])
-add(drone(6.0, 55, 0.25), 12.0)
-add(riser(2.0, 300, 9000, 0.55), 15.6)
-add(boom(3.0, 140, 30, 1.1), 17.6)
-add(whoosh(1.4, 0.6, 0.1), 17.6)
-add(ping(880, 2.5, 0.18), 17.75)
+    # 12–20: HUD
+    add(zap(0.25, 0.35), 12.05)
+    for k, g in enumerate([0.9, 1.35, 1.8]):
+        add(ping(1100 + 220 * k, 0.6, 0.3), 12 + g, 1.0, [-0.6, 0, 0.6][k])
+        add(ratchet(10, 30, 0.12, seed=60 + k), 12 + g + 0.2, 1.0, [-0.6, 0, 0.6][k])
+    add(drone(6.0, 55, 0.25), 12.0)
+    add(riser(2.0, 300, 9000, 0.55), 15.6)
+    add(boom(3.0, 140, 30, 1.1), 17.6)
+    add(whoosh(1.4, 0.6, 0.1), 17.6)
+    add(ping(880, 2.5, 0.18), 17.75)
 
-# 20–24: l'auto esce dal fumo (0,5 s di silenzio, poi fari e accelerata)
-add(clank(0.9, 220, 0.5, seed=80), 20.55)
-add(zap(0.3, 0.5), 20.55)
-emerge_len = 4.0
-tt = np.arange(int(emerge_len * SR)) / SR
-rpm = 900 + 5200 * np.clip((tt - 0.1) / 3.2, 0, 1) ** 1.6
-rpm += 700 * np.sin(tt * 3) * (tt < 1)
-eng2 = engine(rpm, 0.75, seed=5) * np.clip(tt / 0.3, 0, 1)
-add(eng2, 20.6, 0.9)
-add(riser(1.0, 500, 9000, 0.4), 23.0)
-add(whoosh(1.6, 0.8, 0.6), 23.2)
+    # 20–24: l'auto esce dal fumo (0,5 s di silenzio, poi fari e accelerata)
+    add(clank(0.9, 220, 0.5, seed=80), 20.55)
+    add(zap(0.3, 0.5), 20.55)
+    emerge_len = 4.0
+    tt = np.arange(int(emerge_len * SR)) / SR
+    rpm = 900 + 5200 * np.clip((tt - 0.1) / 3.2, 0, 1) ** 1.6
+    rpm += 700 * np.sin(tt * 3) * (tt < 1)
+    eng2 = engine(rpm, 0.75, seed=5) * np.clip(tt / 0.3, 0, 1)
+    add(eng2, 20.6, 0.9)
+    add(riser(1.0, 500, 9000, 0.4), 23.0)
+    add(whoosh(1.6, 0.8, 0.6), 23.2)
 
-# 24–27: tunnel ad alta velocità
-tun_len = 3.0
-tt = np.arange(int(tun_len * SR)) / SR
-rpm = 6200 - 600 * np.sin(tt * 2.1)
-eng3 = engine(rpm, 0.8, seed=9)
-eng3[: int(0.1 * SR)] *= np.linspace(0, 1, int(0.1 * SR))
-add(eng3, 24.0, 0.85)
-wind = onepole_lp(rng.standard_normal(len(tt)), 1800) * 0.25
-add(wind, 24.0)
-for k in range(6):
-    add(whoosh(0.7, 0.35, 0.3), 24.1 + k * 0.48, 1.0, 0.6 if k % 2 else -0.6)
+    # 24–27: tunnel ad alta velocità
+    tun_len = 3.0
+    tt = np.arange(int(tun_len * SR)) / SR
+    rpm = 6200 - 600 * np.sin(tt * 2.1)
+    eng3 = engine(rpm, 0.8, seed=9)
+    eng3[: int(0.1 * SR)] *= np.linspace(0, 1, int(0.1 * SR))
+    add(eng3, 24.0, 0.85)
+    wind = onepole_lp(rng.standard_normal(len(tt)), 1800) * 0.25
+    add(wind, 24.0)
+    for k in range(6):
+        add(whoosh(0.7, 0.35, 0.3), 24.1 + k * 0.48, 1.0, 0.6 if k % 2 else -0.6)
 
-# 27–30: finale — motore che si spegne, ultimo colpo, coda
-tt = np.arange(int(1.6 * SR)) / SR
-rpm = 6000 * np.exp(-tt * 4) + 700
-eng4 = engine(rpm, 0.6, seed=11) * np.exp(-tt * 2.2)
-add(eng4, 27.0, 0.8)
-add(boom(3.0, 100, 28, 1.0), 27.3)
-add(ping(660, 2.6, 0.12), 27.9)
-add(ping(990, 2.6, 0.08), 27.95)
+    # 27–30: finale — motore che si spegne, ultimo colpo, coda
+    tt = np.arange(int(1.6 * SR)) / SR
+    rpm = 6000 * np.exp(-tt * 4) + 700
+    eng4 = engine(rpm, 0.6, seed=11) * np.exp(-tt * 2.2)
+    add(eng4, 27.0, 0.8)
+    add(boom(3.0, 100, 28, 1.0), 27.3)
+    add(ping(660, 2.6, 0.12), 27.9)
+    add(ping(990, 2.6, 0.08), 27.95)
 
-# ---------------- mix ----------------
-mix = np.stack([L, R], axis=1)
-# riverbero semplice: alcune eco filtrate
-rev = np.zeros_like(mix)
-for d, g in [(0.031, 0.35), (0.047, 0.3), (0.071, 0.25), (0.113, 0.2), (0.173, 0.15), (0.241, 0.1)]:
-    k = idx(d)
-    rev[k:, 0] += mix[:-k, 1] * g
-    rev[k:, 1] += mix[:-k, 0] * g
-mix = mix + 0.35 * rev
-peak = np.max(np.abs(mix))
-mix = np.tanh(mix / peak * 1.4) / np.tanh(1.4) * 0.92
-fade = np.ones(N)
-fo = idx(1.2)
-fade[-fo:] = np.linspace(1, 0, fo)
-mix *= fade[:, None]
+    # ---------------- mix ----------------
+    write(out)
 
-out = sys.argv[1] if len(sys.argv) > 1 else "audio.wav"
-pcm = (mix * 32767).astype(np.int16)
-with wave.open(out, "wb") as w:
-    w.setnchannels(2)
-    w.setsampwidth(2)
-    w.setframerate(SR)
-    w.writeframes(pcm.tobytes())
-print("scritto", out)
+
+def write(out):
+    mix = np.stack([L, R], axis=1)
+    # riverbero semplice: alcune eco filtrate
+    rev = np.zeros_like(mix)
+    for d, g in [(0.031, 0.35), (0.047, 0.3), (0.071, 0.25), (0.113, 0.2), (0.173, 0.15), (0.241, 0.1)]:
+        k = idx(d)
+        rev[k:, 0] += mix[:-k, 1] * g
+        rev[k:, 1] += mix[:-k, 0] * g
+    mix = mix + 0.35 * rev
+    peak = np.max(np.abs(mix))
+    mix = np.tanh(mix / peak * 1.4) / np.tanh(1.4) * 0.92
+    fade = np.ones(N)
+    fo = idx(1.2)
+    fade[-fo:] = np.linspace(1, 0, fo)
+    mix *= fade[:, None]
+
+    pcm = (mix * 32767).astype(np.int16)
+    with wave.open(out, "wb") as w:
+        w.setnchannels(2)
+        w.setsampwidth(2)
+        w.setframerate(SR)
+        w.writeframes(pcm.tobytes())
+    print("scritto", out)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1] if len(sys.argv) > 1 else "audio.wav")
