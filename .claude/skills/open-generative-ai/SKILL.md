@@ -12,6 +12,13 @@ https://github.com/Anil-matcha/Open-Generative-AI (MIT license).
 It is NOT bundled in this repo: clone it fresh each time, outside the project, so
 the `costruzione` repo stays light.
 
+## Free first (Nadir's Mac: M5, 16 GB)
+
+Prefer the **desktop app with local models** (free, no API key): Settings → Local Models →
+install sd.cpp → download Z-Image Turbo (or Realistic Vision / Dreamshaper for lighter runs) →
+toggle ⚡ Local in Image Studio. Local video (Wan2GP) does NOT work on Apple Silicon.
+Only use MuAPI cloud models after the user agrees to pay.
+
 ## Requirements
 
 - Node.js 18+ and npm
