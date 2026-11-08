@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>G63 HUD</title>
+<style>
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  canvas { display: block; width: 1920px; height: 1080px; }
+</style>
+</head>
+<body>
+<canvas id="c" width="3840" height="2160"></canvas>
+<script>
+// Animazione deterministica: render(t) disegna il fotogramma al tempo t (secondi).
+// Aperta nel browser senza parametri, va in loop in tempo reale.
+const W = 1920, H = 1080, DUR = 8;
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+ctx.scale(2, 2);
+
+const CYAN = '#5ff3ff';
+const CYAN_DIM = 'rgba(95,243,255,0.25)';
+const WHITE = '#e9fbff';
+
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const easeOut = x => 1 - Math.pow(1 - x, 3);
+const easeInOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const easeOutExpo = x => x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
+
+// grana pellicola: tile di rumore pre-generato, spostato a ogni fotogramma
+const grain = document.createElement('canvas');
+grain.width = grain.height = 512;
+(() => {
+  const g = grain.getContext('2d'), img = g.createImageData(512, 512);
+  let s = 1234567;
+  const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = rnd() * 255;
+    img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+})();
+
+function glow(blur, color = CYAN) { ctx.shadowBlur = blur; ctx.shadowColor = color; }
+function noGlow() { ctx.shadowBlur = 0; }
+
+function gauge(cx, cy, r, t, start, value, decimals, unit, label, maxFrac) {
+  const p = seg(t, start, start + 1.6);
+  if (p <= 0) return;
+  const appear = easeOut(seg(t, start, start + 0.5));
+  const fill = easeOutExpo(seg(t, start + 0.2, start + 1.6)) * maxFrac;
+  const spin = t * 0.35;
+  ctx.save();
+  ctx.globalAlpha = appear;
+  ctx.translate(cx, cy);
+  ctx.scale(0.85 + 0.15 * appear, 0.85 + 0.15 * appear);
+
+  // anello di fondo
+  ctx.lineWidth = 2; ctx.strokeStyle = CYAN_DIM;
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+
+  // tacche rotanti esterne
+  ctx.save(); ctx.rotate(spin);
+  for (let i = 0; i < 72; i++) {
+    const a = i / 72 * Math.PI * 2, long = i % 6 === 0;
+    ctx.strokeStyle = long ? 'rgba(95,243,255,.7)' : 'rgba(95,243,255,.25)';
+    ctx.lineWidth = long ? 2 : 1;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * (r + 18), Math.sin(a) * (r + 18));
+    ctx.lineTo(Math.cos(a) * (r + (long ? 34 : 26)), Math.sin(a) * (r + (long ? 34 : 26)));
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // arco che si riempie
+  glow(24); ctx.strokeStyle = CYAN; ctx.lineWidth = 7; ctx.lineCap = 'round';
+  const a0 = -Math.PI / 2;
+  ctx.beginPath(); ctx.arc(0, 0, r, a0, a0 + fill * Math.PI * 2); ctx.stroke();
+  // punta luminosa
+  const tipA = a0 + fill * Math.PI * 2;
+  ctx.fillStyle = WHITE; glow(30);
+  ctx.beginPath(); ctx.arc(Math.cos(tipA) * r, Math.sin(tipA) * r, 6, 0, Math.PI * 2); ctx.fill();
+  noGlow();
+
+  // anello interno controrotante, tratteggiato
+  ctx.save(); ctx.rotate(-spin * 1.6);
+  ctx.setLineDash([3, 14]); ctx.strokeStyle = 'rgba(95,243,255,.45)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(0, 0, r - 26, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore(); ctx.setLineDash([]);
+
+  // numero
+  const shown = (value * easeOutExpo(seg(t, start + 0.2, start + 1.6)))
+    .toFixed(decimals).replace('.', ',');
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  glow(18); ctx.fillStyle = WHITE;
+  ctx.font = '200 92px "Inter Display", Inter, sans-serif';
+  ctx.fillText(shown, 0, 22);
+  noGlow();
+  ctx.fillStyle = CYAN;
+  ctx.font = '500 22px "JetBrains Mono", monospace';
+  ctx.fillText(unit, 0, 62);
+  ctx.fillStyle = 'rgba(233,251,255,.55)';
+  ctx.font = '400 17px "JetBrains Mono", monospace';
+  ctx.letterSpacing = '6px';
+  ctx.fillText(label, 0, r + 82);
+  ctx.letterSpacing = '0px';
+  ctx.restore();
+}
+
+function streaks(t) {
+  // scie luminose in basso, come luci di un tunnel in movimento
+  const p = seg(t, 1.0, 5.6);
+  if (p <= 0 || p >= 1) return;
+  ctx.save();
+  for (let i = 0; i < 6; i++) {
+    const speed = 900 + i * 260;
+    const x = ((t * speed + i * 517) % (W + 900)) - 450;
+    const y = 930 + (i % 3) * 22;
+    const len = 220 + (i % 2) * 180;
+    const g = ctx.createLinearGradient(x, 0, x + len, 0);
+    g.addColorStop(0, 'rgba(95,243,255,0)');
+    g.addColorStop(1, 'rgba(95,243,255,.9)');
+    ctx.strokeStyle = g; ctx.lineWidth = 4 - (i % 3); ctx.lineCap = 'round';
+    glow(20);
+    ctx.globalAlpha = Math.sin(p * Math.PI);
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.stroke();
+  }
+  noGlow(); ctx.restore();
+}
+
+function frameUI(t) {
+  // angoli e dati tecnici ai bordi
+  const a = easeOut(seg(t, 0.4, 1.2)) * (1 - seg(t, 7.3, 7.9));
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = CYAN; ctx.lineWidth = 2;
+  const m = 70, L = 46;
+  [[m, m, 1, 1], [W - m, m, -1, 1], [m, H - m, 1, -1], [W - m, H - m, -1, -1]].forEach(([x, y, sx, sy]) => {
+    ctx.beginPath(); ctx.moveTo(x, y + L * sy); ctx.lineTo(x, y); ctx.lineTo(x + L * sx, y); ctx.stroke();
+  });
+  ctx.fillStyle = 'rgba(233,251,255,.6)';
+  ctx.font = '400 15px "JetBrains Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('G 63 // 4.0 V8 BITURBO', m + 14, m + 30);
+  ctx.textAlign = 'right';
+  const tc = t.toFixed(2).padStart(5, '0');
+  ctx.fillText('REC ' + tc, W - m - 14, m + 30);
+  ctx.fillStyle = CYAN; glow(12);
+  if (Math.floor(t * 2) % 2 === 0) { ctx.beginPath(); ctx.arc(W - m - 140, m + 25, 5, 0, Math.PI * 2); ctx.fill(); }
+  noGlow(); ctx.restore();
+}
+
+function scanline(t) {
+  // apertura: una linea che attraversa lo schermo e si accende
+  const p = seg(t, 0.05, 0.75);
+  if (p <= 0 || t > 1.4) return;
+  const w = W * easeInOut(p);
+  const fade = 1 - seg(t, 0.9, 1.4);
+  ctx.save(); ctx.globalAlpha = fade;
+  glow(40); ctx.fillStyle = CYAN;
+  ctx.fillRect(W / 2 - w / 2, H / 2 - 1, w, 2);
+  noGlow(); ctx.restore();
+}
+
+function finale(t) {
+  // gli indicatori collassano al centro, lampo, titolo
+  const flash = seg(t, 5.55, 5.75) * (1 - seg(t, 5.75, 6.3));
+  if (flash > 0) {
+    // riflesso anamorfico: linea orizzontale sottile + nucleo luminoso
+    ctx.save();
+    const cy = H / 2 - 20;
+    const lg = ctx.createLinearGradient(0, 0, W, 0);
+    lg.addColorStop(0, 'rgba(95,243,255,0)');
+    lg.addColorStop(0.5, `rgba(220,252,255,${flash})`);
+    lg.addColorStop(1, 'rgba(95,243,255,0)');
+    glow(40); ctx.fillStyle = lg;
+    ctx.fillRect(0, cy - 3, W, 6);
+    ctx.fillStyle = lg; ctx.globalAlpha = 0.35 * flash;
+    ctx.fillRect(0, cy - 26, W, 52);
+    ctx.globalAlpha = 1; noGlow();
+    const core = ctx.createRadialGradient(W / 2, cy, 0, W / 2, cy, 220);
+    core.addColorStop(0, `rgba(255,255,255,${flash})`);
+    core.addColorStop(0.15, `rgba(180,248,255,${0.6 * flash})`);
+    core.addColorStop(1, 'rgba(95,243,255,0)');
+    ctx.fillStyle = core; ctx.fillRect(W / 2 - 220, cy - 220, 440, 440);
+    noGlow(); ctx.restore();
+  }
+  const p = seg(t, 5.7, 7.0);
+  if (p <= 0) return;
+  const out = 1 - seg(t, 7.4, 7.95);
+  ctx.save();
+  ctx.globalAlpha = easeOut(p) * out;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = WHITE; glow(30);
+  ctx.font = '100 230px "Inter Display", Inter, sans-serif';
+  ctx.letterSpacing = (60 - 40 * easeOut(p)) + 'px';
+  ctx.fillText('G 63', W / 2 + 10, H / 2 - 30);
+  noGlow();
+  ctx.letterSpacing = '14px';
+  ctx.fillStyle = CYAN;
+  ctx.font = '400 26px "JetBrains Mono", monospace';
+  ctx.globalAlpha = easeOut(seg(t, 6.2, 7.0)) * out;
+  ctx.fillText('PROJECT NERO', W / 2 + 7, H / 2 + 120);
+  // linea sotto il titolo
+  const lw = 520 * easeInOut(seg(t, 6.0, 6.9));
+  glow(16); ctx.fillRect(W / 2 - lw / 2, H / 2 + 72, lw, 2); noGlow();
+  ctx.letterSpacing = '0px';
+  ctx.restore();
+}
+
+function render(t) {
+  ctx.save();
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+
+  // leggera atmosfera: alone ciano dall'alto
+  const haze = ctx.createRadialGradient(W / 2, -200, 0, W / 2, -200, 1300);
+  haze.addColorStop(0, `rgba(40,120,140,${0.22 * seg(t, 0.3, 2)})`);
+  haze.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = haze; ctx.fillRect(0, 0, W, H);
+
+  scanline(t);
+  frameUI(t);
+  streaks(t);
+
+  // indicatori: entrano sfalsati, poi collassano verso il centro
+  const col = easeInOut(seg(t, 5.0, 5.65));
+  const gaugesOut = 1 - seg(t, 5.45, 5.65);
+  if (gaugesOut > 0) {
+    ctx.save(); ctx.globalAlpha = gaugesOut;
+    const xs = [W / 2 - 560, W / 2, W / 2 + 560].map(x => x + (W / 2 - x) * col);
+    const sc = 1 - 0.6 * col;
+    [[xs[0], 0.9, 585, 0, 'CV', 'POTENZA', 0.82],
+     [xs[1], 1.35, 4.3, 1, 'SECONDI', '0–100 KM/H', 0.6],
+     [xs[2], 1.8, 850, 0, 'NM', 'COPPIA', 0.9]].forEach(([x, st, v, d, u, l, f]) => {
+      ctx.save(); ctx.translate(x, H / 2 - 20); ctx.scale(sc, sc);
+      gauge(0, 0, 150, t, st, v, d, u, l, f);
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+
+  finale(t);
+
+  // vignettatura
+  const v = ctx.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 1.05);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.75)');
+  ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+
+  // grana
+  ctx.globalAlpha = 0.06; ctx.globalCompositeOperation = 'overlay';
+  const f = Math.floor(t * 30);
+  const ox = (f * 131) % 512, oy = (f * 293) % 512;
+  ctx.fillStyle = ctx.createPattern(grain, 'repeat');
+  ctx.translate(-ox, -oy); ctx.fillRect(0, 0, W + 512, H + 512);
+  ctx.restore();
+}
+
+window.render = render;
+window.DUR = DUR;
+if (!new URLSearchParams(location.search).has('capture')) {
+  const t0 = performance.now();
+  const loop = () => { render(((performance.now() - t0) / 1000) % DUR); requestAnimationFrame(loop); };
+  document.fonts.ready.then(loop);
+}
+</script>
+</body>
+</html>
