@@ -51,6 +51,13 @@ else
   xattr -cr "/Applications/Open Generative AI.app"
 fi
 
+passo "Extra: OpenWhispr (dettatura vocale gratis)"
+if [[ -d "/Applications/OpenWhispr.app" ]]; then
+  echo "Già installato."
+else
+  brew install --cask openwhispr || echo "OpenWhispr non installato: scaricalo da github.com/OpenWhispr/openwhispr/releases"
+fi
+
 passo "5/5 Comando 'jarvis' nel terminale"
 LINE="alias jarvis='cd \"$REPO_DIR\" && claude'"
 if grep -q "alias jarvis=" "$HOME/.zshrc" 2>/dev/null; then
@@ -69,4 +76,6 @@ Fatto! Ultimi passi (una volta sola):
      installa il motore sd.cpp e scarica "Z-Image Turbo" (~8 GB).
      In Image Studio attiva il pulsante ⚡ Local: immagini gratis.
   3. Apri "VoiceStudio": scarica un modello voce quando te lo chiede.
+  4. Apri "OpenWhispr": scegli un modello locale (es. Parakeet o Whisper) per dettare gratis.
+  5. OpenProject (opzionale): chiedi a Jarvis "installa OpenProject" (serve Docker Desktop).
 FINE

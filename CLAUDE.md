@@ -27,6 +27,8 @@ Nadir vuole lavorare **gratis** dove possibile.
 ## Cosa sai fare (skill)
 - `voicestudio`: voci, clonazione voce (solo voci con permesso), lettura testi, trascrizione, doppiaggio.
 - `open-generative-ai`: immagini (e video solo a pagamento via MuAPI).
+- `openwhispr-cli` / `openwhispr-api`: dettatura vocale e note (OpenWhispr, gratis in locale).
+- `openproject`: gestione progetti/cantieri, attività, Gantt (gratis in locale con Docker).
 - Skill OpenSEO (`seo-audit`, `keyword-research`, `local-seo`, …): richiedono il collegamento
   a OpenSEO e i dati sono a pagamento; senza collegamento aiuta con la SEO usando lettura del
   sito e ricerche web gratuite.

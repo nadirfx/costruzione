@@ -13,6 +13,6 @@ bash ~/costruzione/jarvis/installa-jarvis.sh
 
 3. Chiudi e riapri il Terminale e scrivi `jarvis`.
 
-Cosa installa: Homebrew, Claude Code, VoiceStudio, Open Generative AI, e il comando `jarvis`.
+Cosa installa: Homebrew, Claude Code, VoiceStudio, Open Generative AI, OpenWhispr, e il comando `jarvis`.
 Tutto gratis. I modelli (diversi GB) si scaricano dentro le app quando li scegli.
 Personalità e regole di Jarvis: `CLAUDE.md` nella cartella principale.
