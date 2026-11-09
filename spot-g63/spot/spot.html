@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>G63 Project Nero</title>
+<style>
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  canvas { display: block; width: 1920px; height: 1080px; }
+</style>
+</head>
+<body>
+<canvas id="c" width="3840" height="2160"></canvas>
+<script>
+// Spot "PROJECT NERO" — 30 s. render(t) disegna il fotogramma al tempo t.
+// 12–20 s è lo slot dell'HUD (video separato): qui resta nero.
+const W = 1920, H = 1080, DUR = 30;
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+ctx.setTransform(2, 0, 0, 2, 0, 0);
+
+const CYAN = '#5ff3ff', WHITE = '#e9fbff';
+const BODY = '#0c0e10', BODY2 = '#111417', GLASS = '#06080a', TIRE = '#050606';
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const easeOut = x => 1 - Math.pow(1 - x, 3);
+const easeIn = x => x * x * x;
+const easeInOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const easeOutExpo = x => x >= 1 ? 1 : 1 - Math.pow(2, -10 * x);
+const lerp = (a, b, x) => a + (b - a) * x;
+const hash = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+
+function glow(b, c = CYAN) { ctx.shadowBlur = b * 2; ctx.shadowColor = c; }
+function noGlow() { ctx.shadowBlur = 0; }
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function circle(x, y, r) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); }
+
+// ---------- grana ----------
+const grain = document.createElement('canvas');
+grain.width = grain.height = 512;
+(() => {
+  const g = grain.getContext('2d'), img = g.createImageData(512, 512);
+  let s = 987654;
+  const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = rnd() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+})();
+
+// ---------- atmosfera ----------
+function spotlight(x, topW, botW, yTop, yBot, a, color = '170,225,235') {
+  if (a <= 0) return;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createLinearGradient(0, yTop, 0, yBot);
+  g.addColorStop(0, `rgba(${color},${0.32 * a})`);
+  g.addColorStop(0.6, `rgba(${color},${0.10 * a})`);
+  g.addColorStop(1, `rgba(${color},${0.02 * a})`);
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(x - topW / 2, yTop); ctx.lineTo(x + topW / 2, yTop);
+  ctx.lineTo(x + botW / 2, yBot); ctx.lineTo(x - botW / 2, yBot); ctx.closePath();
+  ctx.fill();
+  // pozza di luce a terra
+  const p = ctx.createRadialGradient(x, yBot, 0, x, yBot, botW * 0.7);
+  p.addColorStop(0, `rgba(${color},${0.18 * a})`); p.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = p;
+  ctx.save(); ctx.translate(x, yBot); ctx.scale(1, 0.18); ctx.translate(-x, -yBot);
+  ctx.fillRect(x - botW, yBot - botW, botW * 2, botW * 2); ctx.restore();
+  ctx.restore();
+}
+
+function rain(t, x, topW, botW, yTop, yBot, a, n = 160) {
+  if (a <= 0) return;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x - topW / 2, yTop); ctx.lineTo(x + topW / 2, yTop);
+  ctx.lineTo(x + botW / 2, yBot); ctx.lineTo(x - botW / 2, yBot); ctx.closePath();
+  ctx.clip();
+  ctx.strokeStyle = 'rgba(210,240,250,0.35)'; ctx.lineWidth = 1.2; ctx.globalAlpha = a;
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const sp = 900 + hash(i) * 700, len = 14 + hash(i + 7) * 26;
+    const xx = x - botW / 2 + hash(i + 3) * botW;
+    const yy = ((hash(i + 11) * (yBot - yTop + 200) + t * sp) % (yBot - yTop + 200)) + yTop - 100;
+    ctx.moveTo(xx, yy); ctx.lineTo(xx - len * 0.08, yy + len);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function smoke(t, cx, cy, spreadX, spreadY, a, n = 14, seed = 0, rise = 18, color = '150,175,185') {
+  if (a <= 0) return;
+  ctx.save();
+  for (let i = 0; i < n; i++) {
+    const k = i + seed * 100;
+    const x = cx + (hash(k) - 0.5) * spreadX + Math.sin(t * 0.4 + k) * 30;
+    const y = cy + (hash(k + 1) - 0.5) * spreadY - t * rise * (0.5 + hash(k + 2));
+    const r = 140 + hash(k + 3) * 220;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(${color},${0.07 * a})`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  ctx.restore();
+}
+
+// ---------- G 63 vista frontale (origine: centro carrozzeria, terra a y=300) ----------
+function drawFront(L, rim = 1, opts = {}) {
+  const edge = a => `rgba(205,240,250,${a * rim})`;
+  // ombra a terra
+  ctx.save();
+  const sh = ctx.createRadialGradient(0, 300, 0, 0, 300, 480);
+  sh.addColorStop(0, 'rgba(0,0,0,.9)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sh; ctx.translate(0, 300); ctx.scale(1, .08); ctx.fillRect(-480, -480, 960, 960);
+  ctx.restore();
+  // gomme
+  [-1, 1].forEach(s => {
+    rr(s > 0 ? 250 : -350, 165, 100, 135, 20); ctx.fillStyle = TIRE; ctx.fill();
+    ctx.strokeStyle = edge(.12); ctx.lineWidth = 1.5; ctx.stroke();
+  });
+  // parafanghi
+  [-1, 1].forEach(s => { rr(s > 0 ? 232 : -378, 105, 146, 80, 16); ctx.fillStyle = BODY2; ctx.fill(); });
+  // corpo inferiore
+  rr(-360, -70, 720, 245, 14); ctx.fillStyle = BODY; ctx.fill();
+  // paraurti
+  rr(-378, 150, 756, 58, 12); ctx.fillStyle = '#0a0b0c'; ctx.fill();
+  ctx.strokeStyle = edge(.25); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(-370, 152); ctx.lineTo(370, 152); ctx.stroke();
+  rr(-190, 204, 380, 18, 6); ctx.fillStyle = '#16191c'; ctx.fill();
+  // griglia a barre verticali
+  rr(-150, -20, 300, 152, 10); ctx.fillStyle = '#040505'; ctx.fill();
+  ctx.lineWidth = 3;
+  for (let i = 0; i < 15; i++) {
+    const x = -136 + i * 19.4;
+    ctx.strokeStyle = `rgba(185,225,235,${(0.10 + 0.22 * rim) * (0.6 + 0.4 * Math.sin(i * 0.5 + 1))})`;
+    ctx.beginPath(); ctx.moveTo(x, -8); ctx.lineTo(x, 120); ctx.stroke();
+  }
+  rr(-150, -20, 300, 152, 10); ctx.strokeStyle = edge(.35); ctx.lineWidth = 2; ctx.stroke();
+  // cofano
+  rr(-348, -92, 696, 32, 10); ctx.fillStyle = BODY2; ctx.fill();
+  ctx.strokeStyle = edge(.55); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(-340, -92); ctx.lineTo(340, -92); ctx.stroke();
+  // frecce sui parafanghi
+  [-1, 1].forEach(s => { rr(s > 0 ? 268 : -332, -112, 64, 20, 7); ctx.fillStyle = '#15181b'; ctx.fill();
+    ctx.strokeStyle = edge(.5); ctx.lineWidth = 1.5; ctx.stroke(); });
+  // parabrezza
+  ctx.beginPath(); ctx.moveTo(-305, -92); ctx.lineTo(-292, -290); ctx.lineTo(292, -290); ctx.lineTo(305, -92); ctx.closePath();
+  ctx.fillStyle = BODY; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-278, -104); ctx.lineTo(-268, -272); ctx.lineTo(268, -272); ctx.lineTo(278, -104); ctx.closePath();
+  const gl = ctx.createLinearGradient(-280, -272, 280, -104);
+  gl.addColorStop(0, '#0b1014'); gl.addColorStop(0.42, '#06090b'); gl.addColorStop(0.47, `rgba(120,170,185,${0.08 * rim})`);
+  gl.addColorStop(0.52, '#06090b'); gl.addColorStop(1, '#030405');
+  ctx.fillStyle = gl; ctx.fill();
+  // tetto
+  rr(-308, -304, 616, 18, 6); ctx.fillStyle = BODY2; ctx.fill();
+  ctx.strokeStyle = edge(.7); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(-302, -304); ctx.lineTo(302, -304); ctx.stroke();
+  // specchietti
+  [-1, 1].forEach(s => { rr(s > 0 ? 305 : -405, -160, 100, 56, 14); ctx.fillStyle = BODY2; ctx.fill();
+    ctx.strokeStyle = edge(.45); ctx.lineWidth = 1.5; ctx.stroke(); });
+  // fari tondi
+  [-1, 1].forEach(s => {
+    const cx = s * 250, cy = 30;
+    circle(cx, cy, 74); ctx.fillStyle = '#0d0f11'; ctx.fill();
+    ctx.strokeStyle = edge(.5); ctx.lineWidth = 2; ctx.stroke();
+    const lg = ctx.createRadialGradient(cx - 15, cy - 15, 5, cx, cy, 62);
+    lg.addColorStop(0, `rgba(230,250,255,${0.15 + 0.6 * L})`); lg.addColorStop(1, '#07090a');
+    circle(cx, cy, 62); ctx.fillStyle = lg; ctx.fill();
+    if (L > 0) { glow(18 * L, 'rgba(160,240,255,1)'); }
+    ctx.strokeStyle = `rgba(225,252,255,${0.15 + 0.85 * L})`; ctx.lineWidth = 7;
+    circle(cx, cy, 50); ctx.stroke();
+    circle(cx, cy, 17); ctx.fillStyle = `rgba(235,253,255,${0.1 + 0.9 * L})`; ctx.fill();
+    noGlow();
+  });
+  // alone dei fari
+  if (L > 0) {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    [-1, 1].forEach(s => {
+      const g = ctx.createRadialGradient(s * 250, 30, 0, s * 250, 30, 300 * (opts.halo || 1));
+      g.addColorStop(0, `rgba(170,240,255,${0.35 * L})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.fillRect(s * 250 - 600, -570, 1200, 1200);
+    });
+    ctx.restore();
+  }
+}
+
+// ---------- G 63 vista posteriore ----------
+function drawRear(L, rim = 1) {
+  const edge = a => `rgba(205,240,250,${a * rim})`;
+  ctx.save();
+  const sh = ctx.createRadialGradient(0, 300, 0, 0, 300, 480);
+  sh.addColorStop(0, 'rgba(0,0,0,.9)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sh; ctx.translate(0, 300); ctx.scale(1, .08); ctx.fillRect(-480, -480, 960, 960);
+  ctx.restore();
+  [-1, 1].forEach(s => { rr(s > 0 ? 250 : -350, 165, 100, 135, 20); ctx.fillStyle = TIRE; ctx.fill(); });
+  rr(-362, -80, 724, 255, 14); ctx.fillStyle = BODY; ctx.fill();
+  rr(-378, 150, 756, 58, 12); ctx.fillStyle = '#0a0b0c'; ctx.fill();
+  // lunotto
+  rr(-290, -285, 580, 175, 10); ctx.fillStyle = GLASS; ctx.fill(); ctx.strokeStyle = edge(.3); ctx.lineWidth = 2; ctx.stroke();
+  rr(-312, -300, 624, 20, 6); ctx.fillStyle = BODY2; ctx.fill();
+  ctx.strokeStyle = edge(.7); ctx.beginPath(); ctx.moveTo(-305, -300); ctx.lineTo(305, -300); ctx.stroke();
+  // ruota di scorta
+  circle(0, 40, 168); ctx.fillStyle = TIRE; ctx.fill(); ctx.strokeStyle = edge(.35); ctx.lineWidth = 2; ctx.stroke();
+  circle(0, 40, 104); ctx.fillStyle = '#0e1113'; ctx.fill(); ctx.strokeStyle = edge(.5); ctx.stroke();
+  circle(0, 40, 92); ctx.strokeStyle = `rgba(95,243,255,${0.25 * rim})`; ctx.lineWidth = 2; ctx.stroke();
+  // luci posteriori
+  [-1, 1].forEach(s => {
+    rr(s > 0 ? 300 : -346, -70, 46, 130, 8); ctx.fillStyle = '#1a0405'; ctx.fill();
+    glow(22 * L, 'rgba(255,40,40,1)');
+    ctx.fillStyle = `rgba(255,${40 + 30 * L},${45 + 20 * L},${0.25 + 0.75 * L})`;
+    rr(s > 0 ? 308 : -338, -60, 30, 110, 6); ctx.fill(); noGlow();
+  });
+  if (L > 0) {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    [-1, 1].forEach(s => {
+      const g = ctx.createRadialGradient(s * 323, -5, 0, s * 323, -5, 380);
+      g.addColorStop(0, `rgba(255,40,40,${0.32 * L})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.fillRect(s * 323 - 400, -405, 800, 800);
+    });
+    ctx.restore();
+  }
+}
+
+// ---------- G 63 vista laterale (muso a destra, terra a y=250) ----------
+const SIDE = {
+  wheels: [[-335, 154], [335, 154]],
+  body: () => { const p = new Path2D();
+    p.moveTo(-546, -40); p.lineTo(546, -40); p.lineTo(556, 20); p.lineTo(552, 150); p.lineTo(447, 150);
+    p.arc(335, 150, 112, 0, Math.PI, true); p.lineTo(-223, 150);
+    p.arc(-335, 150, 112, 0, Math.PI, true); p.lineTo(-548, 150); p.closePath(); return p; },
+  cabin: () => { const p = new Path2D();
+    p.moveTo(-540, -38); p.lineTo(-534, -258); p.quadraticCurveTo(-532, -270, -515, -270);
+    p.lineTo(268, -270); p.lineTo(312, -52); p.lineTo(546, -44); p.lineTo(546, -38); p.closePath(); return p; },
+  windows: () => { const p = new Path2D();
+    p.roundRect(-508, -244, 250, 122, 8); p.roundRect(-226, -244, 236, 122, 8);
+    p.moveTo(44, -244); p.lineTo(254, -244); p.lineTo(279, -122); p.lineTo(44, -122); p.closePath(); return p; },
+  chassis: () => { const p = new Path2D(); p.roundRect(-500, 105, 1000, 24, 6); return p; },
+  spare: () => { const p = new Path2D(); p.moveTo(-546, -80); p.arc(-546, 30, 110, -Math.PI / 2, Math.PI / 2, true); p.closePath(); return p; },
+  details: () => { const p = new Path2D();
+    p.roundRect(-215, 150, 430, 12, 4);
+    p.roundRect(-215, 112, 50, 12, 5); p.roundRect(-215, 128, 50, 12, 5);
+    p.roundRect(266, -140, 44, 32, 8);
+    p.moveTo(-246, -262); p.lineTo(-246, 145); p.moveTo(28, -262); p.lineTo(28, 145); p.moveTo(306, -60); p.lineTo(306, 145);
+    p.moveTo(-200, -95); p.lineTo(-160, -95); p.moveTo(60, -95); p.lineTo(100, -95);
+    return p; },
+};
+const PATHS = { body: SIDE.body(), cabin: SIDE.cabin(), windows: SIDE.windows(), chassis: SIDE.chassis(), spare: SIDE.spare(), details: SIDE.details() };
+const PERIM = { body: 3300, cabin: 3200, windows: 2600, chassis: 2100, spare: 600, details: 3000, wheel: 610 };
+
+function drawWheel(cx, cy, rot, wire, fill, rim = 1, blur = 0) {
+  if (fill > 0) {
+    ctx.save(); ctx.globalAlpha = fill;
+    circle(cx, cy, 96); ctx.fillStyle = TIRE; ctx.fill();
+    circle(cx, cy, 64); ctx.fillStyle = '#0d1012'; ctx.fill();
+    // pinza freno
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(-0.6);
+    rr(-9, -58, 18, 22, 5); ctx.fillStyle = 'rgba(95,243,255,.55)'; glow(5); ctx.fill(); noGlow();
+    ctx.restore();
+    // razze
+    ctx.strokeStyle = `rgba(190,225,235,${(blur ? 0.18 : 0.55) * rim})`; ctx.lineWidth = blur ? 3 : 6; ctx.lineCap = 'round';
+    const reps = blur ? 6 : 1;
+    for (let k = 0; k < reps; k++) {
+      for (let i = 0; i < 6; i++) {
+        const a = rot + i * Math.PI / 3 + k * 0.09;
+        ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * 14, cy + Math.sin(a) * 14);
+        ctx.lineTo(cx + Math.cos(a) * 60, cy + Math.sin(a) * 60); ctx.stroke();
+      }
+    }
+    circle(cx, cy, 12); ctx.fillStyle = '#1a1e21'; ctx.fill();
+    circle(cx, cy, 64); ctx.strokeStyle = `rgba(205,240,250,${0.35 * rim})`; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+  }
+  if (wire > 0 && wire < 1.0001 && fill < 1) {
+    ctx.save(); ctx.strokeStyle = CYAN; ctx.lineWidth = 2; glow(6);
+    ctx.setLineDash([wire * PERIM.wheel, PERIM.wheel]);
+    circle(cx, cy, 96); ctx.stroke(); circle(cx, cy, 64); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function part(name, wire, fill, color, rim = 1) {
+  const p = PATHS[name];
+  if (fill > 0) {
+    ctx.save(); ctx.globalAlpha = fill; ctx.fillStyle = color; ctx.fill(p, 'evenodd' === 'x' ? 'evenodd' : 'nonzero'); ctx.restore();
+  }
+  if (wire > 0) {
+    ctx.save();
+    const fadeWire = 1 - clamp(fill * 1.2);
+    if (fadeWire > 0) {
+      ctx.globalAlpha = fadeWire; ctx.strokeStyle = CYAN; ctx.lineWidth = 2; glow(6);
+      ctx.setLineDash([wire * PERIM[name], PERIM[name] * 2]); ctx.stroke(p); noGlow();
+    }
+    ctx.setLineDash([]);
+    if (fill > 0) { ctx.globalAlpha = fill; ctx.strokeStyle = `rgba(205,240,250,${0.28 * rim})`; ctx.lineWidth = 1.5; ctx.stroke(p); }
+    ctx.restore();
+  }
+}
+
+// b = funzione (nome) -> [wire, fill]
+function drawSide(b, L, rot, rim = 1, blur = 0) {
+  ctx.save();
+  const sh = ctx.createRadialGradient(0, 250, 0, 0, 250, 700);
+  sh.addColorStop(0, 'rgba(0,0,0,.9)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sh; ctx.translate(0, 250); ctx.scale(1, .06); ctx.fillRect(-700, -700, 1400, 1400);
+  ctx.restore();
+  let [w, f] = b('chassis'); part('chassis', w, f, '#08090a', rim);
+  [w, f] = b('spare'); part('spare', w, f, TIRE, rim);
+  [w, f] = b('cabin'); part('cabin', w, f, BODY, rim);
+  [w, f] = b('body'); part('body', w, f, BODY2, rim);
+  const fbody = b('body')[1];
+  if (fbody > 0) {
+    ctx.save(); ctx.globalAlpha = fbody; ctx.lineCap = 'round';
+    SIDE.wheels.forEach(([x]) => {
+      ctx.strokeStyle = BODY2; ctx.lineWidth = 16; ctx.beginPath(); ctx.arc(x, 150, 120, Math.PI * 1.02, Math.PI * 1.98); ctx.stroke();
+      ctx.strokeStyle = `rgba(205,240,250,${0.35 * rim})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, 150, 128, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
+    });
+    ctx.restore();
+  }
+  [w, f] = b('windows'); part('windows', w, f, GLASS, rim);
+  [w, f] = b('details'); part('details', w, f, '#15181b', rim);
+  // filo di luce sulla linea di cintura e sul tetto
+  const fb = b('cabin')[1];
+  if (fb > 0) {
+    ctx.save(); ctx.globalAlpha = fb * rim; ctx.strokeStyle = 'rgba(215,245,255,.6)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-515, -270); ctx.lineTo(268, -270); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-546, -40); ctx.lineTo(546, -40); ctx.stroke();
+    ctx.restore();
+  }
+  SIDE.wheels.forEach(([x, y], i) => { const [ww, ff] = b('wheel' + i); drawWheel(x, y, rot, ww, ff, rim, blur); });
+  // luci
+  if (L > 0) {
+    ctx.save();
+    glow(14 * L, 'rgba(170,245,255,1)'); ctx.fillStyle = `rgba(230,252,255,${L})`;
+    rr(546, -22, 10, 44, 4); ctx.fill();
+    glow(14 * L, 'rgba(255,40,40,1)'); ctx.fillStyle = `rgba(255,60,60,${L})`;
+    rr(-556, -18, 10, 70, 4); ctx.fill(); noGlow();
+    ctx.globalCompositeOperation = 'lighter';
+    let g = ctx.createRadialGradient(556, 0, 0, 556, 0, 260);
+    g.addColorStop(0, `rgba(170,240,255,${0.35 * L})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(296, -260, 520, 520);
+    g = ctx.createRadialGradient(-556, 15, 0, -556, 15, 220);
+    g.addColorStop(0, `rgba(255,40,40,${0.3 * L})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(-776, -205, 440, 440);
+    ctx.restore();
+  }
+}
+
+const FULL = () => [1, 1];
+
+// ---------- testi ----------
+function subtitle(text, t, a, b, y = 905) {
+  const al = seg(t, a, a + 0.4) * (1 - seg(t, b - 0.4, b));
+  if (al <= 0) return;
+  ctx.save(); ctx.globalAlpha = al;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = WHITE; ctx.font = '300 34px "Inter Display", Inter, sans-serif';
+  ctx.letterSpacing = (10 - 4 * easeOut(seg(t, a, a + 1.2))) + 'px';
+  ctx.fillText(text, W / 2, y + 8 * (1 - easeOut(seg(t, a, a + 0.6))));
+  ctx.letterSpacing = '0px'; ctx.restore();
+}
+
+// ---------- scene ----------
+function sceneFront(t) { // 0 – 4
+  // luce del faro: si accende con due sfarfallii
+  let L = 0;
+  if (t >= 0.25) L = 1;
+  if (t >= 0.31 && t < 0.37) L = 0.15;
+  if (t >= 0.44 && t < 0.49) L = 0.4;
+  // camera: macro sul faro sinistro -> carrellata indietro
+  const back = easeOutExpo(seg(t, 1.0, 2.3));
+  const z = lerp(7.2 + 0.4 * seg(t, 0, 1), 1.0, back) * (1 + 0.07 * seg(t, 2.3, 4.0));
+  const fx = lerp(-250, 0, back), fy = lerp(30, -10, back);
+  const reveal = seg(t, 0.9, 1.6);
+
+  spotlight(W / 2, 220, 1500, -20, 980, reveal);
+  smoke(t, W / 2, 700, 1500, 300, reveal, 12, 1, 14);
+
+  ctx.save();
+  ctx.translate(W / 2, H / 2 + 20); ctx.scale(z, z); ctx.translate(-fx, -fy);
+  // riflesso sul pavimento bagnato
+  if (reveal > 0) {
+    ctx.save(); ctx.globalAlpha = 0.18 * reveal;
+    ctx.translate(0, 600); ctx.scale(1, -1); drawFront(L, reveal); ctx.restore();
+    const fl = ctx.createLinearGradient(0, 300, 0, 620);
+    fl.addColorStop(0, 'rgba(0,0,0,0.2)'); fl.addColorStop(1, 'rgba(0,0,0,1)');
+    ctx.fillStyle = fl; ctx.fillRect(-1200, 300, 2400, 400);
+  }
+  drawFront(L, 0.25 + 0.75 * reveal, { halo: 1 });
+  ctx.restore();
+
+  rain(t, W / 2, 220, 1500, -20, 980, reveal);
+
+  // gocce sul vetro del faro, solo in macro
+  const macro = 1 - seg(t, 1.0, 1.4);
+  if (macro > 0 && L > 0) {
+    ctx.save(); ctx.globalAlpha = macro * L;
+    for (let i = 0; i < 26; i++) {
+      const x = W / 2 + (hash(i + 40) - 0.5) * 1100, y = H / 2 + (hash(i + 41) - 0.5) * 800 + t * 6 * hash(i);
+      const r = 4 + hash(i + 42) * 14;
+      circle(x, y, r); ctx.fillStyle = 'rgba(200,240,255,.10)'; ctx.fill();
+      circle(x - r * 0.3, y - r * 0.3, r * 0.3); ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fill();
+    }
+    ctx.restore();
+  }
+  // lampo sull'accensione
+  const ign = seg(t, 0.25, 0.27) * (1 - seg(t, 0.27, 0.6));
+  if (ign > 0) { ctx.fillStyle = `rgba(200,245,255,${0.35 * ign})`; ctx.fillRect(0, 0, W, H); }
+  subtitle('Nato nel buio.', t, 2.5, 3.9);
+}
+
+const BUILD = { // [inizio filo, inizio riempimento]
+  chassis: [0.15, 0.9], wheel0: [0.5, 1.2], wheel1: [0.75, 1.45], body: [1.25, 2.0],
+  cabin: [1.8, 2.55], spare: [2.4, 3.0], windows: [2.5, 3.2], details: [3.1, 3.8],
+};
+function sceneBuild(t) { // 4 – 10 (t locale 0 – 6)
+  const b = name => { const [s, f] = BUILD[name]; return [easeInOut(seg(t, s, s + 0.7)), easeOut(seg(t, f, f + 0.6))]; };
+  const L = seg(t, 4.2, 4.5) * (t < 4.33 || t > 4.4 ? 1 : 0.2);
+  const z = 1.18 + 0.08 * easeInOut(seg(t, 0, 6));
+  spotlight(W / 2 - 160, 200, 1700, -20, 900, 0.8 + 0.2 * seg(t, 3, 5));
+  smoke(t, W / 2, 760, 1800, 260, 1, 10, 2, 8);
+  // griglia tecnica sul pavimento durante il montaggio
+  const gridA = 0.35 * seg(t, 0, 0.6) * (1 - seg(t, 4, 5.5));
+  if (gridA > 0) {
+    ctx.save(); ctx.globalAlpha = gridA; ctx.strokeStyle = 'rgba(95,243,255,.35)'; ctx.lineWidth = 1;
+    for (let i = -12; i <= 12; i++) { ctx.beginPath(); ctx.moveTo(W / 2 + i * 70, 830); ctx.lineTo(W / 2 + i * 190, 1080); ctx.stroke(); }
+    for (let j = 0; j < 5; j++) { const y = 830 + j * j * 14; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    ctx.restore();
+  }
+  ctx.save();
+  ctx.translate(W / 2, H / 2 - 10); ctx.scale(z * 0.82, z * 0.82);
+  drawSide(b, L, 0, 0.9);
+  ctx.restore();
+  // etichette tecniche che compaiono con i pezzi
+  const labels = [['TELAIO A LONGHERONI', 0.3, -500, 160], ['V8 4.0 BITURBO', 1.4, 380, -120], ['CERCHI FORGIATI', 0.9, 330, 290], ['SCARICHI LATERALI', 3.2, -200, 230]];
+  ctx.save(); ctx.font = '400 15px "JetBrains Mono", monospace'; ctx.letterSpacing = '4px';
+  labels.forEach(([txt, s, x, y]) => {
+    const a = seg(t, s, s + 0.4) * (1 - seg(t, 4.0, 4.6));
+    if (a <= 0) return;
+    const sx = W / 2 + x * z * 0.82, sy = H / 2 - 10 + y * z * 0.82;
+    ctx.globalAlpha = a; ctx.strokeStyle = 'rgba(95,243,255,.6)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + 40, sy - 40); ctx.lineTo(sx + 60 + txt.length * 13, sy - 40); ctx.stroke();
+    ctx.fillStyle = CYAN; ctx.fillText(txt, sx + 50, sy - 52);
+  });
+  ctx.letterSpacing = '0px'; ctx.restore();
+  subtitle('Assemblato a mano.', t, 1.0, 3.0);
+  subtitle('Un pezzo alla volta.', t, 3.6, 5.8);
+}
+
+function sceneWheel(t) { // 10 – 12 (t locale 0 – 2)
+  const z = lerp(3.0, 3.6, easeInOut(seg(t, 0, 2)));
+  const rot = easeIn(seg(t, 0, 2)) * 9;
+  spotlight(W / 2 - 250, 160, 1300, -20, 1000, 0.7);
+  ctx.save();
+  ctx.translate(W / 2 - 120, H / 2 + 40); ctx.scale(z, z); ctx.translate(-335, -154);
+  drawSide(FULL, 1, rot, 1, seg(t, 1.0, 1.6) > 0.5 ? 1 : 0);
+  ctx.restore();
+  smoke(t, W / 2, 900, 1600, 200, 0.8, 8, 3, 10);
+  // fade verso l'HUD
+  const out = seg(t, 1.6, 2.0);
+  if (out > 0) { ctx.fillStyle = `rgba(0,0,0,${out})`; ctx.fillRect(0, 0, W, H); }
+}
+
+function figure(x, y, s, a) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.globalAlpha = a;
+  ctx.fillStyle = '#020303';
+  circle(0, -170, 20); ctx.fill();
+  rr(-34, -146, 68, 120, 22); ctx.fill();
+  rr(-30, -40, 26, 120, 10); ctx.fill(); rr(4, -40, 26, 120, 10); ctx.fill();
+  ctx.strokeStyle = 'rgba(190,230,240,.25)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(0, -170, 20, -2.6, -0.6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-30, -140); ctx.lineTo(30, -140); ctx.stroke();
+  ctx.restore();
+}
+
+function sceneEmerge(t) { // 20 – 24 (t locale 0 – 4)
+  const L = t < 0.55 ? 0 : (t < 0.62 ? 1 : (t < 0.7 ? 0.3 : 1));
+  const z = lerp(0.55, 1.35, easeIn(seg(t, 0.6, 4.0)));
+  spotlight(W / 2, 200, 1400, -20, 960, 0.35 + 0.3 * seg(t, 0, 1));
+  smoke(t, W / 2, 640, 1900, 400, 1.4, 14, 4, 20);
+  // figure ai lati, in controluce
+  [[-620, 0.95], [-470, 0.85], [470, 0.85], [620, 0.95]].forEach(([x, s], i) => {
+    figure(W / 2 + x * (0.85 + 0.25 * seg(t, 0, 4)), 860 + i % 2 * 8, s, 0.9);
+  });
+  ctx.save();
+  ctx.translate(W / 2, H / 2 + 60 + 40 * easeIn(seg(t, 0.6, 4))); ctx.scale(z, z);
+  ctx.save(); ctx.globalAlpha = 0.15; ctx.translate(0, 600); ctx.scale(1, -1); drawFront(L, 0.9); ctx.restore();
+  const fl = ctx.createLinearGradient(0, 300, 0, 620);
+  fl.addColorStop(0, 'rgba(0,0,0,0.25)'); fl.addColorStop(1, 'rgba(0,0,0,1)');
+  ctx.fillStyle = fl; ctx.fillRect(-1400, 300, 2800, 400);
+  drawFront(L, 0.9, { halo: 1.4 });
+  ctx.restore();
+  // fasci dei fari verso la camera
+  if (L > 0) {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    [-1, 1].forEach(s => {
+      const x = W / 2 + s * 250 * z, y = H / 2 + 60 + 40 * easeIn(seg(t, 0.6, 4)) + 30 * z;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 700 * z);
+      g.addColorStop(0, `rgba(190,245,255,${0.25 * L})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    });
+    ctx.restore();
+  }
+  smoke(t + 3, W / 2, 900, 2000, 200, 1.2, 8, 5, 6);
+  // i fari riempiono lo schermo -> stacco
+  const wash = seg(t, 3.55, 4.0);
+  if (wash > 0) { ctx.fillStyle = `rgba(215,250,255,${easeIn(wash)})`; ctx.fillRect(0, 0, W, H); }
+}
+
+function sceneTunnel(t) { // 24 – 27 (t locale 0 – 3)
+  const shake = Math.sin(t * 61) * 1.5 + Math.sin(t * 37) * 1.2;
+  // pareti e soffitto in prospettiva
+  ctx.save();
+  ctx.strokeStyle = 'rgba(95,243,255,.08)'; ctx.lineWidth = 2;
+  for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(0, 120 + i * 40); ctx.lineTo(W, 120 + i * 40); ctx.stroke(); }
+  ctx.restore();
+  // luci a soffitto che sfrecciano (l'auto va verso destra)
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 9; i++) {
+    const x = W - ((t * 5200 + i * 420) % (W + 1200)) + 300;
+    const g = ctx.createLinearGradient(x - 520, 0, x, 0);
+    g.addColorStop(0, 'rgba(160,240,255,0)'); g.addColorStop(1, 'rgba(210,250,255,.95)');
+    ctx.fillStyle = g; ctx.fillRect(x - 520, 170, 520, 10);
+    const r = ctx.createRadialGradient(x - 120, 175, 0, x - 120, 175, 260);
+    r.addColorStop(0, 'rgba(140,230,255,.10)'); r.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = r; ctx.fillRect(x - 380, -85, 520, 520);
+    // riflesso sul pavimento bagnato
+    const g2 = ctx.createLinearGradient(x - 520, 0, x, 0);
+    g2.addColorStop(0, 'rgba(160,240,255,0)'); g2.addColorStop(1, 'rgba(160,240,255,.25)');
+    ctx.fillStyle = g2; ctx.fillRect(x - 520, 960, 520, 6);
+  }
+  ctx.restore();
+  // linee di velocità a terra
+  ctx.save(); ctx.strokeStyle = 'rgba(200,240,255,.12)'; ctx.lineWidth = 2;
+  for (let i = 0; i < 14; i++) {
+    const x = W - ((t * 3600 + hash(i) * 3000) % (W + 600)) + 300, y = 860 + hash(i + 5) * 160;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 260, y); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.save();
+  ctx.translate(W / 2 + shake, H / 2 + 30 + shake * 0.6); ctx.scale(0.95, 0.95);
+  ctx.save(); ctx.globalAlpha = 0.16; ctx.translate(0, 500); ctx.scale(1, -1); drawSide(FULL, 1, t * 40, 0.9, 1); ctx.restore();
+  const fl = ctx.createLinearGradient(0, 250, 0, 560);
+  fl.addColorStop(0, 'rgba(0,0,0,.25)'); fl.addColorStop(1, 'rgba(0,0,0,1)');
+  ctx.fillStyle = fl; ctx.fillRect(-1300, 250, 2600, 400);
+  drawSide(FULL, 1, t * 40, 1, 1);
+  ctx.restore();
+  // ingresso dal bianco
+  const inn = 1 - seg(t, 0, 0.35);
+  if (inn > 0) { ctx.fillStyle = `rgba(215,250,255,${inn})`; ctx.fillRect(0, 0, W, H); }
+  const out = seg(t, 2.75, 3.0);
+  if (out > 0) { ctx.fillStyle = `rgba(0,0,0,${out})`; ctx.fillRect(0, 0, W, H); }
+}
+
+function sceneRear(t) { // 27 – 30 (t locale 0 – 3)
+  const L = seg(t, 0.15, 0.35);
+  const z = 0.78 + 0.05 * easeInOut(seg(t, 0, 3));
+  spotlight(W / 2, 200, 1300, -20, 960, 0.45, '255,120,120');
+  smoke(t, W / 2, 700, 1800, 300, 1.6, 14, 6, 10, '170,90,95');
+  ctx.save();
+  ctx.translate(W / 2, H / 2 - 30); ctx.scale(z, z);
+  ctx.save(); ctx.globalAlpha = 0.2; ctx.translate(0, 600); ctx.scale(1, -1); drawRear(L, 0.8); ctx.restore();
+  const fl = ctx.createLinearGradient(0, 300, 0, 620);
+  fl.addColorStop(0, 'rgba(0,0,0,.2)'); fl.addColorStop(1, 'rgba(0,0,0,1)');
+  ctx.fillStyle = fl; ctx.fillRect(-1400, 300, 2800, 400);
+  drawRear(L, 0.8);
+  ctx.restore();
+  smoke(t + 5, W / 2, 900, 2000, 160, 1.2, 8, 7, 4, '150,80,85');
+  // titolo finale
+  const a = easeOut(seg(t, 0.9, 1.9)) * (1 - seg(t, 2.55, 2.95));
+  if (a > 0) {
+    ctx.save(); ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = WHITE; glow(14, 'rgba(200,245,255,.8)');
+    ctx.font = '100 120px "Inter Display", Inter, sans-serif';
+    ctx.letterSpacing = (34 - 14 * easeOut(seg(t, 0.9, 2.4))) + 'px';
+    ctx.fillText('G 63', W / 2 + 10, 860); noGlow();
+    ctx.fillStyle = CYAN; ctx.font = '400 20px "JetBrains Mono", monospace'; ctx.letterSpacing = '12px';
+    ctx.fillText('PROJECT NERO', W / 2 + 6, 940);
+    ctx.letterSpacing = '0px'; ctx.restore();
+  }
+  const out = seg(t, 2.6, 3.0);
+  if (out > 0) { ctx.fillStyle = `rgba(0,0,0,${out})`; ctx.fillRect(0, 0, W, H); }
+}
+
+function render(t) {
+  ctx.save();
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  if (t < 4) sceneFront(t);
+  else if (t < 10) sceneBuild(t - 4);
+  else if (t < 12) sceneWheel(t - 10);
+  else if (t < 20) { /* slot HUD */ }
+  else if (t < 24) sceneEmerge(t - 20);
+  else if (t < 27) sceneTunnel(t - 24);
+  else sceneRear(t - 27);
+  noGlow();
+  // vignettatura
+  const v = ctx.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 1.05);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.72)');
+  ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  // grana
+  ctx.globalAlpha = 0.06; ctx.globalCompositeOperation = 'overlay';
+  const f = Math.floor(t * 30), ox = (f * 131) % 512, oy = (f * 293) % 512;
+  ctx.fillStyle = ctx.createPattern(grain, 'repeat');
+  ctx.translate(-ox, -oy); ctx.fillRect(0, 0, W + 512, H + 512);
+  ctx.restore();
+  // bande cinema 2:1
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, 60); ctx.fillRect(0, H - 60, W, 60);
+}
+
+window.render = render; window.DUR = DUR;
+if (!new URLSearchParams(location.search).has('capture')) {
+  const t0 = performance.now();
+  const loop = () => { let t = ((performance.now() - t0) / 1000) % DUR; if (t >= 12 && t < 20) t = 20; render(t); requestAnimationFrame(loop); };
+  document.fonts.ready.then(loop);
+}
+</script>
+</body>
+</html>
