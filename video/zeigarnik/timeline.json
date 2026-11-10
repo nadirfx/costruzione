@@ -1,0 +1,22 @@
+{
+  "fps": 30,
+  "duration": 26.0,
+  "captions": [
+    [2.0, 3.2, [["Ti dà fastidio, vero?", "w"]]],
+    [3.2, 7.0, [["Il tuo cervello", "w"], ["odia", "p"], ["le cose lasciate a metà.", "w"]]],
+    [7.0, 9.5, [["Per questo guardi le serie fino alle", "w"], ["tre di notte.", "c"]]],
+    [9.5, 12.0, [["Per questo resti sui video", "w"], ["fino alla fine.", "p"]]],
+    [12.0, 15.0, [["Si chiama", "w"], ["effetto Zeigarnik.", "g"]]],
+    [15.0, 17.5, [["E lo sto usando", "w"], ["adesso.", "p"]]],
+    [18.0, 19.4, [["Quella", "w"], ["frase", "c"], ["dell’inizio?", "w"]]],
+    [19.4, 21.0, [["Te la finisco solo se", "w"], ["resti.", "p"]]],
+    [23.0, 25.0, [["Vuoi le altre", "w"], ["tecniche?", "g"]]]
+  ],
+  "tags": [
+    [2.1, 7.0, "01", "LA FRASE A METÀ", "c"],
+    [7.0, 12.0, "02", "DOVE LO TROVI", "c"],
+    [12.0, 15.0, "03", "IL NOME", "g"],
+    [15.0, 18.0, "04", "IL TRUCCO", "p"],
+    [23.0, 25.0, "05", "ALTRE TECNICHE", "g"]
+  ]
+}
