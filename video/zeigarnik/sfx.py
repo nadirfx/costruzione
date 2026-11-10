@@ -11,6 +11,11 @@ SR = 48000
 HERE = Path(__file__).parent
 TL = json.loads((HERE / "timeline.json").read_text())
 DUR = TL["duration"]
+_W = np.array(TL["warp"], dtype=float)
+def W(t_old):
+    """tempo originale -> tempo nuovo"""
+    return float(np.interp(t_old, _W[:, 0], _W[:, 1]))
+
 N = int(SR * DUR)
 mix = np.zeros((2, N))
 rng = np.random.default_rng(7)
@@ -33,7 +38,7 @@ def filt(x, kind, f):
 
 
 def place(x, at, gain=1.0, pan=0.0):
-    i = int(at * SR)
+    i = int(W(at) * SR)
     if i >= N or i + len(x) <= 0:
         return
     x = x[: max(0, N - i)] * gain
@@ -198,13 +203,13 @@ for i, (tm, g) in enumerate([(2.47, .55), (2.62, .3), (2.71, .18)]):
     place(pop(700, 250, 0.06), tm, g)
 
 # Drone continuo 2.0 → 21.5 (non si risolve mai)
-place(drone(2.0, 21.6, 21.5), 2.0, 0.42)
+place(drone(W(2.0), W(21.6), W(21.5)), 2.0, 0.42)
 
 # La barra
 place(riser(0.4, 300, 1200), 3.2, 0.25)
 place(riser(1.3, 400, 2200), 3.6, 0.22)
 place(thump(90, 50, 0.25), 4.9, 0.45)
-place(buzz(2.1, 100), 4.9, 0.10)
+place(buzz(W(7.0) - W(4.9), 100), 4.9, 0.10)
 for k in range(8):                                  # orologio
     place(tick(1900 if k % 2 else 2300, 0.03, 0.2), 3.3 + k * 0.5, 0.22, -0.3 if k % 2 else 0.3)
 
@@ -239,7 +244,7 @@ place(riser(0.75, 200, 1600), 16.75, 0.35)
 # La frase scende (linea lineare = tensione)
 for k in range(4):
     place(thump(70, 38, 0.4), 18.0 + k * 0.8, 0.35)
-place(buzz(3.1, 100), 18.4, 0.08)
+place(buzz(W(21.5) - W(18.4), 100), 18.4, 0.08)
 place(riser(1.2, 150, 900), 20.3, 0.3)
 
 # "…di dire." → la risoluzione

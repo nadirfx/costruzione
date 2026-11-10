@@ -1,22 +1,300 @@
 {
-  "fps": 30,
-  "duration": 26.0,
-  "captions": [
-    [2.0, 3.2, [["Ti dà fastidio, vero?", "w"]]],
-    [3.2, 7.0, [["Resta", "w"], ["in allerta", "p"], ["finché una cosa non è finita.", "w"]]],
-    [7.0, 9.5, [["Per questo guardi le serie fino alle", "w"], ["tre di notte.", "c"]]],
-    [9.5, 12.0, [["Per questo resti sui video", "w"], ["fino alla fine.", "p"]]],
-    [12.0, 15.0, [["Si chiama", "w"], ["effetto Zeigarnik.", "g"]]],
-    [15.0, 17.5, [["E lo sto usando", "w"], ["adesso.", "p"]]],
-    [18.0, 19.4, [["Quella", "w"], ["frase", "c"], ["dell’inizio?", "w"]]],
-    [19.4, 21.0, [["Te la finisco solo se", "w"], ["resti.", "p"]]],
-    [23.0, 25.0, [["Vuoi le altre", "w"], ["tecniche?", "g"]]]
+ "fps": 30,
+ "duration": 19.4,
+ "captions": [
+  [
+   2.0,
+   3.2,
+   [
+    [
+     "Ti dà fastidio, vero?",
+     "w"
+    ]
+   ]
   ],
-  "tags": [
-    [2.1, 7.0, "01", "LA FRASE A METÀ", "c"],
-    [7.0, 12.0, "02", "DOVE LO TROVI", "c"],
-    [12.0, 15.0, "03", "IL NOME", "g"],
-    [15.0, 18.0, "04", "IL TRUCCO", "p"],
-    [23.0, 25.0, "05", "ALTRE TECNICHE", "g"]
+  [
+   3.2,
+   7.0,
+   [
+    [
+     "Resta",
+     "w"
+    ],
+    [
+     "in allerta",
+     "p"
+    ],
+    [
+     "finché una cosa non è finita.",
+     "w"
+    ]
+   ]
+  ],
+  [
+   7.0,
+   9.5,
+   [
+    [
+     "Per questo guardi le serie fino alle",
+     "w"
+    ],
+    [
+     "tre di notte.",
+     "c"
+    ]
+   ]
+  ],
+  [
+   9.5,
+   12.0,
+   [
+    [
+     "Per questo resti sui video",
+     "w"
+    ],
+    [
+     "fino alla fine.",
+     "p"
+    ]
+   ]
+  ],
+  [
+   12.0,
+   15.0,
+   [
+    [
+     "Si chiama",
+     "w"
+    ],
+    [
+     "effetto Zeigarnik.",
+     "g"
+    ]
+   ]
+  ],
+  [
+   15.0,
+   17.5,
+   [
+    [
+     "E lo sto usando",
+     "w"
+    ],
+    [
+     "adesso.",
+     "p"
+    ]
+   ]
+  ],
+  [
+   18.0,
+   19.4,
+   [
+    [
+     "Quella",
+     "w"
+    ],
+    [
+     "frase",
+     "c"
+    ],
+    [
+     "dell’inizio?",
+     "w"
+    ]
+   ]
+  ],
+  [
+   19.4,
+   21.0,
+   [
+    [
+     "Te la finisco solo se",
+     "w"
+    ],
+    [
+     "resti.",
+     "p"
+    ]
+   ]
+  ],
+  [
+   23.0,
+   25.0,
+   [
+    [
+     "Vuoi le altre",
+     "w"
+    ],
+    [
+     "tecniche?",
+     "g"
+    ]
+   ]
   ]
+ ],
+ "tags": [
+  [
+   2.1,
+   7.0,
+   "01",
+   "LA FRASE A METÀ",
+   "c"
+  ],
+  [
+   7.0,
+   12.0,
+   "02",
+   "DOVE LO TROVI",
+   "c"
+  ],
+  [
+   12.0,
+   15.0,
+   "03",
+   "IL NOME",
+   "g"
+  ],
+  [
+   15.0,
+   18.0,
+   "04",
+   "IL TRUCCO",
+   "p"
+  ],
+  [
+   23.0,
+   25.0,
+   "05",
+   "ALTRE TECNICHE",
+   "g"
+  ]
+ ],
+ "srcDuration": 26.0,
+ "warp": [
+  [
+   0,
+   0
+  ],
+  [
+   1.65,
+   1.3
+  ],
+  [
+   2.0,
+   1.6
+  ],
+  [
+   2.7,
+   2.2
+  ],
+  [
+   3.2,
+   2.5
+  ],
+  [
+   3.6,
+   2.85
+  ],
+  [
+   4.9,
+   3.75
+  ],
+  [
+   7.0,
+   4.9
+  ],
+  [
+   7.5,
+   5.3
+  ],
+  [
+   9.5,
+   6.8
+  ],
+  [
+   10.05,
+   7.25
+  ],
+  [
+   10.83,
+   7.9
+  ],
+  [
+   12.0,
+   8.6
+  ],
+  [
+   12.7,
+   9.15
+  ],
+  [
+   13.5,
+   9.8
+  ],
+  [
+   15.0,
+   10.4
+  ],
+  [
+   15.6,
+   10.85
+  ],
+  [
+   16.3,
+   11.4
+  ],
+  [
+   17.5,
+   12.3
+  ],
+  [
+   18.0,
+   12.7
+  ],
+  [
+   18.4,
+   13.0
+  ],
+  [
+   20.6,
+   14.6
+  ],
+  [
+   21.0,
+   14.9
+  ],
+  [
+   21.5,
+   15.25
+  ],
+  [
+   22.6,
+   16.3
+  ],
+  [
+   23.0,
+   16.6
+  ],
+  [
+   23.69,
+   17.1
+  ],
+  [
+   24.6,
+   17.9
+  ],
+  [
+   25.0,
+   18.6
+  ],
+  [
+   25.4,
+   18.9
+  ],
+  [
+   26.0,
+   19.4
+  ]
+ ]
 }
