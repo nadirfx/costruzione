@@ -185,12 +185,13 @@ def buzz(d, f=100):
 # ── TIMELINE AUDIO ───────────────────────────────────────────
 # Aggancio
 # parole che entrano una dopo l'altra (stessi ritardi della scena)
-for d, big in [(0.0, 0), (0.06, 0), (0.16, 2), (0.32, 1), (0.40, 0), (0.46, 0), (0.56, 0), (0.63, 0), (0.69, 0)]:
+for d, big in [(0.0, 0), (0.04, 0), (0.08, 2), (0.22, 1), (0.30, 0)]:
+    d = max(0.0, d - 0.16)                # la scena parte già 0.16 s avanti
     if big == 2:
         place(thump(170, 40, 0.8), d, 1.0)
-        place(whoosh(0.18, 2000, 6000), d - 0.08, 0.3)
+        place(whoosh(0.18, 2000, 6000), max(0, d - 0.05), 0.3)
     elif big == 1:
-        place(thump(140, 55, 0.4), d, 0.7)
+        place(thump(140, 55, 0.4), d, 0.75)
     else:
         place(pop(1100, 380, 0.06), d, 0.45, (d * 7 % 2) - 0.5)
         place(tick(3400, 0.02), d, 0.2)
@@ -248,8 +249,11 @@ place(buzz(W(21.5) - W(18.4), 100), 18.4, 0.08)
 place(riser(1.2, 150, 900), 20.3, 0.3)
 
 # "…di dire." → la risoluzione
-for i in range(3):
-    place(keyclick(), 21.0 + i * 0.12, 0.55)
+for i, d in enumerate([0.0, 0.12, 0.24, 0.36]):    # "cose lasciate a metà."
+    place(pop(1000 - i * 80, 330, 0.06), 21.0 + d, 0.5)
+    place(thump(150, 60, 0.25), 21.0 + d, 0.35 if i < 3 else 0.6)
+place(pop(1500, 600, 0.05), 4.2, 0.25)                 # compare il badge col lucchetto
+place(tick(1800, 0.03, 0.6), 4.25, 0.2)
 place(whoosh(0.5, 3000, 200, rev=True), 21.0, 0.35)
 place(thump(160, 35, 1.0), 21.5, 1.0)
 _c = chord([110, 138.59, 164.81, 220, 277.18], 1.48, 0.03)
@@ -268,6 +272,9 @@ def tape_stop(d=0.55):
     return filt(x / 4, "lowpass", 2500) * (rate ** 0.5)
 
 place(tape_stop(), 22.95, 0.7)
+place(tick(1500, 0.04, 0.8), 23.28, 0.5)                # lucchetto che si apre
+place(tick(4200, 0.03, 0.5), 23.33, 0.35)
+place(shimmer(0.5, 41), 23.35, 0.3)
 for i, d in enumerate([23.05, 23.13, 23.21, 23.29]):          # "Ah, un'ultima cosa…"
     place(pop(800, 300, 0.05), d, 0.22)
 for i in range(5):                                              # "Questo video l'ho creato con"
@@ -276,7 +283,7 @@ place(whoosh(0.3, 1500, 7000, rev=True), 23.7, 0.4)
 place(thump(190, 32, 1.1), 23.98, 1.0)                          # l'AI.
 place(glitch(0.3), 23.98, 0.55)
 place(shimmer(0.8, 21), 24.05, 0.45)
-for k in range(9):                                              # groove "dietro le quinte"
+for k in range(11):                                             # groove "dietro le quinte"
     tk = 24.4 + k * 0.5
     place(thump(110, 45, 0.25), tk, 0.42)
     place(tick(7000, 0.03, 0.9), tk + 0.25, 0.12)
@@ -289,10 +296,14 @@ place(thump(150, 50, 0.5), 27.0, 0.6)                           # "E ha funziona
 place(pop(1600, 700, 0.06), 27.4, 0.45)                         # pin "TU SEI QUI"
 place(ding(), 27.42, 0.35)
 place(shimmer(0.7, 31), 27.45, 0.4)
-place(whoosh(0.4, 3000, 300, rev=True), 28.05, 0.3)
+place(whoosh(0.35, 600, 4000), 28.35, 0.3)              # "Ora immagina che siano i tuoi clienti"
+place(pop(1400, 500, 0.06), 28.45, 0.5)
+place(thump(140, 45, 0.6), 28.75, 0.7)
+place(shimmer(0.8, 51), 28.8, 0.5)
+place(whoosh(0.4, 3000, 300, rev=True), 29.25, 0.3)
 
 # ── CTA (spostata di 5.4 s nel tempo sorgente) ──
-TW = 5.4
+TW = 6.6
 place(whoosh(0.4, 400, 4000), 22.95 + TW, 0.35)
 place(buzz(0.35, 120), 23.1 + TW, 0.15)
 for i in range(2):
