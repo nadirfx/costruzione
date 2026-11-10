@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <title>Zeigarnik – scena</title>
 <style>
+  @font-face{font-family:'Unbounded';font-weight:800;src:url(fonts/Unbounded-800.ttf)}
+  @font-face{font-family:'Unbounded';font-weight:900;src:url(fonts/Unbounded-900.ttf)}
+  @font-face{font-family:'Space Grotesk';font-weight:500;src:url(fonts/SpaceGrotesk-500.ttf)}
+  @font-face{font-family:'Space Grotesk';font-weight:600;src:url(fonts/SpaceGrotesk-600.ttf)}
+  @font-face{font-family:'Space Grotesk';font-weight:700;src:url(fonts/SpaceGrotesk-700.ttf)}
   html,body{margin:0;background:#000;}
   canvas{display:block;width:360px;height:640px;}
 </style>
@@ -78,50 +83,81 @@ const off = document.createElement('canvas'); off.width = W; off.height = H;
 const octx = off.getContext('2d');
 
 // ── HERO (la frase a metà) ───────────────────────────────────
-const HERO = ['C’è una frase', 'che non ti', 'finirò di'];
-const HS = 98, HLH = 116;
-function heroCursor(st) {
-  ctx.save(); ctx.font = `800 ${HS}px Inter`;
-  const wb = ctx.measureText(HERO[2]).width, ws = st.suffix ? ctx.measureText(st.suffix).width : 0;
+const FH = 'Unbounded', FB = 'Space Grotesk';
+// [testo, dimensione, colore finale, ritardo d'entrata]
+const HERO = [
+  [['Il', 70, 'w', 0.00], ['tuo', 70, 'w', 0.06]],
+  [['CERVELLO', 124, 'c', 0.16]],
+  [['odia', 86, 'p', 0.32], ['le', 86, 'w', 0.40], ['frasi', 86, 'w', 0.46]],
+  [['lasciate', 86, 'w', 0.56], ['a', 86, 'w', 0.63], ['me', 86, 'w', 0.69]]
+];
+const LH = 1.16, GAP = .28;
+function heroLayout(suffix) {
+  ctx.save();
+  const lines = HERO.map((ln, li) => {
+    const words = ln.map(([txt, size, c, d], wi) => {
+      const isLast = li === 3 && wi === ln.length - 1;
+      ctx.font = `800 ${size}px ${FH}`;
+      return {txt, size, c, d, w: ctx.measureText(txt).width, sw: isLast && suffix ? ctx.measureText(suffix).width : 0};
+    });
+    const size = Math.max(...words.map(o => o.size));
+    const tw = words.reduce((s, o) => s + o.w + o.sw, 0) + GAP * size * (words.length - 1);
+    let x = -tw / 2; for (const o of words) { o.x = x; x += o.w + o.sw + GAP * size; }
+    return {words, size, tw};
+  });
   ctx.restore();
-  const tot = wb + ws, y = HLH;                  // terza riga
-  return {x: st.cx + (tot / 2 + 16) * st.s, y: st.cy + y * st.s, h: HS * .92 * st.s};
+  const tot = lines.reduce((s, l) => s + l.size * LH, 0);
+  let y = -tot / 2; for (const l of lines) { l.y = y + l.size * LH / 2; y += l.size * LH; }
+  return lines;
+}
+function heroCursor(st) {
+  const L = heroLayout(st.suffix), l = L[3], o = l.words[l.words.length - 1];
+  return {x: st.cx + (o.x + o.w + o.sw + 16) * st.s, y: st.cy + l.y * st.s, h: l.size * .95 * st.s};
 }
 function drawHero(g, st) {
   if (st.a <= 0.001) return;
-  g.save(); g.translate(st.cx, st.cy); g.scale(st.s, st.s); g.globalAlpha = st.a;
-  g.font = `800 ${HS}px Inter`; g.textBaseline = 'middle'; g.textAlign = 'left';
-  for (let i = 0; i < 3; i++) {
-    const y = (i - 1) * HLH;
-    if (i < 2) {
-      const w = g.measureText(HERO[i]).width;
-      glow(g, 'rgba(255,255,255,.28)', 22); g.fillStyle = COL.w; g.fillText(HERO[i], -w / 2, y);
-    } else {
-      const wb = g.measureText(HERO[2]).width, ws = st.suffix ? g.measureText(st.suffix).width : 0;
-      const x0 = -(wb + ws) / 2;
-      glow(g, 'rgba(255,255,255,.28)', 22); g.fillStyle = COL.w; g.fillText(HERO[2], x0, y);
-      if (st.suffix) {
-        glow(g, COL.p, 30 + 40 * (st.boom || 0)); g.fillStyle = mix(COL.p, '#FFFFFF', .15 * (st.boom || 0));
-        g.fillText(st.suffix, x0 + wb, y);
-      }
-      if (st.cur > 0) {
-        noGlow(g); glow(g, COL.p, 26); g.globalAlpha = st.a * st.cur; g.fillStyle = COL.p;
-        rr(g, x0 + wb + ws + 12, y - HS * .46, 10, HS * .92, 3); g.fill();
-      }
+  const L = heroLayout(st.suffix);
+  g.save(); g.translate(st.cx, st.cy); g.scale(st.s, st.s);
+  g.textBaseline = 'middle'; g.textAlign = 'left';
+  L.forEach((l, li) => l.words.forEach((o, wi) => {
+    const e = st.intro == null ? 1 : prog(st.intro, o.d, o.d + .22);
+    if (e <= 0) return;
+    // entrata: arriva grande e colorata, poi si assesta sul colore finale
+    const sc = lerp(1.7, 1, E.outBack(e)), fin = COL[o.c] || COL.w;
+    const flash = st.intro == null ? 0 : 1 - prog(st.intro, o.d + .1, o.d + .45);
+    const wave = st.wave ? Math.max(0, 1 - Math.abs(st.wave - (li * .12 + wi * .05)) / .12) : 0;
+    const hot = Math.max(flash, wave);
+    const col = o.c === 'w' ? mix(COL.w, li % 2 ? COL.c : COL.p, hot) : mix(fin, '#FFFFFF', hot * .5);
+    g.save(); g.globalAlpha = st.a * clamp(e * 3);
+    g.translate(o.x + o.w / 2, l.y); g.scale(sc, sc); g.translate(-(o.x + o.w / 2), -l.y);
+    g.font = `800 ${o.size}px ${FH}`;
+    glow(g, o.c === 'w' ? rgba(hot > .1 ? (li % 2 ? COL.c : COL.p) : '#FFFFFF', .3 + .5 * hot) : fin, o.c === 'w' ? 22 + 20 * hot : 34);
+    g.fillStyle = col; g.fillText(o.txt, o.x, l.y);
+    if (o.sw) {
+      glow(g, COL.p, 30 + 40 * (st.boom || 0)); g.fillStyle = mix(COL.p, '#FFFFFF', .2 * (st.boom || 0));
+      g.fillText(st.suffix, o.x + o.w, l.y);
     }
+    g.restore();
+  }));
+  if (st.cur > 0) {
+    const l = L[3], o = l.words[l.words.length - 1];
+    g.globalAlpha = st.a * st.cur; glow(g, COL.p, 26); g.fillStyle = COL.p;
+    rr(g, o.x + o.w + o.sw + 12, l.y - l.size * .47, 11, l.size * .95, 3); g.fill();
   }
   g.restore(); noGlow(g);
 }
 function heroState(t) {
-  const A = {cx: 540, cy: 820, s: 1, a: 1, suffix: '', cur: 0, boom: 0};
-  const TOP = {cx: 540, cy: 252, s: .42, a: .5};
+  const A = {cx: 540, cy: 840, s: 1, a: 1, suffix: '', cur: 0, boom: 0, intro: null, wave: 0};
+  const TOP = {cx: 540, cy: 250, s: .42, a: .55};
   let st = {...A};
   if (t < 2.0) {
-    st.s = t < .5 ? lerp(1.04, 1, E.outCubic(prog(t, 0, .5))) : lerp(1, 1.025, E.inOutCubic(prog(t, .5, 2.0)));
-    st.cur = blinkOn(t) ? 1 : 0;
+    st.intro = t;
+    st.wave = t > 1.0 && t < 1.6 ? (t - 1.0) * 1.4 : 0;   // onda di colore sulle parole
+    st.s = lerp(1, 1.03, E.inOutCubic(prog(t, .7, 2.0)));
+    st.cur = t > .75 && blinkOn(t) ? 1 : 0;
   } else if (t < 15.0) {
     const k = E.outExpo(prog(t, 2.0, 2.6));
-    st.cy = lerp(A.cy, TOP.cy, k); st.s = lerp(1.025, TOP.s, k); st.a = lerp(1, TOP.a, k);
+    st.cy = lerp(A.cy, TOP.cy, k); st.s = lerp(1.03, TOP.s, k); st.a = lerp(1, TOP.a, k);
   } else if (t < 18.0) {
     const k = E.outCubic(prog(t, 15.0, 15.6));
     st.cy = TOP.cy; st.s = lerp(TOP.s, .46, k); st.a = lerp(TOP.a, 1, k);
@@ -129,23 +165,20 @@ function heroState(t) {
   } else if (t < 22.6) {
     const k = prog(t, 18.0, 20.6);                    // LINEARE = tensione
     st.cy = lerp(TOP.cy, A.cy, k); st.s = lerp(.46, 1, k);
-    const typed = ' dire.';
-    const n = Math.floor(clamp((t - 21.0) / .09, 0, typed.length));
-    st.suffix = t >= 21.0 ? typed.slice(0, Math.max(1, n + 1)) : '';
-    if (st.suffix === ' ') st.suffix = '';
-    st.cur = t >= 21.0 && t < 21.6 ? 1 : (blinkOn(t) ? 1 : 0);
-    if (t >= 21.5) { st.boom = Math.exp(-(t - 21.5) * 3); st.cur = t < 21.6 ? 1 : 0; }
+    const typed = 'tà.';
+    const n = Math.floor(clamp((t - 21.0) / .12, 0, typed.length - 1)) + 1;
+    st.suffix = t >= 21.0 ? typed.slice(0, n) : '';
+    st.cur = t >= 21.0 && t < 21.5 ? 1 : (t < 21.0 && blinkOn(t) ? 1 : 0);
+    if (t >= 21.5) st.boom = Math.exp(-(t - 21.5) * 3);
   } else if (t < 23.0) {
     const k = E.inExpo(prog(t, 22.6, 23.0));
-    st.suffix = ' dire.'; st.cy = lerp(A.cy, 560, k); st.a = 1 - k;
-  } else if (t < 25.5) {
-    st.a = 0;
+    st.suffix = 'tà.'; st.cy = lerp(A.cy, 580, k); st.a = 1 - k;
   } else {
-    st.s = 1.04; st.a = E.outCubic(prog(t, 25.5, 26.0)); st.cur = blinkOn(t) ? 1 : 0;
+    st.a = 0;
   }
   return st;
 }
-const HERO_CUR_A = () => heroCursor({cx: 540, cy: 820, s: 1, suffix: ''});
+const HERO_CUR_A = () => heroCursor({cx: 540, cy: 840, s: 1.03, suffix: ''});
 
 // ── GLITCH ───────────────────────────────────────────────────
 function glitchHero(st, t) {
@@ -179,13 +212,13 @@ function drawBg(t) {
   let a = .11 + .03 * Math.sin(t * 2.2);
   if (t >= 21.5 && t < 23) a += .22 * Math.exp(-(t - 21.5) * 2.2);
   if (t >= 25.0) a *= 1 - prog(t, 25.0, 25.4);
-  const gr = ctx.createRadialGradient(540, 900, 0, 540, 900, 760);
+  const gr = ctx.createRadialGradient(540, 900, 0, 540, 900, 1050);
   gr.addColorStop(0, rgba(accentAt(t), a)); gr.addColorStop(1, rgba(accentAt(t), 0));
   ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
 }
 function drawPost(t) {
-  const v = ctx.createRadialGradient(540, 960, 520, 540, 960, 1250);
-  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.7)');
+  const v = ctx.createRadialGradient(540, 960, 760, 540, 960, 1400);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.4)');
   ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
   ctx.save(); ctx.globalAlpha = .045; ctx.globalCompositeOperation = 'overlay';
   ctx.drawImage(grain[Math.floor(t * 30) % grain.length], 0, 0, W, H); ctx.restore();
@@ -198,7 +231,7 @@ function drawTags(t) {
     const al = Math.min(prog(t, a, a + .25), 1 - prog(t, b - .2, b));
     const dy = (1 - E.outExpo(prog(t, a, a + .4))) * 16;
     ctx.save(); ctx.globalAlpha = al; ctx.textBaseline = 'middle';
-    ctx.font = '700 26px Inter'; ctx.letterSpacing = '7px';
+    ctx.font = '700 26px ' + FB; ctx.letterSpacing = '7px';
     const s1 = num, s2 = '  —  ' + label;
     const w1 = ctx.measureText(s1).width, w2 = ctx.measureText(s2).width;
     const x = 540 - (w1 + w2) / 2;
@@ -216,7 +249,7 @@ function layoutCaption(tokens) {
   for (const [txt, c] of tokens) for (const w of txt.split(' ')) if (w) words.push({w, c});
   const lines = [[]]; let lw = 0; const SP = 14, MAXW = 900;
   for (const o of words) {
-    ctx.font = (o.c === 'w' ? '600' : '800') + ' 52px Inter';
+    ctx.font = (o.c === 'w' ? '600' : '700') + ' 54px ' + FB;
     o.width = ctx.measureText(o.w).width;
     if (lw + o.width > MAXW && lines[lines.length - 1].length) { lines.push([]); lw = 0; }
     lines[lines.length - 1].push(o); lw += o.width + SP;
@@ -237,10 +270,12 @@ function drawCaptions(t) {
       const s = a + .05 + i * dt, p = prog(t, s, s + .16);
       if (p <= 0) return;
       ctx.save(); ctx.globalAlpha = p * out; ctx.textBaseline = 'middle';
-      ctx.font = (o.c === 'w' ? '600' : '800') + ' 52px Inter';
-      const y = o.y + (1 - E.outCubic(p)) * 16;
-      if (o.c === 'w') { glow(ctx, 'rgba(0,0,0,.8)', 12); ctx.fillStyle = COL.w; }
-      else { glow(ctx, COL[o.c], 22); ctx.fillStyle = COL[o.c]; }
+      ctx.font = (o.c === 'w' ? '600' : '700') + ' 54px ' + FB;
+      const y = o.y + (1 - E.outCubic(p)) * 18, sc = lerp(1.25, 1, E.outBack(p));
+      ctx.translate(o.x + o.width / 2, y); ctx.scale(sc, sc); ctx.translate(-(o.x + o.width / 2), -y);
+      const hot = 1 - prog(t, s + .08, s + .4), acc = accentAt(t);
+      if (o.c === 'w') { glow(ctx, hot > .05 ? rgba(acc, .6 * hot) : 'rgba(0,0,0,.8)', 14); ctx.fillStyle = mix(COL.w, acc, hot * .85); }
+      else { glow(ctx, COL[o.c], 22 + 20 * hot); ctx.fillStyle = mix(COL[o.c], '#FFFFFF', hot * .5); }
       ctx.fillText(o.w, o.x, y); ctx.restore();
     });
   }
@@ -267,7 +302,7 @@ function drawBar(x, y, w, h, fillW, a, t, label, jitter) {
   }
   if (label) {
     const blink = jitter ? (Math.floor(t * 4) % 2 ? .35 : 1) : 1;
-    ctx.globalAlpha = a * label.a * blink; ctx.font = '800 64px Inter'; ctx.textAlign = 'center';
+    ctx.globalAlpha = a * label.a * blink; ctx.font = '800 56px ' + FH; ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic'; glow(ctx, label.c || COL.w, 18); ctx.fillStyle = label.c || COL.w;
     ctx.fillText(label.txt, 540, y - 46);
   }
@@ -289,12 +324,12 @@ function drawTitle(t, gx = 540, gy = 900, gs = 1, ga = 1) {
   ctx.save(); ctx.translate(gx, gy); ctx.scale(gs, gs); ctx.translate(-540, -900); ctx.globalAlpha = ga;
   // EFFETTO
   const pe = prog(t, 12.3, 12.55);
-  ctx.save(); ctx.globalAlpha *= pe; ctx.font = '700 46px Inter'; ctx.letterSpacing = '16px';
+  ctx.save(); ctx.globalAlpha *= pe; ctx.font = '700 46px ' + FB; ctx.letterSpacing = '16px';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; glow(ctx, COL.g, 16); ctx.fillStyle = COL.g;
   ctx.fillText('EFFETTO', 548, 790 + (1 - E.outExpo(pe)) * 20); ctx.restore();
   // ZEIGARNIK lettera per lettera
   const word = 'ZEIGARNIK';
-  ctx.font = '900 134px Inter'; ctx.textBaseline = 'middle';
+  ctx.font = '900 112px ' + FH; ctx.textBaseline = 'middle';
   const ws = [...word].map(ch => ctx.measureText(ch).width);
   const tot = ws.reduce((s, v) => s + v, 0); let x = 540 - tot / 2;
   const pulse = .85 + .15 * Math.sin(t * 3);
@@ -343,11 +378,11 @@ function drawThumbs(t, outK) {
     if (i === 1) {
       ctx.strokeStyle = 'rgba(242,242,242,.4)'; ctx.lineWidth = 2; rr(ctx, -50, 8, 100, 10, 5); ctx.stroke();
       ctx.fillStyle = COL.p; rr(ctx, -50, 8, 99, 10, 5); ctx.fill();
-      noGlow(ctx); ctx.font = '800 26px Inter'; ctx.textAlign = 'center'; ctx.fillStyle = COL.w; ctx.fillText('99%', 0, -12);
+      noGlow(ctx); ctx.font = '700 26px ' + FB; ctx.textAlign = 'center'; ctx.fillStyle = COL.w; ctx.fillText('99%', 0, -12);
     }
     if (i === 2) {
       glow(ctx, COL.c, 14); ctx.strokeStyle = COL.c; ctx.lineWidth = 3; rr(ctx, -50, -36, 100, 64, 10); ctx.stroke();
-      ctx.font = '800 38px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = COL.c; ctx.fillText('3', 0, -3);
+      ctx.font = '800 38px ' + FH; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = COL.c; ctx.fillText('3', 0, -3);
     }
     if (i === 3) {
       ctx.strokeStyle = COL.p; ctx.lineWidth = 3; rr(ctx, -28, -48, 56, 96, 12); ctx.stroke();
@@ -356,7 +391,7 @@ function drawThumbs(t, outK) {
     }
     ctx.restore();
     // etichette
-    ctx.save(); ctx.globalAlpha = al * p; ctx.font = '700 24px Inter'; ctx.textAlign = 'center';
+    ctx.save(); ctx.globalAlpha = al * p; ctx.font = '700 24px ' + FB; ctx.textAlign = 'center';
     ctx.fillStyle = COL.c; ctx.fillText(lbl[i], sx, 1160);
     ctx.fillStyle = 'rgba(242,242,242,.4)'; ctx.fillRect(sx - 1, 1112, 2, 16); ctx.restore();
   });
@@ -365,7 +400,7 @@ function drawThumbs(t, outK) {
   if (fp > 0) {
     ctx.save(); glow(ctx, COL.p, 18); ctx.strokeStyle = COL.p; ctx.lineWidth = 4; ctx.setLineDash([14, 10]);
     ctx.beginPath(); ctx.moveTo(120, 880); ctx.lineTo(lerp(120, 960, fp), 880); ctx.stroke(); ctx.setLineDash([]);
-    ctx.globalAlpha = fp; ctx.font = '700 26px Inter'; ctx.fillStyle = COL.p; ctx.textAlign = 'left';
+    ctx.globalAlpha = fp; ctx.font = '700 26px ' + FB; ctx.fillStyle = COL.p; ctx.textAlign = 'left';
     ctx.fillText('la frase a metà  →  sempre qui', 120, 850); ctx.restore();
   }
   ctx.restore();
@@ -376,7 +411,7 @@ function drawAnnotation(t, outK) {
   glow(ctx, COL.c, 18); ctx.strokeStyle = COL.c; ctx.lineWidth = 4; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.ellipse(540, 252, 300, 104, -.04, -Math.PI * .5, -Math.PI * .5 + Math.PI * 2 * E.outCubic(p)); ctx.stroke();
   const tp = prog(t, 16.0, 16.3);
-  ctx.globalAlpha = (1 - outK) * tp; ctx.font = '700 30px Inter'; ctx.textAlign = 'center';
+  ctx.globalAlpha = (1 - outK) * tp; ctx.font = '700 30px ' + FB; ctx.textAlign = 'center';
   ctx.fillStyle = COL.c; ctx.fillText('era qui da 15 secondi ↑', 540, 412 + (1 - tp) * 10);
   ctx.restore();
 }
@@ -409,14 +444,14 @@ function drawCTA(t) {
   ctx.save(); ctx.translate(540, 900); ctx.scale(gs, gs); ctx.translate(-540, -900); ctx.globalAlpha = 1 - out * .6;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const pc = prog(t, 23.0, 23.3);
-  ctx.save(); ctx.globalAlpha *= pc; ctx.font = '500 58px Inter'; ctx.fillStyle = COL.w;
+  ctx.save(); ctx.globalAlpha *= pc; ctx.font = '500 58px ' + FB; ctx.fillStyle = COL.w;
   ctx.fillText('Commenta', 540, 720 + (1 - E.outExpo(pc)) * 20); ctx.restore();
   // LOOP neon che si accende
   const fl = [0, 1, 0, 0, 1, 0, 1, 1, 0, 1];
   const fi = Math.floor((t - 23.1) * 30);
   const on = t < 23.1 ? 0 : (fi < fl.length ? fl[fi] : 1);
   if (on) {
-    ctx.save(); ctx.font = '900 196px Inter'; ctx.letterSpacing = '6px';
+    ctx.save(); ctx.font = '900 168px ' + FH; ctx.letterSpacing = '6px';
     glow(ctx, COL.p, 60); ctx.fillStyle = COL.p; ctx.fillText('LOOP', 543, 870);
     glow(ctx, COL.p, 18); ctx.fillStyle = '#FF7AB8'; ctx.fillText('LOOP', 543, 870); ctx.restore();
   }
@@ -434,9 +469,9 @@ function drawCTA(t) {
     if (ca > 0) {
       ctx.save(); ctx.globalAlpha *= ca; ctx.textAlign = 'left';
       const typed = 'LOOP'.slice(0, Math.max(0, Math.min(4, Math.floor((t - 23.6) / .12) + 1)));
-      if (t < 23.6) { ctx.font = '500 32px Inter'; ctx.fillStyle = 'rgba(242,242,242,.38)'; ctx.fillText('Aggiungi un commento…', bx + 44, by); }
+      if (t < 23.6) { ctx.font = '500 32px ' + FB; ctx.fillStyle = 'rgba(242,242,242,.38)'; ctx.fillText('Aggiungi un commento…', bx + 44, by); }
       else {
-        ctx.font = '800 38px Inter'; ctx.fillStyle = COL.w; ctx.fillText(typed, bx + 44, by);
+        ctx.font = '800 38px ' + FH; ctx.fillStyle = COL.w; ctx.fillText(typed, bx + 44, by);
         const tw = ctx.measureText(typed).width;
         if (blinkOn(t * 2) || t < 24.1) { ctx.fillStyle = COL.p; ctx.fillRect(bx + 50 + tw, by - 22, 4, 44); }
       }
@@ -503,19 +538,29 @@ function drawStage(t) {
     if (t >= 7.45 && t < 9.65) {
       const la = prog(t, 7.45, 7.7) * (1 - out);
       ctx.save(); ctx.globalAlpha = la; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.font = '700 26px Inter'; ctx.letterSpacing = '8px'; ctx.fillStyle = 'rgba(242,242,242,.6)';
+      ctx.font = '700 26px ' + FB; ctx.letterSpacing = '8px'; ctx.fillStyle = 'rgba(242,242,242,.6)';
       ctx.fillText('PROSSIMO EPISODIO', 545, 690); ctx.letterSpacing = '0px';
-      moon(778, 677, 13, COL.c); ctx.font = '700 28px Inter'; ctx.textAlign = 'right'; ctx.fillStyle = COL.c; ctx.fillText('03:00', 892, 678);
+      moon(778, 677, 13, COL.c); ctx.font = '700 28px ' + FB; ctx.textAlign = 'right'; ctx.fillStyle = COL.c; ctx.fillText('03:00', 892, 678);
       // anello countdown
       const rp = prog(t, 7.5, 9.5);
       ctx.strokeStyle = 'rgba(34,211,238,.15)'; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(540, 900, 150, 0, Math.PI * 2); ctx.stroke();
       glow(ctx, COL.c, 22); ctx.strokeStyle = COL.c; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.arc(540, 900, 150, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - rp)); ctx.stroke();
       if (t >= 7.5) {
-        const i = Math.min(3, Math.floor((t - 7.5) / .6)), d = 5 - i, ds = 7.5 + i * .6, dp = prog(t, ds, ds + .28);
-        ctx.save(); ctx.translate(540, 905); const sc = lerp(1.6, 1, E.outBack(dp)); ctx.scale(sc, sc);
-        ctx.globalAlpha = la * prog(t, ds, ds + .08); ctx.font = '800 210px Inter'; ctx.fillStyle = COL.c; glow(ctx, COL.c, 40);
-        ctx.fillText(String(d), 0, 0); ctx.restore();
+        // contachilometri: il numero vecchio scivola giù, il nuovo cade dall'alto (ritagliato nel cerchio)
+        const i = Math.min(3, Math.floor((t - 7.5) / .6)), ds = 7.5 + i * .6, dp = prog(t, ds, ds + .32);
+        ctx.save(); ctx.beginPath(); ctx.arc(540, 900, 140, 0, Math.PI * 2); ctx.clip();
+        ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.font = '800 190px ' + FH; glow(ctx, COL.c, 40);
+        const m = ctx.measureText('5'), cyb = 900 + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+        const tilt = (1 - E.outBack(dp)) * -.25;
+        if (i > 0 && dp < 1) {
+          ctx.save(); ctx.globalAlpha = la * (1 - dp); ctx.fillStyle = COL.c;
+          ctx.translate(540, cyb + E.inCubic(dp) * 260); ctx.fillText(String(6 - i), 0, 0); ctx.restore();
+        }
+        ctx.save(); ctx.globalAlpha = la * clamp(dp * 4); ctx.fillStyle = dp < 1 ? mix('#FFFFFF', COL.c, dp) : COL.c;
+        ctx.translate(540, cyb + lerp(-280, 0, E.outBack(dp))); ctx.rotate(tilt);
+        ctx.fillText(String(5 - i), 0, 0); ctx.restore();
+        ctx.restore();
       }
       ctx.restore();
     }
@@ -542,7 +587,7 @@ function drawStage(t) {
       ctx.fillStyle = 'rgba(242,242,242,.22)'; rr(ctx, 375, 1215, 330, 6, 3); ctx.fill();
       glow(ctx, COL.p, 16); ctx.fillStyle = COL.p; rr(ctx, 375, 1215, 330 * fp, 6, 3); ctx.fill();
       ctx.fillStyle = COL.w; ctx.beginPath(); ctx.arc(375 + 330 * fp, 1218, 11, 0, Math.PI * 2); ctx.fill(); noGlow(ctx);
-      ctx.font = '600 24px Inter'; ctx.fillStyle = 'rgba(242,242,242,.55)'; ctx.textAlign = 'left';
+      ctx.font = '600 24px ' + FB; ctx.fillStyle = 'rgba(242,242,242,.55)'; ctx.textAlign = 'left';
       ctx.fillText(t < 12 ? '0:58 / 1:00' : '0:59 / 1:00', 375, 1262);
       ctx.restore();
     }
@@ -559,7 +604,7 @@ function drawStage(t) {
   if (t >= 18.4 && t < 23.0) {
     const k = E.outExpo(prog(t, 18.4, 18.8)), out = E.inExpo(prog(t, 22.6, 23.0));
     const full = t >= 21.5 ? lerp(.99, 1, E.outExpo(prog(t, 21.5, 21.7))) : .99;
-    const by = 1160 - out * 300;
+    const by = 1230 - out * 300;
     drawBar(540 - BAR[2] * k / 2, by, BAR[2] * k, BAR[3], BAR[2] * k * full, 1 - out, t,
       {txt: t >= 21.5 ? '100%' : '99%', a: k, c: t >= 21.5 ? COL.p : COL.w}, t < 21.5);
   }
@@ -592,10 +637,10 @@ function render(t) {
   drawPost(t);
 }
 window.render = render;
-window.ready = document.fonts.load('800 98px Inter').then(() => Promise.all([
-  document.fonts.load('900 134px Inter'), document.fonts.load('700 26px Inter'),
-  document.fonts.load('600 52px Inter'), document.fonts.load('500 58px Inter')]))
-  .then(() => { render(0); return true; });
+window.ready = Promise.all([
+  document.fonts.load('800 80px Unbounded'), document.fonts.load('900 80px Unbounded'),
+  document.fonts.load('500 40px "Space Grotesk"'), document.fonts.load('600 40px "Space Grotesk"'),
+  document.fonts.load('700 40px "Space Grotesk"')]).then(() => { capCache.clear(); render(0); return true; });
 </script>
 </body>
 </html>

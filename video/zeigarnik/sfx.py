@@ -179,8 +179,17 @@ def buzz(d, f=100):
 
 # ── TIMELINE AUDIO ───────────────────────────────────────────
 # Aggancio
-place(thump(150, 40, 0.7), 0.0, 0.9)
-place(tick(2600, 0.05), 0.0, 0.35)
+# parole che entrano una dopo l'altra (stessi ritardi della scena)
+for d, big in [(0.0, 0), (0.06, 0), (0.16, 2), (0.32, 1), (0.40, 0), (0.46, 0), (0.56, 0), (0.63, 0), (0.69, 0)]:
+    if big == 2:
+        place(thump(170, 40, 0.8), d, 1.0)
+        place(whoosh(0.18, 2000, 6000), d - 0.08, 0.3)
+    elif big == 1:
+        place(thump(140, 55, 0.4), d, 0.7)
+    else:
+        place(pop(1100, 380, 0.06), d, 0.45, (d * 7 % 2) - 0.5)
+        place(tick(3400, 0.02), d, 0.2)
+place(shimmer(0.6, 11), 1.0, 0.3)
 place(glitch(0.16), 1.65, 0.6)
 
 # Il cursore cade
@@ -202,7 +211,8 @@ for k in range(8):                                  # orologio
 # TV + countdown
 place(whoosh(0.5, 250, 3500), 6.95, 0.45, 0.2)
 for i in range(4):
-    place(thump(180, 70, 0.3), 7.5 + i * 0.6, 0.45)
+    place(whoosh(0.25, 600, 3000), 7.42 + i * 0.6, 0.25)
+    place(thump(180, 70, 0.3), 7.5 + i * 0.6 + 0.12, 0.45)
     place(tick(3000, 0.03), 7.5 + i * 0.6, 0.18)
 
 # Telefono
@@ -233,8 +243,8 @@ place(buzz(3.1, 100), 18.4, 0.08)
 place(riser(1.2, 150, 900), 20.3, 0.3)
 
 # "…di dire." → la risoluzione
-for i in range(5):
-    place(keyclick(), 21.0 + i * 0.09, 0.5)
+for i in range(3):
+    place(keyclick(), 21.0 + i * 0.12, 0.55)
 place(whoosh(0.5, 3000, 200, rev=True), 21.0, 0.35)
 place(thump(160, 35, 1.0), 21.5, 1.0)
 place(chord([110, 138.59, 164.81, 220, 277.18], 3.0, 0.03), 21.5, 0.75)   # La maggiore: sollievo

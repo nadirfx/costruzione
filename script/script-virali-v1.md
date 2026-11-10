@@ -30,7 +30,7 @@ Legenda per la registrazione:
 
 ---
 
-## 2. "Il tuo cervello odia le cose lasciate a metà"
+## 2. "Il tuo cervello odia le frasi lasciate a me…" (VOCE AGGIORNATA v2 — vedi blocco "Voce pulita")
 
 (Effetto Zeigarnik – il video apre un "loop" e lo chiude SOLO alla fine)
 
@@ -45,7 +45,7 @@ Legenda per la registrazione:
 | 21–26 s | "…di **dire**. / Vuoi le altre tecniche? Commenta **LOOP**." | Barra va al 100% con scoppio di luce, poi box commento | ding di completamento |
 
 **Voce pulita da registrare:**
-> C'è una frase che non ti finirò di… / Ti dà fastidio, vero? / Il tuo cervello odia le cose lasciate a metà. / Per questo guardi le serie fino alle tre di notte. / Per questo resti sui video fino alla fine. / Si chiama effetto Zeigarnik. / E lo sto usando adesso. // Quella frase dell'inizio? / Te la finisco solo se resti. / …di dire. / Vuoi le altre tecniche? Commenta LOOP.
+> Il tuo cervello odia le frasi lasciate a me… / Ti dà fastidio, vero? / Resta in allerta finché una cosa non è finita. / Per questo guardi le serie fino alle tre di notte. / Per questo resti sui video fino alla fine. / Si chiama effetto Zeigarnik. / E lo sto usando adesso. // Quella frase dell'inizio? / Te la finisco solo se resti. / …tà. / Vuoi le altre tecniche? Commenta LOOP.
 
 ---
 
