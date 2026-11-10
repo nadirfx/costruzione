@@ -450,7 +450,7 @@ function drawAnnotation(t, outK) {
   ctx.beginPath(); ctx.ellipse(540, 252, 300, 104, -.04, -Math.PI * .5, -Math.PI * .5 + Math.PI * 2 * E.outCubic(p)); ctx.stroke();
   const tp = prog(t, 16.0, 16.3);
   ctx.globalAlpha = (1 - outK) * tp; ctx.font = '700 30px ' + FB; ctx.textAlign = 'center';
-  ctx.fillStyle = COL.c; ctx.fillText('era qui da 10 secondi ↑', 540, 392 + (1 - tp) * 10);
+  ctx.fillStyle = COL.c; ctx.fillText('era qui da 12 secondi ↑', 540, 392 + (1 - tp) * 10);
   ctx.restore();
 }
 
@@ -542,9 +542,7 @@ function drawCTA(t) {
   if (sa > 0) { ctx.save(); ctx.globalAlpha *= sa; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = '600 34px ' + FB; ctx.fillStyle = COL.w;
     ctx.fillText('→ ti scrivo io in privato', 540, 1185);
-    ctx.font = '500 26px ' + FB; ctx.fillStyle = 'rgba(242,242,242,.5)';
-    ctx.fillText('idea e regia umana  ·  realizzato con AI', 540, 1236);
-    if (TL.handle) { ctx.font = '700 30px ' + FB; ctx.fillStyle = COL.w; ctx.fillText(TL.handle, 540, 1290); }
+    if (TL.handle) { ctx.font = '700 30px ' + FB; ctx.fillStyle = COL.w; ctx.fillText(TL.handle, 540, 1240); }
     ctx.restore(); }
   ctx.restore();
 }

@@ -37,8 +37,8 @@ def filt(x, kind, f):
     return sosfilt(sos, x)
 
 
-def place(x, at, gain=1.0, pan=0.0):
-    i = int(W(at) * SR)
+def place(x, at, gain=1.0, pan=0.0, raw=False):
+    i = int((at if raw else W(at)) * SR)
     if i >= N or i + len(x) <= 0:
         return
     x = x[: max(0, N - i)] * gain
@@ -211,8 +211,11 @@ place(riser(0.4, 300, 1200), 3.2, 0.25)
 place(riser(1.3, 400, 2200), 3.6, 0.22)
 place(thump(90, 50, 0.25), 4.9, 0.45)
 place(buzz(W(7.0) - W(4.9), 100), 4.9, 0.10)
-for k in range(8):                                  # orologio
-    place(tick(1900 if k % 2 else 2300, 0.03, 0.2), 3.3 + k * 0.5, 0.22, -0.3 if k % 2 else 0.3)
+tk = W(3.3)                                          # orologio: tempo regolare nel video finale
+k = 0
+while tk < W(7.0):
+    place(tick(1900 if k % 2 else 2300, 0.03, 0.2), tk, 0.22, -0.3 if k % 2 else 0.3, raw=True)
+    tk += 0.5; k += 1
 
 # TV + countdown
 place(whoosh(0.5, 250, 3500), 6.95, 0.45, 0.2)
@@ -283,10 +286,11 @@ place(whoosh(0.3, 1500, 7000, rev=True), 23.7, 0.4)
 place(thump(190, 32, 1.1), 23.98, 1.0)                          # l'AI.
 place(glitch(0.3), 23.98, 0.55)
 place(shimmer(0.8, 21), 24.05, 0.45)
-for k in range(11):                                             # groove "dietro le quinte"
-    tk = 24.4 + k * 0.5
-    place(thump(110, 45, 0.25), tk, 0.42)
-    place(tick(7000, 0.03, 0.9), tk + 0.25, 0.12)
+tk = W(24.4)                                          # groove a tempo fisso (120 bpm) nel video finale
+while tk < W(29.4):
+    place(thump(110, 45, 0.25), tk, 0.42, raw=True)
+    place(tick(7000, 0.03, 0.9), tk + 0.25, 0.12, raw=True)
+    tk += 0.5
 for li in range(4):                                             # le clip entrano
     for q in range(5):
         place(pop(1300 - li * 150, 500, 0.04), 24.05 + li * 0.07 + q * 0.045, 0.09, (q - 2) / 3)

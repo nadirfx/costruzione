@@ -1,4 +1,4 @@
-# Testo da registrare – Zeigarnik v4 (~26 s)
+# Testo da registrare – Zeigarnik v5 (~30 s)
 
 `/` = respiro · `//` = unica pausa drammatica · **grassetto** = enfasi
 
