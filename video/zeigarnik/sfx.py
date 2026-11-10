@@ -252,19 +252,55 @@ for i in range(3):
     place(keyclick(), 21.0 + i * 0.12, 0.55)
 place(whoosh(0.5, 3000, 200, rev=True), 21.0, 0.35)
 place(thump(160, 35, 1.0), 21.5, 1.0)
-place(chord([110, 138.59, 164.81, 220, 277.18], 3.0, 0.03), 21.5, 0.75)   # La maggiore: sollievo
+_c = chord([110, 138.59, 164.81, 220, 277.18], 1.48, 0.03)
+_c[-int(0.08 * SR):] *= np.linspace(1, 0, int(0.08 * SR))
+place(_c, 21.5, 0.75)   # La maggiore: sollievo (tagliato dal "tape stop")
 place(shimmer(1.4, 9), 21.52, 0.7)
 place(whoosh(0.7, 4000, 300), 21.5, 0.35)
 
-# CTA
-place(whoosh(0.4, 400, 4000), 22.95, 0.35)
-place(buzz(0.35, 120), 23.1, 0.15)
-for i in range(4):
-    place(keyclick(), 23.6 + i * 0.12, 0.55)
-place(pop(1200, 500, 0.05), 24.15, 0.5)
-place(ding(), 24.55, 0.6)
-place(whoosh(0.4, 3000, 300, rev=True), 24.95, 0.3)
-place(pop(500, 150, 0.08), 25.35, 0.3)
+# ── COLPO DI SCENA ──
+def tape_stop(d=0.55):
+    """L'accordo che rallenta fino a fermarsi, come un nastro."""
+    t = t_(d)
+    rate = np.clip(1 - t / d, 0, 1) ** 1.6
+    ph = np.cumsum(rate) / SR
+    x = sum(np.sin(2 * np.pi * f * ph) for f in [110, 138.59, 164.81, 220])
+    return filt(x / 4, "lowpass", 2500) * (rate ** 0.5)
+
+place(tape_stop(), 22.95, 0.7)
+for i, d in enumerate([23.05, 23.13, 23.21, 23.29]):          # "Ah, un'ultima cosa…"
+    place(pop(800, 300, 0.05), d, 0.22)
+for i in range(5):                                              # "Questo video l'ho creato con"
+    place(tick(3000, 0.025), 23.72 + i * 0.06, 0.18)
+place(whoosh(0.3, 1500, 7000, rev=True), 23.7, 0.4)
+place(thump(190, 32, 1.1), 23.98, 1.0)                          # l'AI.
+place(glitch(0.3), 23.98, 0.55)
+place(shimmer(0.8, 21), 24.05, 0.45)
+for k in range(9):                                              # groove "dietro le quinte"
+    tk = 24.4 + k * 0.5
+    place(thump(110, 45, 0.25), tk, 0.42)
+    place(tick(7000, 0.03, 0.9), tk + 0.25, 0.12)
+for li in range(4):                                             # le clip entrano
+    for q in range(5):
+        place(pop(1300 - li * 150, 500, 0.04), 24.05 + li * 0.07 + q * 0.045, 0.09, (q - 2) / 3)
+place(whoosh(0.4, 400, 3000), 25.45, 0.35)                     # tracce → grafico
+place(riser(1.3, 250, 1100), 25.7, 0.2)
+place(thump(150, 50, 0.5), 27.0, 0.6)                           # "E ha funzionato"
+place(pop(1600, 700, 0.06), 27.4, 0.45)                         # pin "TU SEI QUI"
+place(ding(), 27.42, 0.35)
+place(shimmer(0.7, 31), 27.45, 0.4)
+place(whoosh(0.4, 3000, 300, rev=True), 28.05, 0.3)
+
+# ── CTA (spostata di 5.4 s nel tempo sorgente) ──
+TW = 5.4
+place(whoosh(0.4, 400, 4000), 22.95 + TW, 0.35)
+place(buzz(0.35, 120), 23.1 + TW, 0.15)
+for i in range(2):
+    place(keyclick(), 23.6 + TW + i * 0.16, 0.6)
+place(pop(1200, 500, 0.05), 24.15 + TW, 0.5)
+place(ding(), 24.55 + TW, 0.6)
+place(whoosh(0.4, 3000, 300, rev=True), 24.95 + TW, 0.3)
+place(pop(500, 150, 0.08), 25.35 + TW, 0.3)
 
 # Micro-tick per ogni parola dei sottotitoli (molto bassi)
 for a, b, tokens in TL["captions"]:

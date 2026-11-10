@@ -205,13 +205,14 @@ const tintC = document.createElement('canvas'); tintC.width = W; tintC.height = 
 // ── SFONDO ───────────────────────────────────────────────────
 function accentAt(t) {
   if (t < 7) return COL.p; if (t < 12) return COL.c; if (t < 15) return COL.g;
-  if (t < 18) return COL.c; return COL.p;
+  if (t < 18) return COL.c; if (t < 23.0) return COL.p;
+  if (t < 25.5) return COL.p; if (t < 28.4) return COL.c; return COL.p;
 }
 function drawBg(t) {
   ctx.fillStyle = COL.bg; ctx.fillRect(0, 0, W, H);
   let a = .11 + .03 * Math.sin(t * 2.2);
   if (t >= 21.5 && t < 23) a += .22 * Math.exp(-(t - 21.5) * 2.2);
-  if (t >= 25.0) a *= 1 - prog(t, 25.0, 25.4);
+  if (t >= 30.4) a *= 1 - prog(t, 30.4, 30.8);
   const gr = ctx.createRadialGradient(540, 900, 0, 540, 900, 1050);
   gr.addColorStop(0, rgba(accentAt(t), a)); gr.addColorStop(1, rgba(accentAt(t), 0));
   ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
@@ -451,9 +452,9 @@ function drawCTA(t) {
   const fi = Math.floor((t - 23.1) * 30);
   const on = t < 23.1 ? 0 : (fi < fl.length ? fl[fi] : 1);
   if (on) {
-    ctx.save(); ctx.font = '900 168px ' + FH; ctx.letterSpacing = '6px';
-    glow(ctx, COL.p, 60); ctx.fillStyle = COL.p; ctx.fillText('LOOP', 543, 870);
-    glow(ctx, COL.p, 18); ctx.fillStyle = '#FF7AB8'; ctx.fillText('LOOP', 543, 870); ctx.restore();
+    ctx.save(); ctx.font = '900 230px ' + FH; ctx.letterSpacing = '10px';
+    glow(ctx, COL.p, 60); ctx.fillStyle = COL.p; ctx.fillText('AI', 543, 870);
+    glow(ctx, COL.p, 18); ctx.fillStyle = '#FF7AB8'; ctx.fillText('AI', 543, 870); ctx.restore();
   }
   // box commento
   const pb = prog(t, 23.4, 23.7);
@@ -468,7 +469,7 @@ function drawCTA(t) {
     const ca = 1 - prog(t, 24.3, 24.42);
     if (ca > 0) {
       ctx.save(); ctx.globalAlpha *= ca; ctx.textAlign = 'left';
-      const typed = 'LOOP'.slice(0, Math.max(0, Math.min(4, Math.floor((t - 23.6) / .12) + 1)));
+      const typed = 'AI'.slice(0, Math.max(0, Math.min(2, Math.floor((t - 23.6) / .16) + 1)));
       if (t < 23.6) { ctx.font = '500 32px ' + FB; ctx.fillStyle = 'rgba(242,242,242,.38)'; ctx.fillText('Aggiungi un commento…', bx + 44, by); }
       else {
         ctx.font = '800 38px ' + FH; ctx.fillStyle = COL.w; ctx.fillText(typed, bx + 44, by);
@@ -500,7 +501,185 @@ function drawCTA(t) {
     }
     ctx.restore();
   }
+  const sa = prog(t, 23.6, 23.9);
+  if (sa > 0) { ctx.save(); ctx.globalAlpha *= sa; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '500 28px ' + FB; ctx.fillStyle = 'rgba(242,242,242,.55)';
+    ctx.fillText('idea e regia umana  ·  realizzato con AI', 540, 1190);
+    if (TL.handle) { ctx.font = '700 30px ' + FB; ctx.fillStyle = COL.w; ctx.fillText(TL.handle, 540, 1240); }
+    ctx.restore(); }
   ctx.restore();
+}
+
+// ── COLPO DI SCENA: "questo video l'ho creato con l'AI" ──────
+const TW = 5.4;   // di quanto la CTA è spostata in avanti (tempo sorgente)
+function popLine(t, start, tokens, y, size, weight, family, dt = .07, outAt = null) {
+  const words = [];
+  for (const [txt, c] of tokens) for (const w of txt.split(' ')) if (w) words.push({w, c});
+  ctx.save(); ctx.font = `${weight} ${size}px ${family}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+  const SP = size * .28; let tw = 0;
+  for (const o of words) { o.width = ctx.measureText(o.w).width; tw += o.width; }
+  tw += SP * (words.length - 1);
+  let x = 540 - tw / 2;
+  const oa = outAt == null ? 1 : 1 - prog(t, outAt, outAt + .16);
+  words.forEach((o, i) => {
+    const s = start + i * dt, p = prog(t, s, s + .22);
+    if (p > 0 && oa > 0) {
+      const sc = lerp(1.35, 1, E.outBack(p)), hot = 1 - prog(t, s + .08, s + .4);
+      const fin = o.c === 'w' ? COL.w : COL[o.c];
+      ctx.save(); ctx.globalAlpha = clamp(p * 3) * oa;
+      ctx.translate(x + o.width / 2, y + (1 - E.outCubic(p)) * 14 - (1 - oa) * 30); ctx.scale(sc, sc);
+      glow(ctx, o.c === 'w' ? rgba(COL.p, .55 * hot + .05) : fin, o.c === 'w' ? 16 : 32);
+      ctx.fillStyle = o.c === 'w' ? mix(COL.w, COL.p, hot * .8) : mix(fin, '#FFFFFF', hot * .4);
+      ctx.fillText(o.w, 0, 0); ctx.restore();
+    }
+    x += o.width + SP;
+  });
+  ctx.restore();
+}
+
+const PANEL = [90, 1030, 900, 400, 30];
+const LANES = [['TESTO', '#F2F2F2'], ['MOTION', COL.c], ['SUONO', COL.p], ['PSICO', COL.g]];
+const CLIPS = (() => { const r = rng(77), out = [];
+  LANES.forEach((ln, li) => { let x = r() * .05, qi = 0;
+    while (x < .97) { const w = .07 + r() * .2; out.push({li, qi: qi++, x, w: Math.min(w, .995 - x) - .018}); x += w; } });
+  return out; })();
+const RET = u => 100 - 7 * u - 1.6 * Math.sin(u * 9) * (1 - u) ;       // curva di retention (illustrativa)
+
+function drawPanel(t) {
+  const pin = E.outExpo(prog(t, 23.95, 24.4)), pout = E.inExpo(prog(t, 28.15, 28.4));
+  if (pin <= 0 || pout >= 1) return;
+  const [px, py, pw, ph, pr] = PANEL, ix = px + 150, iw = pw - 185;
+  ctx.save(); ctx.globalAlpha = 1 - pout;
+  ctx.translate(540, py + ph / 2); ctx.scale(lerp(.92, 1, pin) * (1 - pout * .2), pin * (1 - pout * .2)); ctx.translate(-540, -(py + ph / 2));
+  rr(ctx, px, py, pw, ph, pr); ctx.fillStyle = 'rgba(255,255,255,.035)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(242,242,242,.16)'; ctx.lineWidth = 2; ctx.stroke();
+  const base = ctx.globalAlpha;
+  // tracce della timeline
+  const la = 1 - prog(t, 25.5, 25.85);
+  if (la > 0) LANES.forEach(([name, c], li) => {
+    const ly = py + 52 + li * 84;
+    ctx.globalAlpha = base * la;
+    ctx.font = '700 20px ' + FB; ctx.letterSpacing = '4px'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(242,242,242,.5)'; ctx.fillText(name, px + 32, ly + 22); ctx.letterSpacing = '0px';
+    rr(ctx, ix, ly, iw, 44, 10); ctx.fillStyle = 'rgba(255,255,255,.03)'; ctx.fill();
+    for (const q of CLIPS) {
+      if (q.li !== li) continue;
+      const s = 24.05 + li * .07 + q.qi * .045, p = E.outExpo(prog(t, s, s + .4));
+      if (p <= 0) continue;
+      const x = ix + q.x * iw + (1 - p) * 140, w = q.w * iw;
+      ctx.globalAlpha = base * la * clamp(p * 2);
+      if (name === 'SUONO') {
+        glow(ctx, c, 8); ctx.fillStyle = c;
+        for (let bx = 4; bx < w - 4; bx += 7) {
+          const hgt = 4 + 30 * Math.abs(Math.sin((x + bx) * .045) * Math.sin((x + bx) * .013 + q.qi));
+          ctx.fillRect(x + bx, ly + 22 - hgt / 2, 3, hgt);
+        }
+        noGlow(ctx);
+      } else {
+        rr(ctx, x, ly + 4, w, 36, 8); ctx.fillStyle = rgba(c, .22); ctx.fill();
+        ctx.strokeStyle = rgba(c, .85); ctx.lineWidth = 2; ctx.stroke();
+        if (name === 'MOTION') for (const dx of [10, w - 10]) {
+          ctx.save(); ctx.translate(x + dx, ly + 22); ctx.rotate(Math.PI / 4); ctx.fillStyle = c; ctx.fillRect(-5, -5, 10, 10); ctx.restore();
+        }
+        if (name === 'TESTO' && w > 60) { ctx.fillStyle = 'rgba(242,242,242,.55)'; ctx.fillRect(x + 12, ly + 19, Math.min(w - 24, 70), 6); }
+      }
+    }
+  });
+  ctx.globalAlpha = base;
+  // grafico di retention
+  const ga = prog(t, 25.6, 25.95);
+  const gx0 = px + 60, gx1 = px + pw - 70, gy0 = py + 110, gy1 = py + ph - 50;
+  const yOf = v => lerp(gy0, gy1, (100 - v) / 30);
+  const u1 = E.inOutCubic(prog(t, 25.7, 26.95));
+  if (ga > 0) {
+    ctx.save(); ctx.globalAlpha = base * ga;
+    ctx.font = '700 22px ' + FB; ctx.letterSpacing = '6px'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    glow(ctx, COL.c, 12); ctx.fillStyle = COL.c; ctx.fillText('RETENTION', px + 40, py + 50); noGlow(ctx); ctx.letterSpacing = '0px';
+    ctx.strokeStyle = 'rgba(242,242,242,.08)'; ctx.lineWidth = 1;
+    for (let k = 0; k < 4; k++) { const gy = lerp(gy0, gy1, k / 3); ctx.beginPath(); ctx.moveTo(gx0, gy); ctx.lineTo(gx1, gy); ctx.stroke(); }
+    if (u1 > 0) {
+      const N = 80; ctx.beginPath();
+      for (let k = 0; k <= N; k++) { const u = k / N * u1; const x = lerp(gx0, gx1, u), y = yOf(RET(u)); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+      const ex = lerp(gx0, gx1, u1);
+      const area = new Path2D(); area.moveTo(gx0, gy1 + 30);
+      for (let k = 0; k <= N; k++) { const u = k / N * u1; area.lineTo(lerp(gx0, gx1, u), yOf(RET(u))); }
+      area.lineTo(ex, gy1 + 30); area.closePath();
+      const gr = ctx.createLinearGradient(0, gy0, 0, gy1 + 30); gr.addColorStop(0, 'rgba(34,211,238,.22)'); gr.addColorStop(1, 'rgba(34,211,238,0)');
+      ctx.fillStyle = gr; ctx.fill(area);
+      glow(ctx, COL.c, 22); ctx.strokeStyle = COL.c; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+      ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(ex, yOf(RET(u1)), 8, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+  // testina di riproduzione
+  const phx = t < 25.7 ? lerp(ix, ix + iw * .97, E.inOutCubic(prog(t, 24.15, 25.6))) : lerp(gx0, gx1, u1);
+  const pha = prog(t, 24.1, 24.3);
+  if (pha > 0) {
+    ctx.save(); ctx.globalAlpha = base * pha; glow(ctx, COL.p, 18); ctx.strokeStyle = COL.p; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(phx, py + 26); ctx.lineTo(phx, py + ph - 26); ctx.stroke();
+    ctx.fillStyle = COL.p; ctx.beginPath(); ctx.moveTo(phx - 11, py + 18); ctx.lineTo(phx + 11, py + 18); ctx.lineTo(phx, py + 32); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  // pin "TU SEI QUI"
+  const pp = prog(t, 27.05, 27.6);
+  if (pp > 0) {
+    const ex = gx1, ey = yOf(RET(1)), dy = lerp(-150, 0, E.outBounce(pp));
+    ctx.save(); ctx.globalAlpha = base * clamp(pp * 4);
+    const rp = prog(t, 27.3, 28.1);
+    if (rp < 1) { glow(ctx, COL.p, 20); ctx.strokeStyle = COL.p; ctx.globalAlpha = base * (1 - rp); ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(ex, ey, 14 + 70 * E.outExpo(rp), 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = base * clamp(pp * 4); }
+    glow(ctx, COL.p, 26); ctx.fillStyle = COL.p; ctx.beginPath(); ctx.arc(ex, ey + dy, 15, 0, Math.PI * 2); ctx.fill();
+    ctx.font = '800 30px ' + FH; const lw = ctx.measureText('TU SEI QUI').width + 40;
+    rr(ctx, ex - lw + 30, ey + dy - 92, lw, 54, 27); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(ex - 10, ey + dy - 40); ctx.lineTo(ex + 10, ey + dy - 40); ctx.lineTo(ex, ey + dy - 22); ctx.closePath(); ctx.fill();
+    noGlow(ctx); ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('TU SEI QUI', ex - lw / 2 + 30, ey + dy - 64);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function drawTwist(t) {
+  if (t < 22.95 || t > 28.45) return;
+  // A) "Ah, un'ultima cosa…"
+  if (t < 23.75) {
+    const pa = prog(t, 23.0, 23.15) * (1 - prog(t, 23.6, 23.72));
+    ctx.save(); ctx.globalAlpha = pa; ctx.fillStyle = 'rgba(242,242,242,.7)';
+    rr(ctx, 512, 760, 18, 64, 4); ctx.fill(); rr(ctx, 550, 760, 18, 64, 4); ctx.fill(); ctx.restore();
+    popLine(t, 23.05, [['Ah, un’ultima cosa…', 'w']], 900, 64, 600, FB, .08, 23.6);
+  }
+  // B) "Questo video l'ho creato con l'AI."
+  if (t >= 23.7 && t < 25.6) {
+    popLine(t, 23.72, [['Questo video l’ho creato con', 'w']], 600, 60, 600, FB, .06, 25.42);
+    const pa = prog(t, 23.98, 24.2), out = E.inExpo(prog(t, 25.38, 25.56));
+    if (pa > 0) {
+      ctx.save(); ctx.font = `900 200px ${FH}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const tw = ctx.measureText('l’AI.').width, sz = Math.min(1, 860 / tw);
+      const sc = lerp(1.6, 1, E.outBack(prog(t, 23.98, 24.3))) * sz * (1 + .02 * Math.sin(t * 6)) * (1 - out * .4);
+      ctx.translate(540, 820); ctx.scale(sc, sc); ctx.globalAlpha = clamp(pa * 2) * (1 - out);
+      const g = ctx.createLinearGradient(-tw / 2, 0, tw / 2, 0);
+      const sh = (t * .35) % 1;
+      g.addColorStop(0, COL.p); g.addColorStop(clamp(.35 + sh * .3), '#FF7AB8'); g.addColorStop(1, COL.c);
+      const gl = 1 - prog(t, 23.98, 24.35);
+      if (gl > 0) {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha *= gl;
+        ctx.fillStyle = COL.p; ctx.fillText('l’AI.', -22 * gl, 0); ctx.fillStyle = COL.c; ctx.fillText('l’AI.', 22 * gl, 0); ctx.restore();
+      }
+      glow(ctx, COL.p, 50); ctx.fillStyle = g; ctx.fillText('l’AI.', 0, 0);
+      ctx.restore(); noGlow(ctx);
+    }
+  }
+  // C) "Ogni secondo pensato per non farti scrollare."
+  if (t >= 25.5 && t < 27.1) {
+    popLine(t, 25.55, [['Ogni secondo pensato', 'w']], 640, 60, 600, FB, .07, 26.95);
+    popLine(t, 25.84, [['per', 'w'], ['non farti scrollare.', 'p']], 730, 60, 700, FB, .07, 26.95);
+  }
+  // D) "E ha funzionato: sei ancora qui."
+  if (t >= 27.0) {
+    popLine(t, 27.02, [['E ha funzionato:', 'w']], 620, 60, 600, FB, .07, 28.22);
+    popLine(t, 27.3, [['sei ancora qui.', 'p']], 750, 86, 800, FH, .09, 28.22);
+  }
+  drawPanel(t);
 }
 
 // ── STAGE principale ─────────────────────────────────────────
@@ -622,7 +801,7 @@ function renderSrc(t) {
     sx = (r() - .5) * 22 * Math.exp(-d * 10); sy = (r() - .5) * 22 * Math.exp(-d * 10);
   }
   if (t >= 15.0 && t < 15.6) cs = lerp(1.08, 1, E.outExpo(prog(t, 15.0, 15.6)));
-  for (const sc of [2.0, 3.2, 7.0, 9.5, 12.0, 18.0, 23.0]) if (t >= sc && t < sc + .5) cs *= 1 + .035 * Math.exp(-(t - sc) * 9);
+  for (const sc of [2.0, 3.2, 7.0, 9.5, 12.0, 18.0, 23.98, 25.5, 27.0, 28.4]) if (t >= sc && t < sc + .5) cs *= 1 + .035 * Math.exp(-(t - sc) * 9);
   ctx.save(); ctx.translate(540 + sx, 960 + sy); ctx.scale(cs, cs); ctx.translate(-540, -960);
 
   drawStage(t);
@@ -630,7 +809,8 @@ function renderSrc(t) {
   if (t >= 1.65 && t < 1.8) glitchHero(hs, t);
   else drawHero(ctx, hs);
   drawBoom(t);
-  drawCTA(t);
+  drawTwist(t);
+  drawCTA(t - TW);
   ctx.restore();
 
   drawTags(t);
