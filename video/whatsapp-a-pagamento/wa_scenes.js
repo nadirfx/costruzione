@@ -126,7 +126,7 @@ function w6(T){bgDark(T,'warm');typeLit('Niente…',CX,250,T,K.c3,14,{size:110,w
   [[K.c3,'building','Agenzia','preventivi e settimane di attesa'],[K.c3b,'user','Editor','1.400 € al mese'],[K.c3c,'film','After Effects','ore di rendering']].forEach(([t0,ic,nm,sub],i)=>{const k=p(T,t0-.05,t0+.3);if(k<=0)return;const Y=560+i*270,dx=(1-eo(k))*700;
     x.save();x.translate(CX+dx,Y);x.globalAlpha=clamp(k*2);glass(0,0,820,200,44,{rim:[G.cyan,G.purple],fill:.07});gIcon(ic,-320,0,130,T,{cols:[G.white,G.cyan,G.purple]});
     glowText(nm,-230,-30,{size:74,weight:800,align:'left',glow:10,maxW:9999});glowText(sub,-230,42,{size:38,weight:400,align:'left',glow:0,color:G.dim,maxW:9999});
-    const st=eo(p(T,t0+.35,t0+.6));if(st>0){x.strokeStyle=G.red;x.shadowColor=G.red;x.shadowBlur=20;x.lineWidth=8;x.lineCap='round';x.beginPath();x.moveTo(-250,-6);x.lineTo(-250+470*st,-6);x.stroke();x.shadowBlur=0;
+    const st=eo(p(T,t0+.35,t0+.6));if(st>0){x.strokeStyle=G.red;x.shadowColor=G.red;x.shadowBlur=20;x.lineWidth=7;x.lineCap='round';x.font='800 74px Int';x.letterSpacing='-2px';const nw=x.measureText(nm).width;x.letterSpacing='0px';x.beginPath();x.moveTo(-236,-32);x.lineTo(-236+(nw+12)*st,-32);x.stroke();x.shadowBlur=0;
       gIcon('x',320,0,100*back(clamp(p(T,t0+.5,t0+.8))),T,{alpha:clamp(p(T,t0+.5,t0+.7)*2),cols:['#FFFFFF','#FF8899',G.red]})}x.restore()})}
 
 /* S7 · "Gli scrivo l'idea, e lui mi fa animazioni, effetti e suoni." */
@@ -138,8 +138,8 @@ function w7(T){bgDark(T,'warm');typeLit("Gli scrivo l'idea",CX,250,T,K.c4,22,{si
   if(T>=K.c4a)halo(CX+375,BY,T,K.c4a,G.orange,50,200);
   typeLit('e lui mi fa',CX,690,T,K.c4b-.3,22,{size:70,weight:500,lit:G.orange});
   [[K.c4b,'wave','Animazioni',270],[K.c4c,'spark','Effetti',540],[K.c4d,'note','Suoni',810]].forEach(([t0,kd,lb,X])=>{const k=p(T,t0,t0+.4);if(k<=0)return;
-    const lk=eo(p(T,t0-.15,t0+.2));x.save();x.strokeStyle=hexA(G.orange,.7);x.shadowColor=G.orange;x.shadowBlur=14;x.lineWidth=3;x.beginPath();x.moveTo(CX,BY+70);x.quadraticCurveTo((CX+X)/2,(BY+940)/2,L(CX,X,lk),L(BY+70,900,lk));x.stroke();x.restore();
-    tileL(kd,X,960,190,T,lb,k,{cols:[G.white,G.orange,G.violet]});halo(X,960,T,t0+.15,G.orange,90,240)})}
+    const lk=eo(p(T,t0-.15,t0+.2));x.save();x.strokeStyle=hexA(G.orange,.7);x.shadowColor=G.orange;x.shadowBlur=14;x.lineWidth=3;x.beginPath();x.moveTo(CX,745);x.quadraticCurveTo((CX+X)/2,800,L(CX,X,lk),L(745,862,lk));x.stroke();x.restore();
+    tileL(kd,X,960,190,T,lb,k,{cols:[G.white,G.orange,G.violet]});halo(X,960,T,t0+.15,G.orange,96,135)})}
 
 /* S8 · "E se per un secondo ti sei preoccupato… ha funzionato." */
 function w8(T){const calm=p(T,K.e1c,K.e1c+.4);bgDark(T,calm>.5?'green':'red');
