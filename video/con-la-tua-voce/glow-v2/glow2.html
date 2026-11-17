@@ -189,12 +189,19 @@ function g5(T){bgDark(T,'cool');
   if(T>=13.6){const e=pts[60];gpill('Il mio video: 230 visual.',e[0]-330,e[1]-270,T,13.6,{icon:'eye',col:G.red,size:34})}
   if(T>=14.16){const k=p(T,14.16,14.35);x.save();x.translate(CX,1440);x.scale(L(1.4,1,eo(k)),L(1.4,1,eo(k)));glowText('Già morto.',0,0,{size:170,weight:800,color:G.red,glow:50,alpha:Math.min(1,k*2)});x.restore()}}
 /* S6 · 14.6–16.9 "allora ho cambiato tutto": dome + arrow up (like the reference) */
-function g6(T){bgDark(T,'cool');const k=eo(p(T,14.62,15.3));
-  x.save();x.translate(CX,1150);const dr=L(200,760,k);const dg=x.createRadialGradient(0,0,dr*.2,0,0,dr);dg.addColorStop(0,hexA(G.blue,.7));dg.addColorStop(.7,hexA(G.violet,.55));dg.addColorStop(1,hexA(G.violet,0));x.fillStyle=dg;x.beginPath();x.arc(0,0,dr,Math.PI,0);x.fill();
-  x.strokeStyle='rgba(255,255,255,.8)';x.lineWidth=3;x.shadowColor='#fff';x.shadowBlur=20;x.beginPath();x.arc(0,0,dr*.78,Math.PI*1.08,Math.PI*1.92);x.stroke();x.shadowBlur=0;x.restore();
-  const ay=L(1500,1220,eo(p(T,15.0,15.6)));x.save();x.translate(CX,ay);const ag=x.createRadialGradient(0,40,10,0,60,260);ag.addColorStop(0,hexA(G.cyan,.9));ag.addColorStop(1,hexA(G.blue,0));x.fillStyle=ag;x.beginPath();x.arc(0,60,260,Math.PI,0);x.fill();x.strokeStyle='#05060C';x.lineWidth=26;x.lineCap='round';x.lineJoin='round';x.beginPath();x.moveTo(0,140);x.lineTo(0,-60);x.moveTo(-150,30);x.lineTo(0,-60);x.lineTo(150,30);x.stroke();x.restore();
-  flare(CX+150,820,520,Math.max(0,1-Math.abs(T-15.25)*1.6),G.green);
-  glowText('allora',CX,640,{size:60,weight:400,color:G.dim,glow:0,alpha:p(T,15.18,15.4)});typeLit('Ho cambiato tutto.',CX,760,T,15.64,16,{size:110,weight:700})}
+function g6(T){bgDark(T,'cool');const k=eo(p(T,14.62,15.4)),rise=eo(p(T,14.75,15.25)),hit=Math.max(0,1-Math.abs(T-15.2)*2.2);
+  // soft volumetric bloom from below (no hard edge)
+  x.save();x.globalCompositeOperation='lighter';const R0=L(300,900,k);const bg=x.createRadialGradient(CX,1250,0,CX,1250,R0);bg.addColorStop(0,hexA(G.cyan,.55));bg.addColorStop(.35,hexA(G.blue,.35));bg.addColorStop(.7,hexA(G.violet,.18));bg.addColorStop(1,hexA(G.violet,0));x.fillStyle=bg;x.fillRect(-300,-400,W+600,H+800);
+  // light beams fanning upward from the icon
+  for(let b=0;b<9;b++){const a=-Math.PI/2+(b-4)*.17+.04*Math.sin(b*1.7)+ (T-14.62)*.03*(b%2?1:-1),len=L(0,1300,eo(p(T,14.8+b*.03,15.6+b*.03))),wd=18+((b*37)%5)*9;
+    x.save();x.translate(CX,1060);x.rotate(a+Math.PI/2);const lg=x.createLinearGradient(0,0,0,-len);lg.addColorStop(0,hexA(b%3?G.cyan:G.violet,.32+.25*hit));lg.addColorStop(1,hexA(G.blue,0));x.fillStyle=lg;x.beginPath();x.moveTo(-wd*.2,0);x.lineTo(wd*.2,0);x.lineTo(wd,-len);x.lineTo(-wd,-len);x.closePath();x.fill();x.restore()}
+  x.restore();
+  // halo rings expanding on the hit
+  for(let r=0;r<2;r++){const q=p(T,15.2+r*.18,16.2+r*.18);if(q>0&&q<1){x.save();x.globalAlpha=(1-q)*.8;x.strokeStyle=r?G.violet:G.cyan;x.shadowColor=x.strokeStyle;x.shadowBlur=30;x.lineWidth=4;x.beginPath();x.arc(CX,1060,140+eo(q)*420,0,7);x.stroke();x.restore()}}
+  // glass icon rising (the reveal goes UP)
+  const iy=L(1420,1060,rise),is=L(120,250,rise)*(1+.08*hit);gIcon('up',CX,iy,is,T,{alpha:p(T,14.7,14.95),cols:[G.white,G.cyan,G.violet]});
+  flare(CX,iy-is*.5,420*(.5+hit),Math.min(1,hit*1.4+.15*p(T,15.4,15.6)),G.cyan);
+  glowText('allora',CX,600,{size:60,weight:400,color:G.dim,glow:0,alpha:p(T,15.18,15.4)});typeLit('Ho cambiato tutto.',CX,730,T,15.64,16,{size:110,weight:700})}
 /* S7 · 16.9–19.6 now I make them, with Claude: icons orbit (like "Any case") */
 function g7(T){bgDark(T,'warm');typeLit('Adesso i video',CX,240,T,16.92,18,{size:70,weight:400});typeLit('li faccio io',CX,350,T,18.14,22,{size:110,weight:700});
   const ks=['play','spark','note','eye','wave','star'];const ok=eo(p(T,17.1,17.8));
