@@ -1,7 +1,7 @@
 # WhatsApp a pagamento — script voce
 
 Da gennaio WhatsApp diventa a pagamento.
-4,99 € al mese.
+5 euro al mese.
 Messaggi, vocali, chiamate… tutto.
 E se non paghi?
 Le tue chat vengono cancellate. In 30 giorni.

@@ -18,9 +18,9 @@
 </head>
 <body>
 <canvas id="cv" width="1080" height="1920"></canvas>
-<div class="ctrl"><button id="play">▶</button><input id="scrub" type="range" min="0" max="37.8" step="0.01" value="0"><span id="tm">0.00 / 37.8</span></div>
+<div class="ctrl"><button id="play">▶</button><input id="scrub" type="range" min="0" max="37.5" step="0.01" value="0"><span id="tm">0.00 / 37.8</span></div>
 <script>
-const W=1080,H=1920,DUR=37.8,CX=540;
+const W=1080,H=1920,DUR=37.5,CX=540;
 const C={ink:'#0E0E12',red:'#E8173A',deep:'#7A0010',orange:'#FF6A2B',green:'#19C37D',purple:'#6E4BFF',pink:'#FF3D8B',grey:'#9A9AA2',light:'#F2F2F4'};
 const cv=document.getElementById('cv'),MAIN=cv.getContext('2d');let x=MAIN;
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v)),p=(t,a,b)=>clamp((t-a)/(b-a)),L=(a,b,k)=>a+(b-a)*k;
@@ -156,10 +156,7 @@ const fmtN=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 /* ===================== WHATSAPP A PAGAMENTO · glow edition =====================
    Every time below comes from table K (voice line starts). To resync on the real
    voice recording, only K changes. */
-const K={h1:0,h1b:1.0,h2:2.5,h3:3.9,h3b:4.6,h3c:5.3,h3d:6.0,h4:6.7,h5:7.9,h5b:9.6,
-  t1:11.0,t1b:11.9,t1c:12.9,t2:13.7,t2b:15.2,t2c:15.9,rw:17.3,r1:17.95,r2:18.6,
-  c1:19.9,c2:21.5,c2b:23.0,c3:24.2,c3b:25.1,c3c:26.0,c4:27.2,c4a:28.35,c4b:28.6,c4c:29.3,c4d:29.9,
-  e1:30.7,e1b:31.6,e1c:32.6,e2:33.9,e3:35.0,e3b:36.1,end:37.8};
+const K={h1:0,h1b:1.66,h2:3.12,h3:4.4,h3b:5.34,h3c:5.78,h3d:6.5,h4:6.85,h5:7.84,h5b:9.6,t1:11.16,t1b:12.16,t1c:13.18,t2:14.0,t2b:14.86,t2c:15.68,rw:16.95,r1:17.64,r2:18.2,c1:19.28,c2:20.6,c2b:22.25,c3:23.16,c3b:24.38,c3c:25.34,c4:26.7,c4a:27.75,c4b:28.12,c4c:29.04,c4d:29.68,e1:30.1,e1b:31.42,e1c:32.36,e2:33.5,e3:34.68,e3b:35.36,end:37.5};
 const WAG='#25D366';
 const WA=new Path2D('M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z');
 /* the real WhatsApp mark: official glyph, white on the brand-green app squircle, glass + neon */
@@ -197,13 +194,13 @@ function seg(T,a,b,fn,tin,tout,push=[.11,0],lin=true){if(T<a||T>=b)return;const 
 /* S1 · hook: WhatsApp becomes paid */
 function w1(T){const paid=eo(p(T,K.h2,K.h2+.35));bgDark(T,T>K.h2?'red':'green');
   const ent=ex(p(T,0,1.3)),LY=740,LS=420*(1.45-.45*ent)*(1+.06*Math.exp(-Math.max(0,T-K.h2)*7)*(T>=K.h2));
-  bloom(CX,LY,700,paid>.5?[G.red,'#7A0A2A']:[WAG,G.blue]);x.save();x.translate(CX,LY);x.rotate(.35*Math.sin(T*.55));x.translate(-CX,-LY);beams(CX,LY,T,0,paid>.5?[G.red,'#FF8899']:[WAG,G.cyan],Math.exp(-Math.max(0,T-K.h2)*4)*(T>=K.h2),9,1250);x.restore();
+  bloom(CX,LY,700,paid>.5?[G.red,'#7A0A2A']:[WAG,G.blue]);x.save();x.translate(CX,LY);x.rotate(.55*Math.sin(T*.9));x.translate(-CX,-LY);beams(CX,LY,T,0,paid>.5?[G.red,'#FF8899']:[WAG,G.cyan],Math.exp(-Math.max(0,T-K.h2)*4)*(T>=K.h2),9,1250);x.restore();
   flare(CX+170,LY-170,620,Math.max(0,1-p(T,0,.8)),WAG);
   sparks(T,CX,LY+120,LS*1.2,paid>.5?G.red:WAG,40,330,0,1);waLogo(CX,LY,LS,T,{red:paid});{const g=p(T,.2,1.5);if(g>0&&g<1){x.save();rr(CX-LS/2,LY-LS/2,LS,LS,LS*.24);x.clip();x.globalCompositeOperation='lighter';const gx=L(CX-LS,CX+LS,eio(g));const lg=x.createLinearGradient(gx-90,0,gx+90,0);lg.addColorStop(0,'rgba(255,255,255,0)');lg.addColorStop(.5,'rgba(255,255,255,.55)');lg.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=lg;x.fillRect(CX-LS,LY-LS,2*LS,2*LS);x.restore()}}
   if(T>=K.h2){const k=p(T,K.h2+.25,K.h2+.55);gIcon('lock',CX+LS*.42,LY-LS*.42,120*back(clamp(k)),T,{alpha:clamp(k*2),cols:['#FFFFFF','#FF8899',G.red]})}
   typeLit('Da gennaio WhatsApp',CX,250,T,-2,22,{size:92,weight:600,lit:WAG});
   typeLit('diventa a pagamento.',CX,370,T,K.h1b,24,{size:100,weight:800,lit:G.red});
-  const sk=p(T,K.h2,K.h2+.16);if(sk>0){x.save();x.translate(CX,1075);const s=L(2.6,1,eo(sk));x.scale(s,s);x.globalAlpha=clamp(sk*3);glass(0,0,620,150,75,{rim:[G.red,'#FF8899'],fill:.12,glowA:.9});x.fillStyle=hexA('#C3001F',.55);rr(-310,-75,620,150,75);x.fill();x.shadowColor=G.red;x.shadowBlur=40;glowText('4,99 € / mese',0,4,{size:88,weight:800,color:'#FFFFFF',glow:30});x.restore();flare(CX+250,1020,560,Math.max(0,1-p(T,K.h2,K.h2+.6)),G.red)}
+  const sk=p(T,K.h2,K.h2+.16);if(sk>0){x.save();x.translate(CX,1075);const s=L(2.6,1,eo(sk));x.scale(s,s);x.globalAlpha=clamp(sk*3);glass(0,0,620,150,75,{rim:[G.red,'#FF8899'],fill:.12,glowA:.9});x.fillStyle=hexA('#C3001F',.55);rr(-310,-75,620,150,75);x.fill();x.shadowColor=G.red;x.shadowBlur=40;glowText('5 € / mese',0,4,{size:88,weight:800,color:'#FFFFFF',glow:30});x.restore();flare(CX+250,1020,560,Math.max(0,1-p(T,K.h2,K.h2+.6)),G.red)}
   [[K.h3,'msg','Messaggi',300],[K.h3b,'mic','Vocali',540],[K.h3c,'phone','Chiamate',780]].forEach(([t0,kd,lb,X])=>{const k=p(T,t0,t0+.4);if(k<=0)return;const allRed=T>=K.h3d;
     tileL(kd,X,1250,150,T,lb,k,{cols:allRed?['#FFFFFF','#FF8899',G.red]:[G.white,G.cyan,G.purple],lc:allRed?'#FF8899':G.white});coin(X+62,1250-62,58,p(T,t0+.22,t0+.5));
     if(allRed)halo(X,1250,T,K.h3d,G.red,70,190)});
@@ -268,7 +265,7 @@ function rewindFX(T){const q=p(T,K.rw,K.r1);x.save();x.globalCompositeOperation=
 
 /* S5 · "Ma una cosa vera c'è. Questo video l'ho fatto io. Con Claude." */
 function w5(T){bgDark(T,T>K.c2b?'warm':'cool');typeLit("Ma una cosa vera c'è.",CX,250,T,K.c1,22,{size:92,weight:700,lit:G.cyan});
-  sparks(T,CX,1200,700,G.cyan,30,260,K.c1,.8);const fk=eo(p(T,K.c1+.25,K.c1+.85));if(fk>0){const fw=380*(1+.18*p(T,K.c1+.85,K.c2b)),fh=fw*16/9,FY=760;x.save();x.globalAlpha=fk;x.translate(CX,FY+(1-fk)*120);
+  rbeams(CX,1450,T,K.c1-.3,[G.cyan,G.violet],(T-K.c1)*.3-.4,9,1200,.8*(1-p(T,K.c2b-.2,K.c2b+.1)));sparks(T,CX,1200,700,G.cyan,30,260,K.c1,.8);const fk=eo(p(T,K.c1+.25,K.c1+.85));if(fk>0){const fw=380*(1+.18*p(T,K.c1+.85,K.c2b)),fh=fw*16/9,FY=760;x.save();x.globalAlpha=fk;x.translate(CX,FY+(1-fk)*120);
     bloom(0,0,520,[G.cyan,G.purple],.8);x.save();rr(-fw/2,-fh/2,fw,fh,30);x.clip();x.translate(-fw/2,-fh/2);x.scale(fw/W,fh/H);const tm=((T-K.c1+.3)%(K.h4))+.0;w1(Math.min(tm,K.h4-.01));x.restore();
     glass(0,0,fw+14,fh+14,36,{rim:[G.cyan,G.violet],fill:0,glowA:.8});x.restore();
     typeLit("Questo video l'ho fatto io.",CX,1200,T,K.c2,26,{size:76,weight:600,lit:G.cyan})}
@@ -285,9 +282,9 @@ function w6(T){bgDark(T,'warm');typeLit('Niente…',CX,250,T,K.c3,14,{size:110,w
       gIcon('x',320,0,100*back(clamp(p(T,t0+.5,t0+.8))),T,{alpha:clamp(p(T,t0+.5,t0+.7)*2),cols:['#FFFFFF','#FF8899',G.red]})}x.restore()})}
 
 /* S7 · "Gli scrivo l'idea, e lui mi fa animazioni, effetti e suoni." */
-function w7(T){bgDark(T,'warm');typeLit("Gli scrivo l'idea",CX,250,T,K.c4,22,{size:100,weight:700,lit:G.orange});
+function w7(T){bgDark(T,'warm');rbeams(CX,1450,T,K.c4-.3,[G.orange,G.violet],(T-K.c4)*.3-.4,9,1200,.75);typeLit("Gli scrivo l'idea",CX,250,T,K.c4,22,{size:100,weight:700,lit:G.orange});
   const bk=eo(p(T,K.c4,K.c4+.35)),BY=520;x.save();x.globalAlpha=bk;x.translate(0,(1-bk)*80);glass(CX,BY,880,130,65,{rim:[G.orange,G.violet],fill:.08});asterisk(CX-375,BY,30,T,G.orange);
-  const s='Video: WhatsApp a pagamento',ty=typed(s,K.c4+.15,26,T);glowText(ty||'Scrivi a Claude…',CX-330,BY+2,{size:40,weight:ty?600:400,align:'left',glow:ty?8:0,color:ty?G.white:G.dim,maxW:9999});
+  const s='Video: WhatsApp a pagamento',ty=typed(s,K.c4+.15,34,T);glowText(ty||'Scrivi a Claude…',CX-330,BY+2,{size:40,weight:ty?600:400,align:'left',glow:ty?8:0,color:ty?G.white:G.dim,maxW:9999});
   const sent=p(T,K.c4a,K.c4a+.25);gIcon(sent>0?'check':'up',CX+375,BY,90,T,{cols:sent>0?[G.white,G.green,G.cyan]:[G.white,G.orange,G.violet]});x.restore();
   if(T>=K.c4a-.95&&T<K.c4a+.7){const ck=p(T,K.c4a-.95,K.c4a-.15);const cx=L(1300,CX+385,eo(ck)),cy=L(1500,BY+12,eo(ck));x.save();x.globalAlpha=1-p(T,K.c4a+.35,K.c4a+.7);cursor(cx,cy,p(T,K.c4a,K.c4a+.3));x.restore()}
   if(T>=K.c4a)halo(CX+375,BY,T,K.c4a,G.orange,50,200);
@@ -307,7 +304,7 @@ function w8(T){const calm=p(T,K.e1c,K.e1c+.4);bgDark(T,calm>.5?'green':'red');
   if(T>=K.e1c){typeLit('…ha funzionato.',CX,1180,T,K.e1c,22,{size:110,weight:800,lit:WAG});const ck=p(T,K.e1c+.5,K.e1c+.8);gIcon('check',CX+360,PY-150,90*back(clamp(ck)),T,{alpha:clamp(ck*2),cols:[G.white,WAG,G.cyan]});halo(CX,PY,T,K.e1c,WAG,200,620)}}
 
 /* S9 · CTA */
-function w9(T){bgDark(T,'warm');typeLit('Vuoi il metodo?',CX,260,T,K.e2,22,{size:100,weight:700,lit:G.orange});
+function w9(T){bgDark(T,'warm');rbeams(CX,1450,T,K.e2-.3,[G.orange,G.violet],(T-K.e2)*.28-.45,9,1250,.7);sparks(T,CX,1350,900,G.orange,30,280,K.e2,.8);typeLit('Vuoi il metodo?',CX,260,T,K.e2,22,{size:100,weight:700,lit:G.orange});
   const t0=K.e2,cl=ei(p(T,t0+.5,t0+1.1));['msg','spark','note','eye','wave','star'].forEach((kd,i)=>{const a=T*1.6+i*Math.PI/3,r=L(380,0,cl);const depth=(Math.sin(a)+1)/2;gIcon(kd,CX+Math.cos(a)*r,680+Math.sin(a)*r*.5,L(80,140,depth)*(1-cl*.9)*eo(p(T,t0,t0+.4)),T,{blur:(1-depth)*6,alpha:1-cl})});
   if(T>=t0+1.1){const k=back(p(T,t0+1.1,t0+1.4));x.save();x.translate(CX,680);x.scale(k,k);glass(0,0,200,200,54,{rim:[G.orange,G.violet],fill:.06});asterisk(0,0,60,T,G.orange);x.restore();flare(CX,680,500,Math.max(0,1-p(T,t0+1.1,t0+1.7)),G.orange)}
   glowText('Commenta',CX,900,{size:64,weight:400,color:G.dim,glow:0,alpha:p(T,K.e3,K.e3+.15)});
