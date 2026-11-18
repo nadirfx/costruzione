@@ -266,11 +266,11 @@ function rewindFX(T){const q=p(T,K.rw,K.r1);x.save();x.globalCompositeOperation=
 /* S5 · "Ma una cosa vera c'è. Questo video l'ho fatto io. Con Claude." */
 function w5(T){bgDark(T,T>K.c2b?'warm':'cool');typeLit("Ma una cosa vera c'è.",CX,250,T,K.c1,22,{size:92,weight:700,lit:G.cyan});
   rbeams(CX,1450,T,K.c1-.3,[G.cyan,G.violet],(T-K.c1)*.3-.4,9,1200,.8*(1-p(T,K.c2b-.2,K.c2b+.1)));sparks(T,CX,1200,700,G.cyan,30,260,K.c1,.8);const fk=eo(p(T,K.c1+.25,K.c1+.85));if(fk>0){const fw=380*(1+.18*p(T,K.c1+.85,K.c2b)),fh=fw*16/9,FY=760;x.save();x.globalAlpha=fk;x.translate(CX,FY+(1-fk)*120);
-    bloom(0,0,520,[G.cyan,G.purple],.8);x.save();rr(-fw/2,-fh/2,fw,fh,30);x.clip();x.translate(-fw/2,-fh/2);x.scale(fw/W,fh/H);const tm=((T-K.c1+.3)%(K.h4))+.0;w1(Math.min(tm,K.h4-.01));x.restore();
+    bloom(0,0,520,[G.cyan,G.purple],.8);x.save();rr(-fw/2,-fh/2,fw,fh,30);x.clip();x.translate(-fw/2,-fh/2);x.scale(fw/W,fh/H);const tm=((T-K.c1+.3)%(K.h4))+.0,fo=p(T,K.c2b-.3,K.c2b-.05);if(fo<1){x.save();x.globalAlpha*=1-fo;w1(Math.min(tm,K.h4-.01));x.restore()}if(fo>0){x.fillStyle=`rgba(6,6,14,${fo})`;x.fillRect(0,0,W,H)}x.restore();
     glass(0,0,fw+14,fh+14,36,{rim:[G.cyan,G.violet],fill:0,glowA:.8});x.restore();
     typeLit("Questo video l'ho fatto io.",CX,1200,T,K.c2,26,{size:76,weight:600,lit:G.cyan})}
   if(T>=K.c2b){const k=p(T,K.c2b,K.c2b+.35),hit=Math.exp(-(T-K.c2b)*3.5);beams(CX,760,T,K.c2b,[G.orange,'#FFB07A'],hit,11,1250,.15);x.save();x.translate(CX,760);const s=back(clamp(k));x.scale(s,s);glass(0,0,230,230,62,{rim:[G.orange,G.violet],fill:.14,glowA:.9});asterisk(0,0,70,T,G.orange);x.restore();
-    flare(CX,760,700,Math.max(0,1-p(T,K.c2b,K.c2b+.7)),G.orange);halo(CX,760,T,K.c2b,G.orange,140,560);
+    flare(CX,760,480,Math.max(0,1-p(T,K.c2b,K.c2b+.5)),G.orange);halo(CX,760,T,K.c2b,G.orange,140,560);
     const tk=p(T,K.c2b+.05,K.c2b+.3);x.save();x.translate(CX,1320);x.scale(L(1.4,1,eo(tk)),L(1.4,1,eo(tk)));x.globalAlpha*=Math.min(1,tk*2);asterisk(-300,0,48,T,G.orange);glowText('con Claude',40,0,{size:112,weight:800,color:'#FFB07A',glow:40,alpha:Math.min(1,tk*2)});x.restore()}}
 
 /* S6 · Niente agenzia / editor / After Effects */
