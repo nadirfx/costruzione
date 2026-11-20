@@ -1,0 +1,85 @@
+<!doctype html><html><head><meta charset="utf-8"><style>@font-face{font-family:Int;font-weight:100 900;src:url(fonts/Inter.ttf)}body{margin:0;background:#000}</style></head><body><canvas id="out" width="1080" height="1920"></canvas>
+<script type="importmap">{"imports":{"three":"./nm/three/build/three.module.js","three/addons/":"./nm/three/examples/jsm/"}}</script>
+<script type="module">
+import {THREE,W,H,K,p,L,clamp,eo,ei,eio,ex,e4o,e4i,back,rnd,igGlyph,roundRectShape,igGradientTex,photoCanvas,texOf,engine,grain,vignette,makeRender,phrases,PH,RED} from './common.js';
+await document.fonts.load('900 50px Int');
+const E=engine({bloom:[.42,.4,.86],fov:32,exposure:.9});const {scene,cam,bp}=E;
+scene.fog=new THREE.Fog(0x000000,14,40);
+/* studio: dark floor with soft reflection feel */
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.MeshStandardMaterial({color:0x07070a,roughness:.35,metalness:.6}));floor.rotation.x=-Math.PI/2;floor.position.y=-2.1;scene.add(floor);
+scene.add(new THREE.AmbientLight(0xffffff,.05));
+const key=new THREE.SpotLight(0xffffff,38,40,.5,.6,1.6);key.position.set(4,6,7);scene.add(key);scene.add(key.target);
+const rimP=new THREE.PointLight(0xff3d8b,9,20,1.8);rimP.position.set(-4,2,-3);scene.add(rimP);
+const rimO=new THREE.PointLight(0xffa040,7,20,1.8);rimO.position.set(4,-1.5,-3);scene.add(rimO);
+const redL=new THREE.PointLight(0xff1030,0,30,1.4);const lensL=new THREE.SpotLight(0xffffff,0,12,.35,.5,1.5);lensL.position.set(1.2,1.6,3.2);scene.add(lensL);scene.add(lensL.target);redL.position.set(-3.5,3,2.5);scene.add(redL);
+/* the app icon */
+const icon=new THREE.Group();scene.add(icon);
+const gt=igGradientTex();gt.wrapS=gt.wrapT=THREE.ClampToEdgeWrapping;gt.repeat.set(1/2.4,1/2.4);gt.offset.set(.5,.5);
+const baseMat=new THREE.MeshPhysicalMaterial({map:gt,roughness:.22,metalness:.05,clearcoat:1,clearcoatRoughness:.08,emissive:0x000000,emissiveIntensity:0});
+const base=new THREE.Mesh(new THREE.ExtrudeGeometry(roundRectShape(2.4,2.4,.62),{depth:.32,bevelEnabled:true,bevelThickness:.08,bevelSize:.08,bevelSegments:6,curveSegments:24}),baseMat);base.position.z=-.44;icon.add(base);
+const glyphMat=new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:.18,metalness:0,clearcoat:1,emissive:0xffffff,emissiveIntensity:.14});
+const glyph=igGlyph(glyphMat,.12,.03);glyph.scale.setScalar(1.55/24*12);glyph.position.z=.1;icon.add(glyph);
+/* lens interior (dark glass) */
+const LR=.39;const lens=new THREE.Mesh(new THREE.CircleGeometry(LR,64),new THREE.MeshPhysicalMaterial({color:0x05060a,roughness:.05,metalness:.2,clearcoat:1,emissive:0x101830,emissiveIntensity:.1,stencilWrite:true,stencilRef:1,stencilFunc:THREE.AlwaysStencilFunc,stencilZPass:THREE.ReplaceStencilOp}));lens.renderOrder=1;lens.position.z=.0;icon.add(lens);
+const glint=new THREE.Mesh(new THREE.CircleGeometry(.08,32),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.35}));glint.position.set(-.13,.14,.03);icon.add(glint);
+/* iris diaphragm: petals built inside the lens circle (arc A→B, inner vertex C spirals to centre) */
+const NB=9;const bladeMat=new THREE.MeshPhysicalMaterial({color:0xc9c9d3,roughness:.32,metalness:.55,clearcoat:.9,emissive:0x2a2a33,emissiveIntensity:.6,side:THREE.DoubleSide});
+const blades=[];for(let i=0;i<NB;i++){const m=new THREE.Mesh(new THREE.BufferGeometry(),bladeMat);m.position.z=.012+i*.002;icon.add(m);blades.push(m)}
+const edgeMat=new THREE.LineBasicMaterial({color:0x000000,transparent:true,opacity:.6});const edges=[];for(let i=0;i<NB;i++){const l=new THREE.Line(new THREE.BufferGeometry(),edgeMat);l.position.z=.0135+i*.002;icon.add(l);edges.push(l)}
+function iris(k){const span=Math.PI*2/NB*1.45;blades.forEach((m,i)=>{const a=i*Math.PI*2/NB,mid=a+span/2;m.visible=edges[i].visible=k>.003;if(!m.visible)return;
+  const r=LR*.995*(1-k)*.97,ca=mid+L(1.1,0,k);const C=[Math.cos(ca)*r,Math.sin(ca)*r];const s=new THREE.Shape();s.moveTo(Math.cos(a)*LR*.995,Math.sin(a)*LR*.995);s.absarc(0,0,LR*.995,a,a+span,false);s.lineTo(C[0],C[1]);s.closePath();
+  m.geometry.dispose();m.geometry=new THREE.ShapeGeometry(s,24);const pts=[new THREE.Vector3(Math.cos(a+span)*LR,Math.sin(a+span)*LR,0),new THREE.Vector3(C[0],C[1],0)];edges[i].geometry.dispose();edges[i].geometry=new THREE.BufferGeometry().setFromPoints(pts)})}
+/* profile card (3D, two-sided) */
+function profileTex(){const c=document.createElement('canvas');c.width=900;c.height=1200;const x=c.getContext('2d');x.fillStyle='#FFFFFF';x.beginPath();x.roundRect(0,0,900,1200,60);x.fill();
+  const g=x.createLinearGradient(80,80,280,280);g.addColorStop(0,'#FFDD55');g.addColorStop(.5,'#FF543E');g.addColorStop(1,'#C837AB');x.strokeStyle=g;x.lineWidth=12;x.beginPath();x.arc(180,180,100,0,7);x.stroke();x.save();x.beginPath();x.arc(180,180,86,0,7);x.clip();x.drawImage(photoCanvas(4),94,94,172,172);x.restore();
+  x.fillStyle='#0A0A0A';x.font='800 50px Int';x.fillText('@iltuoprofilo',320,150);x.font='800 44px Int';[['248','post'],['12.480','follower'],['530','seguiti']].forEach(([n,l],i)=>{x.font='800 44px Int';x.fillStyle='#0A0A0A';x.fillText(n,320+i*190,230);x.font='400 28px Int';x.fillStyle='#737373';x.fillText(l,320+i*190,268)});
+  for(let i=0;i<9;i++){const cc=i%3,r=(i/3)|0;x.drawImage(photoCanvas(i+1),36+cc*280,340+r*280,272,272)}const t=texOf(c);return t}
+function backTex(){const c=document.createElement('canvas');c.width=900;c.height=1200;const x=c.getContext('2d');x.fillStyle='#0B0B0E';x.beginPath();x.roundRect(0,0,900,1200,60);x.fill();x.strokeStyle='#FF2D46';x.lineWidth=8;x.beginPath();x.roundRect(30,30,840,1140,44);x.stroke();
+  x.fillStyle='#FF2D46';x.textAlign='center';x.font='900 92px Int';x.fillText('PROFILO',450,560);x.fillText('CANCELLATO',450,670);x.font='500 36px Int';x.fillStyle='#8A8A93';x.fillText('@iltuoprofilo · 1 gennaio 2027',450,760);return texOf(c)}
+const card=new THREE.Group();const cw=2.7,ch=3.6;const front=new THREE.Mesh(new THREE.PlaneGeometry(cw,ch),new THREE.MeshPhysicalMaterial({map:profileTex(),roughness:.3,clearcoat:1,clearcoatRoughness:.15,transparent:true}));
+const backM=new THREE.Mesh(new THREE.PlaneGeometry(cw,ch),new THREE.MeshPhysicalMaterial({map:backTex(),roughness:.3,clearcoat:1,emissive:0xff2d46,emissiveIntensity:.0,emissiveMap:null,transparent:true}));backM.rotation.y=Math.PI;card.add(front);card.add(backM);scene.add(card);
+/* foto / storie / messaggi objects */
+function tileGroup(){const g=new THREE.Group();for(let i=0;i<5;i++){const m=new THREE.Mesh(new THREE.BoxGeometry(1,1,.04),[0,0,0,0,new THREE.MeshPhysicalMaterial({map:texOf(photoCanvas(i+2)),roughness:.3,clearcoat:1}),new THREE.MeshStandardMaterial({color:0x222222})].map(v=>v||new THREE.MeshStandardMaterial({color:0xeeeeee})));m.position.set((i-2)*.12,(i-2)*-.06,-i*.12);m.rotation.z=(i-2)*.08;g.add(m)}return g}
+const fotoG=tileGroup();scene.add(fotoG);
+const storieG=new THREE.Group();for(let i=0;i<5;i++){const ring=new THREE.Mesh(new THREE.TorusGeometry(.32,.035,16,64),new THREE.MeshStandardMaterial({color:0x222222,emissive:[0xffdd55,0xff8a3d,0xff543e,0xe1306c,0xc837ab][i],emissiveIntensity:.5}));const a=i*Math.PI*2/5;ring.position.set(Math.cos(a)*.62,Math.sin(a)*.62,0);
+  const ph=new THREE.Mesh(new THREE.CircleGeometry(.27,48),new THREE.MeshStandardMaterial({map:texOf(photoCanvas(i+5))}));ph.position.copy(ring.position);ph.position.z=-.01;storieG.add(ring);storieG.add(ph)}scene.add(storieG);
+const msgG=new THREE.Group();{const s=roundRectShape(1.6,1.1,.45);const b=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:.18,bevelEnabled:true,bevelThickness:.05,bevelSize:.05,bevelSegments:4}),new THREE.MeshPhysicalMaterial({color:0x8b5cff,roughness:.2,clearcoat:1,emissive:0x3a1c99,emissiveIntensity:.15}));msgG.add(b);
+  const tail=new THREE.Mesh(new THREE.ConeGeometry(.18,.4,3),b.material);tail.position.set(-.5,-.6,.09);tail.rotation.z=.6;msgG.add(tail);for(let i=0;i<3;i++){const d=new THREE.Mesh(new THREE.SphereGeometry(.09,24,16),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:.15}));d.position.set((i-1)*.35,0,.28);msgG.add(d)}}scene.add(msgG);
+/* dust */
+const dustG=new THREE.BufferGeometry();const dp=[];for(let i=0;i<500;i++)dp.push((rnd(i)-.5)*16,(rnd(i+7)-.5)*14,(rnd(i+13)-.5)*14-2);dustG.setAttribute('position',new THREE.Float32BufferAttribute(dp,3));const dust=new THREE.Points(dustG,new THREE.PointsMaterial({color:0xffffff,size:.025,transparent:true,opacity:.35}));scene.add(dust);
+const tmp=new THREE.Vector3();
+function shake(T,ts,a){let x=0,y=0;for(const t0 of ts)if(T>=t0&&T<t0+.6){const e=Math.exp(-(T-t0)*9)*a;x+=Math.sin((T-t0)*93)*e;y+=Math.cos((T-t0)*71)*e}return[x,y]}
+function draw(T){
+  /* ---- icon ---- */
+  const closed=e4i(p(T,K.a2-.02,K.a2+.2));iris(closed);
+  const dead=p(T,K.a2,K.a2+.4);baseMat.color.setRGB(L(1,.35,dead),L(1,.3,dead),L(1,.32,dead));
+  icon.visible=T<K.b1+.35||T>=K.c4t-.2;
+  const flyOff=e4i(p(T,K.b1-.05,K.b1+.3));icon.position.set(-flyOff*9,Math.sin(T*.9)*.04*(1-dead),0);icon.rotation.set(-.06+.03*Math.sin(T*.6),L(-.38,.12,eio(p(T,0,K.a1)))+L(0,.0,1),0);
+  if(T>=K.c4t-.2){icon.position.set(0,.2,-6);icon.rotation.set(0,0,0);icon.scale.setScalar(L(2.4,2.1,p(T,K.c4t,K.d1)))}else icon.scale.setScalar(1);
+  /* ---- card ---- */
+  card.visible=T>=K.b1-.1&&T<K.c1+.3;const cin=e4o(p(T,K.b1-.05,K.b1+.45)),cout=e4i(p(T,K.c1-.25,K.c1+.1));const flip=e4o(p(T,K.b2,K.b2+.32));
+  card.position.set(L(6,0,cin)-cout*8,-.42+Math.sin(T*1.1)*.03,L(-2,0,cin));card.rotation.set(-.05,L(-.9,-.22,cin)+flip*Math.PI+L(0,.15,p(T,K.b2+.32,K.c1)),L(.08,0,cin));backM.material.emissiveIntensity=flip*.15;
+  /* ---- foto / storie / messaggi ---- */
+  const ins=[[fotoG,K.c1,[-1.0,.5,0]],[storieG,K.c2,[.95,.7,-.4]],[msgG,K.c3,[0,-.72,.2]]];
+  const suck=e4i(p(T,K.c4-.05,K.c4+.38));
+  ins.forEach(([g,t0,pos],i)=>{const k=e4o(p(T,t0-.04,t0+.4));g.visible=T>=t0-.05&&T<K.d1+.1&&suck<1;const tgt=icon.position;g.position.set(L(L(pos[0]*3.2,pos[0],k),tgt.x,suck),L(L(pos[1]+2.5,pos[1],k),tgt.y,suck),L(L(-4,pos[2],k),tgt.z,suck));
+    g.rotation.set(L(.8,.08,k)+T*.15*(i%2?1:-1)*.3,L(-1.2,-.2+i*.15,k)+suck*3,0);g.scale.setScalar(L(.3,1,k)*(1-suck*.95)*(T>=K.c4t?L(1,.82,p(T,K.c4t,K.c4t+.4)):1))});
+  /* ---- lights ---- */
+  key.position.set(L(-5,5,p(T,0,K.a2)),6,7);lensL.intensity=(T>=K.a1-.1&&T<K.b1)?L(0,10,p(T,K.a1,K.a2)):0;redL.intensity=L(0,22,dead)*(T<K.b1?1:0)+(flip>0&&T<K.c1?flip*16:0)+(T>=K.c4?L(0,30,p(T,K.c4,K.c4+.15))*(1-p(T,K.c4+.3,K.d1)):0);
+  rimP.intensity=L(9,2,dead);rimO.intensity=L(7,1.5,dead);bp.strength=.42+.22*Math.exp(-Math.max(0,T-K.a2)*5)*(T>=K.a2)+.4*Math.exp(-Math.max(0,T-K.b2)*5)*(T>=K.b2)+.8*Math.exp(-Math.max(0,T-K.c4)*4)*(T>=K.c4);
+  dust.rotation.y=T*.03;dust.position.y=T*.05;
+  /* ---- camera ---- */
+  let pos,look;
+  if(T<K.a1){const a=L(-.55,-.15,eio(p(T,0,K.a1)));const d=L(9.5,7.4,eio(p(T,0,K.a1)));pos=[Math.sin(a)*d,L(1.6,.5,eio(p(T,0,K.a1))),Math.cos(a)*d];look=[0,0,0]}
+  else if(T<K.a3){const k=e4o(p(T,K.a1,K.a2+.02));const a=L(-.15,0,k),d=L(7.4,2.35,k);pos=[Math.sin(a)*d,L(.5,.02,k),Math.cos(a)*d];look=[0,0,0]}
+  else if(T<K.b1){const k=e4o(p(T,K.a3,K.a3+.5));const d=L(2.35,8.4,k);pos=[L(0,1.4,k),L(.02,.9,k),d];look=[0,0,0]}
+  else if(T<K.c1){const k=eio(p(T,K.b1,K.c1));pos=[L(1.2,-.6,k),L(.4,.1,k),L(8.2,6.6,k)];look=[0,.1,0]}
+  else{const k=eio(p(T,K.c1,K.d1));pos=[L(.6,0,k),L(.3,.2,k),L(8.6,L(9.5,12,p(T,K.c4t,K.c4)),k)];look=[0,0,0]}
+  const[sx,sy]=shake(T,[K.a2,K.b2,K.c4],.12);cam.position.set(pos[0]+sx,pos[1]+sy,pos[2]);cam.lookAt(look[0]+sx*.5,look[1]+sy*.5,look[2]);
+}
+function overlay(T,x){vignette(x,.6);
+  if(T>=K.a2&&T<K.a2+.3){x.save();x.globalAlpha=.55*(1-p(T,K.a2,K.a2+.3));x.fillStyle='#000';x.fillRect(0,0,W,H);x.restore()}
+  if(T>=K.c4+.25){x.save();x.globalAlpha=p(T,K.c4+.25,K.d1);x.fillStyle='#000';x.fillRect(0,0,W,H);x.restore()}
+  phrases(x,T,PH,{font:'Int',weight:900,ls:-4});grain(x,T,.05)}
+window.renderAt=makeRender(E,draw,overlay,3);window.ready=true;
+</script></body></html>

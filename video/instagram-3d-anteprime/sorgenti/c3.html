@@ -1,0 +1,81 @@
+<!doctype html><html><head><meta charset="utf-8"><style>@font-face{font-family:Bri;font-weight:800;src:url(fonts/BricolageGrotesque-800.ttf)}@font-face{font-family:Int;font-weight:100 900;src:url(fonts/Inter.ttf)}body{margin:0;background:#000}</style></head><body><canvas id="out" width="1080" height="1920"></canvas>
+<script type="importmap">{"imports":{"three":"./nm/three/build/three.module.js","three/addons/":"./nm/three/examples/jsm/"}}</script>
+<script type="module">
+import {THREE,W,H,K,p,L,clamp,eo,ei,eio,ex,e4o,e4i,back,rnd,photoCanvas,texOf,engine,grain,vignette,makeRender,phrases,PH,RED} from './common.js';
+await document.fonts.load('800 50px Bri');await document.fonts.load('900 50px Int');
+const E=engine({bloom:[1.1,.55,.18],fov:36,exposure:.95});const {scene,cam,bp}=E;
+scene.fog=new THREE.FogExp2(0x05040a,.045);
+/* brick wall + wet street */
+function brickTex(){const c=document.createElement('canvas');c.width=c.height=1024;const x=c.getContext('2d');x.fillStyle='#16131a';x.fillRect(0,0,1024,1024);for(let r=0;r<32;r++)for(let k=0;k<9;k++){const w=120,h=32,ox=(r%2)*60;const v=18+rnd(r*31+k)*16;x.fillStyle=`rgb(${v+8},${v},${v+6})`;x.fillRect(k*w-ox+3,r*h+3,w-6,h-6)}const t=texOf(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,3);return t}
+const wallM=new THREE.MeshStandardMaterial({map:brickTex(),roughness:.85,metalness:.05});const wall=new THREE.Mesh(new THREE.PlaneGeometry(40,24),wallM);wall.position.set(0,5,-1.2);scene.add(wall);
+const street=new THREE.Mesh(new THREE.PlaneGeometry(40,60),new THREE.MeshStandardMaterial({color:0x0a0a10,roughness:.12,metalness:.75}));street.rotation.x=-Math.PI/2;street.position.set(0,-3.4,10);scene.add(street);
+scene.add(new THREE.AmbientLight(0x6070ff,.04));const moon=new THREE.DirectionalLight(0x8090ff,.25);moon.position.set(-4,8,6);scene.add(moon);
+/* neon builder: polyline → glowing tube with vertex gradient */
+const IGC=[new THREE.Color('#FFDD55'),new THREE.Color('#FF8A3D'),new THREE.Color('#FF3D6E'),new THREE.Color('#C837AB'),new THREE.Color('#7638FA')];
+function grad(x,y){const t=clamp((-x+y)/5+.5);const f=t*4,i=Math.min(3,Math.floor(f));return IGC[i].clone().lerp(IGC[i+1],f-i)}
+function neon(pts,closed,r=.055,col=null){const curve=new THREE.CatmullRomCurve3(pts.map(q=>new THREE.Vector3(q[0],q[1],0)),closed,'centripetal');const g=new THREE.TubeGeometry(curve,Math.max(64,pts.length*4),r,10,closed);
+  const cols=[];const pos=g.attributes.position;for(let i=0;i<pos.count;i++){const c=col?new THREE.Color(col):grad(pos.getX(i),pos.getY(i));cols.push(c.r,c.g,c.b)}g.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,toneMapped:false}));const glass=new THREE.Mesh(new THREE.TubeGeometry(curve,Math.max(64,pts.length*4),r*1.9,10,closed),new THREE.MeshPhysicalMaterial({color:0xffffff,transparent:true,opacity:.08,roughness:.1}));const grp=new THREE.Group();grp.add(m);grp.add(glass);grp.userData.core=m;return grp}
+function rrPts(w,h,r,n=12){const P=[];const c=[[w/2-r,h/2-r,0],[-w/2+r,h/2-r,Math.PI/2],[-w/2+r,-h/2+r,Math.PI],[w/2-r,-h/2+r,Math.PI*1.5]];c.forEach(([cx,cy,a0])=>{for(let i=0;i<=n;i++){const a=a0+i/n*Math.PI/2;P.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r])}});return P}
+function circPts(R,n=48,x0=0,y0=0,a0=0,a1=Math.PI*2){const P=[];for(let i=0;i<n;i++){const a=a0+(a1-a0)*i/n;P.push([x0+Math.cos(a)*R,y0+Math.sin(a)*R])}return P}
+function igSign(s=1){const g=new THREE.Group();const parts=[neon(rrPts(2.6*s,2.6*s,.72*s),true,.06*s),neon(circPts(.62*s),true,.06*s)];parts.forEach(q=>g.add(q));
+  const dot=new THREE.Mesh(new THREE.SphereGeometry(.11*s,20,14),new THREE.MeshBasicMaterial({color:grad(.78*s,.78*s),toneMapped:false}));dot.position.set(.78*s,.78*s,0);g.add(dot);g.userData.cores=[parts[0].userData.core,parts[1].userData.core,dot];
+  const back=new THREE.Mesh(new THREE.BoxGeometry(3.2*s,3.2*s,.06),new THREE.MeshStandardMaterial({color:0x0b0b10,roughness:.6,metalness:.4,transparent:true,opacity:.0}));back.position.z=-.1;g.add(back);return g}
+function setLevel(g,k){g.userData.cores.forEach(m=>{const b=m.userData.base||(m.userData.base=m.material.color?m.material.color.clone():null);if(m.material.vertexColors){m.material.color.setScalar(L(.06,1,k))}else m.material.color.copy(b).multiplyScalar(L(.06,1,k))})}
+/* main sign + its light on the wall */
+const sign=igSign(1);sign.position.set(0,1.0,-1.05);scene.add(sign);
+const glowP=new THREE.PointLight(0xff4f8a,30,12,1.7);glowP.position.set(0,1,0);scene.add(glowP);const glowO=new THREE.PointLight(0xffa040,18,10,1.7);glowO.position.set(-1.2,-.3,0);scene.add(glowO);
+/* CHIUSO neon (canvas) */
+function textNeon(txt,col,w=1024,h=300,size=190){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.textAlign='center';x.textBaseline='middle';x.font=`800 ${size}px Bri`;x.letterSpacing='18px';
+  for(const[b,a]of[[60,.6],[30,.8],[10,1]]){x.shadowColor=col;x.shadowBlur=b;x.globalAlpha=a;x.fillStyle=col;x.fillText(txt,w/2,h/2)}x.shadowBlur=0;x.globalAlpha=1;x.fillStyle='#ffb3bd';x.font=`800 ${size}px Bri`;x.globalAlpha=.55;x.fillText(txt,w/2,h/2);const t=texOf(c);return t}
+const chiuso=new THREE.Mesh(new THREE.PlaneGeometry(2.8,.82),new THREE.MeshBasicMaterial({map:textNeon('CHIUSO','#ff1f3d'),transparent:true,blending:THREE.AdditiveBlending,toneMapped:false,depthWrite:false}));chiuso.position.set(0,-1.15,-1.0);scene.add(chiuso);
+const redP=new THREE.PointLight(0xff1030,0,10,1.6);redP.position.set(0,-1.1,.2);scene.add(redP);
+/* more signs down the street (in depth) for "in tutta Italia" */
+const far=[];for(let i=0;i<7;i++){const g=igSign(.55);const side=i%2?1:-1;g.position.set(side*L(3.2,5.5,rnd(i)),L(1.8,3.6,rnd(i+3)),-1.05-(i+1)*0);g.rotation.y=0;const holder=new THREE.Group();holder.add(g);holder.position.set(0,0,-6-i*5.5);
+  const wl=new THREE.Mesh(new THREE.PlaneGeometry(9,14),wallM);wl.position.set(side*7,2,-1.3);holder.add(wl);scene.add(holder);const ch=new THREE.Mesh(new THREE.PlaneGeometry(1.5,.44),chiuso.material.clone());ch.position.set(g.position.x,g.position.y-1.15,-1.0);holder.add(ch);far.push({g,ch,holder})}
+/* profile card in neon frame */
+function profTex(){const c=document.createElement('canvas');c.width=800;c.height=1000;const x=c.getContext('2d');x.fillStyle='#0d0c12';x.fillRect(0,0,800,1000);const g=x.createLinearGradient(60,60,240,240);g.addColorStop(0,'#FFDD55');g.addColorStop(.5,'#FF543E');g.addColorStop(1,'#C837AB');x.strokeStyle=g;x.lineWidth=10;x.beginPath();x.arc(150,150,90,0,7);x.stroke();x.save();x.beginPath();x.arc(150,150,78,0,7);x.clip();x.drawImage(photoCanvas(4),72,72,156,156);x.restore();
+  x.fillStyle='#fff';x.font='800 48px Int';x.fillText('@iltuoprofilo',280,130);x.font='500 30px Int';x.fillStyle='#b9b6c6';x.fillText('248 post · 12.480 follower',280,185);for(let i=0;i<9;i++){const cc=i%3,r=(i/3)|0;x.drawImage(photoCanvas(i+1),30+cc*250,290+r*235,240,225)}return texOf(c)}
+const prof=new THREE.Group();const pPanel=new THREE.Mesh(new THREE.PlaneGeometry(2.4,3.0),new THREE.MeshStandardMaterial({map:profTex(),emissive:0xffffff,emissiveMap:profTex(),emissiveIntensity:.22,roughness:.6}));prof.add(pPanel);const pFrame=neon(rrPts(2.7,3.3,.25),true,.035,'#FF4FA3');prof.add(pFrame);
+const pDead=new THREE.Mesh(new THREE.PlaneGeometry(2.1,.62),new THREE.MeshBasicMaterial({map:textNeon('CANCELLATO','#ff1f3d',1200,300,150),transparent:true,blending:THREE.AdditiveBlending,toneMapped:false,depthWrite:false,opacity:0}));pDead.position.set(0,0,.08);prof.add(pDead);prof.position.set(0,1.1,-1.05);scene.add(prof);
+/* foto / storie / messaggi neon icons */
+const icons=new THREE.Group();icons.scale.setScalar(.86);icons.position.y=.15;scene.add(icons);
+const fotoI=new THREE.Group();fotoI.add(neon(rrPts(1.5,1.2,.18),true,.045,'#3FE0FF'));fotoI.add(neon([[-.6,-.42],[-.15,.12],[.15,-.15],[.35,.05],[.62,-.3]],false,.04,'#3FE0FF'));fotoI.add(neon(circPts(.12,24,.35,.28),true,.035,'#FFE27A'));
+const storieI=new THREE.Group();storieI.add(neon(circPts(.52,48,0,0,.35,Math.PI*2-.1),false,.05,'#FF3D8B'));storieI.add(neon(circPts(.35,40),true,.035,'#FFB0D0'));
+const msgI=new THREE.Group();{const P=rrPts(1.5,1.0,.4);msgI.add(neon(P,true,.05,'#8B5CFF'));msgI.add(neon([[-.5,-.5],[-.62,-.85],[-.2,-.52]],false,.045,'#8B5CFF'));}
+[[fotoI,[-.82,1.55]],[storieI,[.82,1.6]],[msgI,[0,.05]]].forEach(([g,q])=>{g.position.set(q[0],q[1],-1.0);icons.add(g)});
+function setIcon(g,k){g.traverse(o=>{if(o.isMesh&&o.material.vertexColors)o.material.color.setScalar(L(.04,1,k))})}
+/* sparks */
+const NS=260;const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(new Array(NS*3).fill(0),3));const sparks=new THREE.Points(sg,new THREE.PointsMaterial({color:0xffd27a,size:.06,transparent:true,toneMapped:false,blending:THREE.AdditiveBlending,depthWrite:false}));scene.add(sparks);
+function sparkAt(T,bursts){const a=sg.attributes.position;let any=0;for(let i=0;i<NS;i++){const b=bursts[i%bursts.length];const tt=T-b[0]-rnd(i)*.08;if(tt<0||tt>1.1){a.setXYZ(i,0,-50,0);continue}any=1;const vx=(rnd(i+1)-.5)*3.2,vy=rnd(i+2)*2.6+.4,vz=rnd(i+3)*1.8;a.setXYZ(i,b[1]+vx*tt,b[2]+vy*tt-4.9*tt*tt,b[3]+vz*tt)}a.needsUpdate=true;sparks.material.opacity=any?1:0}
+/* rain */
+const NR=900;const rg=new THREE.BufferGeometry();const rp=new Float32Array(NR*6);rg.setAttribute('position',new THREE.BufferAttribute(rp,3));const rain=new THREE.LineSegments(rg,new THREE.LineBasicMaterial({color:0x9fb0ff,transparent:true,opacity:.22}));scene.add(rain);
+function rainAt(T,cz){for(let i=0;i<NR;i++){const x0=(rnd(i)-.5)*14,z0=cz-rnd(i+5)*16,y=((rnd(i+9)*12-T*9)%12+12)%12-4;rp.set([x0,y,z0,x0-.03,y-.32,z0],i*6)}rg.attributes.position.needsUpdate=true}
+function flick(T,t0,dur){/* 1 → dying flicker → 0 */if(T<t0)return 1;if(T>t0+dur)return 0;const f=Math.floor((T-t0)*40);const pat=[1,0,1,1,0,.2,1,0,0,.6,0,0,.3,0,0,0];return pat[Math.min(pat.length-1,Math.floor(f*pat.length/(dur*40)))]}
+function shake(T,ts,a){let x=0,y=0;for(const t0 of ts)if(T>=t0&&T<t0+.6){const e=Math.exp(-(T-t0)*9)*a;x+=Math.sin((T-t0)*93)*e;y+=Math.cos((T-t0)*71)*e}return[x,y]}
+function draw(T){
+  /* main sign: power-on flicker at the start, dies on "chiude" */
+  const on0=T<.35?[1,.25,1,1,1][Math.min(4,Math.floor(T/.07))]:1;const lv=Math.min(on0,flick(T,K.a2,.42));setLevel(sign,lv);glowP.intensity=30*lv;glowO.intensity=18*lv;sign.visible=T<K.b1;
+  const ch=T<K.a2+.36?0:flick(T+1e3,1e9,1)*0+((T-K.a2-.36)<.25?[0,1,0,1,1][Math.min(4,Math.floor((T-K.a2-.36)/.05))]:1);chiuso.material.opacity=T<K.b1?ch:0;redP.intensity=T<K.b1?ch*14:0;
+  /* street of signs going dark one after another */
+  far.forEach((f,i)=>{const t0=K.a3+.15+i*.13;const lv2=flick(T,t0,.3);setLevel(f.g,lv2);f.ch.material.opacity=T>t0+.3?1:0;f.holder.visible=T<K.b1});
+  /* profile */
+  prof.visible=T>=K.b1-.05&&T<K.c1;const pin=e4o(p(T,K.b1,K.b1+.4));prof.position.y=L(4,.5,pin);const pl=flick(T,K.b2,.36);pFrame.userData.core.material.color.setScalar(L(.05,1,pl));pPanel.material.emissiveIntensity=.22*pl;pPanel.material.color.setScalar(L(.15,1,pl));pDead.material.opacity=T>K.b2+.36?1:0;
+  /* icons */
+  icons.visible=T>=K.c1-.05&&T<K.d1;[[fotoI,K.c1],[storieI,K.c2],[msgI,K.c3]].forEach(([g,t0])=>{const on=T<t0?0:((T-t0)<.2?[0,1,0,1][Math.min(3,Math.floor((T-t0)/.05))]:1);const k=Math.min(on,flick(T,K.c4t+.05,.55));setIcon(g,k);g.scale.setScalar(L(.85,1,e4o(p(T,t0,t0+.3))))});
+  sparkAt(T,[[K.a2,0,1,-.8],[K.a2+.12,.9,1.8,-.8],[K.b2,0,-.5,-.8],[K.c4,0,1,-.8],[K.c4+.05,-1.2,1.7,-.8],[K.c4+.08,1.25,1.75,-.8]]);
+  /* camera */
+  let pos,look;
+  if(T<K.a1){const k=eio(p(T,0,K.a1));pos=[L(-1.6,-.5,k),L(-1.6,-.2,k),L(10,7,k)];look=[0,L(.4,.9,k),-1]}
+  else if(T<K.a3){const k=e4o(p(T,K.a1,K.a2));pos=[L(-.5,0,k),L(-.2,.9,k),L(7,4.6,k)];look=[0,.95,-1]}
+  else if(T<K.b1){const k=eio(p(T,K.a3,K.b1));pos=[L(0,-1.2,k),L(.9,.4,k),L(4.6,13,k)];look=[L(0,.4,k),L(.95,1.6,k),L(-1,-20,k)]}
+  else if(T<K.c1){const k=eio(p(T,K.b1,K.c1));pos=[L(1.2,.3,k),L(.6,.9,k),L(7.4,6.2,k)];look=[0,.6,-1]}
+  else{const k=eio(p(T,K.c1,K.d1));pos=[L(-.8,.2,k),L(.4,.9,k),L(8.2,7.0,k)];look=[0,.85,-1]}
+  const[sx,sy]=shake(T,[K.a2,K.b2,K.c4],.1);cam.position.set(pos[0]+sx,pos[1]+sy,pos[2]);cam.lookAt(look[0],look[1],look[2]);rainAt(T,cam.position.z);
+  bp.strength=1.1+.4*Math.exp(-Math.max(0,T-K.a2)*6)*(T>=K.a2);
+}
+function overlay(T,x){vignette(x,.55);
+  if(T>=K.c4+.3){x.save();x.globalAlpha=p(T,K.c4+.3,K.d1);x.fillStyle='#000';x.fillRect(0,0,W,H);x.restore()}
+  phrases(x,T,PH,{font:'Bri',weight:800,ls:-2,glow:26,glowCol:'#FF6FB0'});grain(x,T,.06)}
+window.renderAt=makeRender(E,draw,overlay,3);window.ready=true;
+</script></body></html>
