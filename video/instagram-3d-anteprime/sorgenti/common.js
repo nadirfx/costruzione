@@ -40,7 +40,7 @@ export function grain(x,T,a=.06){const f=Math.floor(T*30);x.save();x.globalAlpha
 export function vignette(x,a=.55){const g=x.createRadialGradient(W/2,H/2,H*.25,W/2,H/2,H*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${a})`);x.fillStyle=g;x.fillRect(0,0,W,H)}
 /* frame driver: draw(T) sets the 3D state, overlay(T,x) draws type; subframes for motion blur */
 export function makeRender(E,draw,overlay,sub=3,shutter=1/48){return function(T){const {ox,ax,acc,comp,r,vx,ov}=E;
-  ax.clearRect(0,0,W,H);for(let i=0;i<sub;i++){const tt=Math.max(0,T+(sub>1?(i/(sub-1)-.5)*shutter:0));draw(tt);comp.render();ax.globalAlpha=1/(i+1);ax.drawImage(r.domElement,0,0)}ax.globalAlpha=1;
+  ax.clearRect(0,0,W,H);const n=[K.a2,K.b1,K.c1,K.b2].some(c=>Math.abs(T-c)<.4)?8:sub;for(let i=0;i<n;i++){const tt=Math.max(0,T+(n>1?(i/(n-1)-.5)*shutter:0));draw(tt);comp.render();ax.globalAlpha=1/(i+1);ax.drawImage(r.domElement,0,0)}ax.globalAlpha=1;
   ox.globalAlpha=1;ox.drawImage(acc,0,0);vx.clearRect(0,0,W,H);overlay(T,vx);ox.drawImage(ov,0,0);return true}}
 /* kinetic phrases: every word appears on its spoken time, slide-up through a mask. Layout is fixed per line (no jumping). */
 export function phrases(x,T,list,st){const{font='Int',weight=900,ls=-3,color='#FFFFFF',glow=0,glowCol='#FFFFFF',upper=false}=st;
@@ -54,7 +54,7 @@ export function phrases(x,T,list,st){const{font='Int',weight=900,ls=-3,color='#F
       x.restore();x.restore()})}}
 export const RED='#FF2D46';
 export const PH=[
- {t0:0,t1:K.a1-.05,y:[360],size:[118],lines:[[['Dal',0],['1°',0.3],['gennaio',0.96],['2027',1.48]]]},
- {t0:K.a1,t1:K.b1-.05,y:[330,470],size:[132,96],lines:[[['Instagram',K.a1],['chiude.',K.a2,RED]],[['In',K.a3],['tutta',3.56],['Italia.',3.8]]]},
- {t0:K.b1,t1:K.c1-.05,y:[330,460],size:[118,96],lines:[[['Il',K.b1],['tuo',4.6],['profilo',5.0]],[['verrà',5.3],['cancellato.',K.b2,RED]]]},
+ {t0:0,t1:K.a1-.25,y:[360],size:[118],lines:[[['Dal',0],['1°',0.3],['gennaio',0.96],['2027',1.48]]]},
+ {t0:K.a1,t1:K.b1-.25,y:[330,470],size:[132,96],lines:[[['Instagram',K.a1],['chiude.',K.a2,RED]],[['In',K.a3],['tutta',3.56],['Italia.',3.8]]]},
+ {t0:K.b1,t1:K.c1-.25,y:[330,460],size:[118,96],lines:[[['Il',K.b1],['tuo',4.6],['profilo',5.0]],[['verrà',5.3],['cancellato.',K.b2,RED]]]},
  {t0:K.c1,t1:K.d1,y:[330,460],size:[104,96],lines:[[['Foto.',K.c1],['Storie.',K.c2],['Messaggi.',K.c3]],[['Tutto',K.c4t],['cancellato.',K.c4,RED]]]}];
