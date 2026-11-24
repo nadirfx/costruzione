@@ -1,6 +1,8 @@
 // Test-only mock of the claude.ai runtime capabilities used by Jarvis Studio.
 (() => {
-  const store = new Map(); // path -> body
+  let saved = null; try { saved = JSON.parse(localStorage.getItem('__mockdb') || 'null'); } catch (e) { }
+  const store = new Map(saved || []); // path -> body (persisted like the real db)
+  const persist = () => { try { localStorage.setItem('__mockdb', JSON.stringify([...store])); } catch (e) { } };
   const listeners = new Set();
   const blobs = {};
   window.__mockBlobs = blobs;
@@ -9,7 +11,7 @@
   window.__sampleCalls = [];
   const clone = o => JSON.parse(JSON.stringify(o));
   const snapDoc = (path) => { const b = store.get(path); return { id: path.split('/').pop(), exists: !!b, data: () => b ? clone(b) : undefined, metadata: { fromCache: false, hasPendingWrites: false } }; };
-  const notify = () => { for (const l of [...listeners]) setTimeout(l, 0); };
+  const notify = () => { persist(); for (const l of [...listeners]) setTimeout(l, 0); };
   function query(col, filters = [], order = null, lim = 1000) {
     const api = {
       where(f, op, v) { return query(col, [...filters, [f, op, v]], order, lim); },
