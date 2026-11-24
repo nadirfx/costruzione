@@ -1,0 +1,204 @@
+<title>Jarvis Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: edit-bay — project rail on the left, review monitor + notes on the right; stacks on phones. */
+:root{
+  --bg:#f3f2ef;--panel:#ffffff;--ink:#17171a;--muted:#6c6b70;--line:#e2e0db;--accent:#2f56ff;--accent-ink:#ffffff;
+  --a:#b8892c;--b:#5d8f12;--c:#d5523a;--ok:#1f8a4c;--warn:#b26a00;--crit:#c2342a;--chip:#efeee9;--monitor:#0e0e10;
+  --f-display:"Space Grotesk",system-ui,sans-serif;--f-body:"Inter",system-ui,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121214;--panel:#1b1b1f;--ink:#f1f0ee;--muted:#9a99a0;--line:#2c2c31;--accent:#6f8dff;--accent-ink:#0b0b0d;--a:#e0b25a;--b:#9fd04a;--c:#ff7d63;--ok:#4cc07f;--warn:#e9a23b;--crit:#ff6b5f;--chip:#24242a;--monitor:#000;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121214;--panel:#1b1b1f;--ink:#f1f0ee;--muted:#9a99a0;--line:#2c2c31;--accent:#6f8dff;--accent-ink:#0b0b0d;--a:#e0b25a;--b:#9fd04a;--c:#ff7d63;--ok:#4cc07f;--warn:#e9a23b;--crit:#ff6b5f;--chip:#24242a;--monitor:#000;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1240px;margin:0 auto;display:grid;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font:700 30px/1.1 var(--f-display);margin:0;letter-spacing:-.5px}
+h1 small{display:block;font:500 13px var(--f-body);color:var(--muted);letter-spacing:0;margin-top:4px}
+h2{font:700 20px/1.2 var(--f-display);margin:0;text-wrap:balance}
+.btn{font:600 14px var(--f-body);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:13px;color:var(--muted)}
+.stat b{color:var(--ink);font:700 16px var(--f-display);margin-right:4px;font-variant-numeric:tabular-nums}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:600 12px var(--f-body);border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:999px;padding:5px 11px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.main{display:grid;grid-template-columns:330px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.main{grid-template-columns:minmax(0,1fr)}}
+.rail{display:grid;gap:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:6px;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.card[aria-current="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.card .t{font:600 15px/1.3 var(--f-body)}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.fmt{font:700 11px var(--f-mono);border-radius:6px;padding:2px 7px;color:#fff}
+.fmt.A{background:var(--a)}.fmt.B{background:var(--b)}.fmt.C{background:var(--c)}
+.st{font:600 11px var(--f-body);border-radius:999px;padding:2px 9px;border:1px solid currentColor}
+.st.brief{color:var(--muted)}.st.lavorazione{color:var(--warn)}.st.revisione{color:var(--accent)}.st.approvato{color:var(--ok)}
+.meta{font-size:12px;color:var(--muted)}
+.detail{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:16px;min-width:0}
+.bay{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:1000px){.bay{grid-template-columns:minmax(0,1fr)}}
+.monitor{background:var(--monitor);border-radius:12px;aspect-ratio:9/16;max-height:72vh;width:100%;max-width:100%;display:grid;place-items:center;overflow:hidden;margin-inline:auto}
+.monitor video{width:100%;height:100%;object-fit:contain;background:#000}
+.monitor .empty{color:#8d8c92;font-size:13px;padding:20px;text-align:center}
+.tc{font:500 13px var(--f-mono);font-variant-numeric:tabular-nums}
+.notes{display:grid;gap:8px;min-width:0}
+.compose{display:grid;gap:8px}
+textarea,input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
+textarea{min-height:70px;resize:vertical}
+.note{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+.note.done{opacity:.55}.note.done .txt{text-decoration:line-through}
+.note .jump{font:500 12px var(--f-mono);background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:3px 7px;cursor:pointer;color:var(--ink)}
+.note .txt{white-space:pre-wrap;overflow-wrap:anywhere}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.kv div{background:var(--bg);border-radius:10px;padding:8px 10px;min-width:0}
+.kv span{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kv p{margin:2px 0 0;overflow-wrap:anywhere}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:20}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);width:min(560px,calc(100vw - 32px));padding:20px}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+form.grid{display:grid;gap:10px}
+form.grid label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.two{grid-template-columns:1fr}}
+.banner{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--muted)}
+.versions{display:flex;gap:6px;flex-wrap:wrap}
+a{color:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Jarvis Studio<small>Brief, revisione ed export dei tuoi video A · B · C</small></h1>
+    <div class="row">
+      <div class="stats" id="stats"></div>
+      <button class="btn primary" id="newBtn" type="button">+ Nuovo brief</button>
+    </div>
+  </header>
+  <div class="filters" id="filters" aria-label="Filtri"></div>
+  <div id="banner" class="banner" hidden></div>
+  <div class="main">
+    <nav class="rail" id="rail" aria-label="Progetti"><div class="banner">Carico i progetti…</div></nav>
+    <section class="detail" id="detail" aria-live="polite">
+      <div class="banner">Scegli un progetto a sinistra, oppure crea un nuovo brief.</div>
+    </section>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <form class="grid" id="briefForm" method="dialog">
+    <h2>Nuovo brief</h2>
+    <label>Titolo<input id="f_title" required maxlength="120" placeholder="Es. Google cancella le recensioni"></label>
+    <div class="two">
+      <label>Formato<select id="f_format"><option value="A">A · Luxury motion</option><option value="B" selected>B · Faceless premium</option><option value="C">C · Creator con la faccia</option></select></label>
+      <label>Piattaforma<select id="f_platform"><option>Reels / TikTok 9:16</option><option>YouTube 16:9</option><option>Feed 1:1</option></select></label>
+    </div>
+    <div class="two">
+      <label>Durata<input id="f_duration" placeholder="Es. 40 s"></label>
+      <label>CTA<input id="f_cta" placeholder="Es. Commenta CLAUDE"></label>
+    </div>
+    <label>Obiettivo<input id="f_goal" placeholder="Es. follower, lead, vendita"></label>
+    <label>Note e riferimenti<textarea id="f_notes" placeholder="Script, link ai riferimenti, cosa evitare…"></textarea></label>
+    <div class="actions"><button class="btn primary" id="f_save" type="submit">Salva brief</button><button class="btn" type="button" id="f_cancel">Annulla</button></div>
+  </form>
+</dialog>
+
+<script>
+const STATUS={brief:"Brief",lavorazione:"In lavorazione",revisione:"Da revisionare",approvato:"Approvato"};
+const FORMAT={A:"A · Luxury motion",B:"B · Faceless premium",C:"C · Creator"};
+let db=null,user=null,downloads=null,assets=null,canWrite=true;
+let projects=[],selId=null,selVer=null,notes=[],unNotes=null,filterF="all",filterS="all";
+const $=id=>document.getElementById(id);
+const el=(tag,props={},...kids)=>{const e=document.createElement(tag);for(const[k,v]of Object.entries(props)){if(k==="class")e.className=v;else if(k.startsWith("on"))e.addEventListener(k.slice(2),v);else if(v!==undefined&&v!==null)e.setAttribute(k,v)}for(const k of kids){if(k==null)continue;e.append(k instanceof Node?k:document.createTextNode(String(k)))}return e};
+const tc=s=>{s=Math.max(0,Math.floor(s||0));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
+function toast(msg){const t=el("div",{class:"toast",role:"status"},msg);document.body.append(t);setTimeout(()=>t.remove(),2600)}
+function banner(msg){const b=$("banner");b.textContent=msg||"";b.hidden=!msg}
+
+function renderFilters(){const f=$("filters");f.replaceChildren();
+  [["all","Tutti"],["A","A"],["B","B"],["C","C"]].forEach(([k,l])=>f.append(el("button",{class:"chip",type:"button","aria-pressed":String(filterF===k),onclick:()=>{filterF=k;renderAll()}},k==="all"?"Tutti i formati":"Formato "+l)));
+  [["all","Ogni stato"],...Object.entries(STATUS)].forEach(([k,l])=>f.append(el("button",{class:"chip",type:"button","aria-pressed":String(filterS===k),onclick:()=>{filterS=k;renderAll()}},l)))}
+function renderStats(){const s=$("stats");s.replaceChildren();const c=k=>projects.filter(p=>p.status===k).length;
+  [["revisione","da revisionare"],["lavorazione","in lavorazione"],["approvato","approvati"]].forEach(([k,l])=>s.append(el("div",{class:"stat"},el("b",{},c(k)),l)))}
+function renderRail(){const r=$("rail");r.replaceChildren();const list=projects.filter(p=>(filterF==="all"||p.format===filterF)&&(filterS==="all"||p.status===filterS));
+  if(!projects.length){r.append(el("div",{class:"banner"},"Nessun progetto ancora. Premi “+ Nuovo brief” per iniziare: compare qui e io lo prendo in carico."));return}
+  if(!list.length){r.append(el("div",{class:"banner"},"Nessun progetto con questi filtri."));return}
+  for(const p of list){const vers=(p.versions||[]).length;
+    r.append(el("button",{class:"card",type:"button","aria-current":String(p.id===selId),onclick:()=>select(p.id)},
+      el("div",{class:"row"},el("span",{class:"fmt "+p.format},p.format),el("span",{class:"st "+p.status},STATUS[p.status]||p.status)),
+      el("div",{class:"t"},p.title||"Senza titolo"),
+      el("div",{class:"meta"},(vers?vers+(vers===1?" versione":" versioni"):"nessun video")+(p.openNotes?" · "+p.openNotes+(p.openNotes===1?" nota aperta":" note aperte"):""))))}}
+function renderAll(){renderFilters();renderStats();renderRail();renderDetail()}
+
+function curProject(){return projects.find(p=>p.id===selId)||null}
+function select(id){if(selId!==id){selId=id;selVer=null;subscribeNotes()}renderAll()}
+
+function renderDetail(){const d=$("detail");const p=curProject();d.replaceChildren();
+  if(!p){d.append(el("div",{class:"banner"},projects.length?"Scegli un progetto a sinistra per guardarlo e revisionarlo.":"Crea il primo brief con “+ Nuovo brief”."));return}
+  const vers=(p.versions||[]).slice().sort((a,b)=>a.v-b.v);const v=vers.find(x=>x.v===selVer)||vers[vers.length-1]||null;if(v)selVer=v.v;
+  d.append(el("div",{class:"row"},el("span",{class:"fmt "+p.format},FORMAT[p.format]||p.format),el("span",{class:"st "+p.status},STATUS[p.status]||p.status)),el("h2",{},p.title||"Senza titolo"));
+  const kv=el("div",{class:"kv"});[["Obiettivo",p.goal],["Piattaforma",p.platform],["Durata",p.duration],["CTA",p.cta]].forEach(([k,val])=>{if(val)kv.append(el("div",{},el("span",{},k),el("p",{},val)))});if(kv.children.length)d.append(kv);
+  if(p.brief)d.append(el("div",{class:"banner"},p.brief));
+  const bay=el("div",{class:"bay"});const left=el("div",{class:"notes"});const mon=el("div",{class:"monitor"});
+  let video=null;
+  if(v&&v.assetId){video=el("video",{controls:"",playsinline:"",preload:"metadata",src:"/_blob/"+v.assetId});video.addEventListener("error",()=>{mon.replaceChildren(el("div",{class:"empty"},"Questo video non si carica qui. Usa il link al master qui sotto."))});mon.append(video)}
+  else mon.append(el("div",{class:"empty"},"Il video comparirà qui quando la prima versione è pronta."));
+  left.append(mon);
+  if(vers.length>1){const vs=el("div",{class:"versions"});vers.forEach(x=>vs.append(el("button",{class:"chip",type:"button","aria-pressed":String(x.v===selVer),onclick:()=>{selVer=x.v;renderDetail()}},"v"+x.v+(x.label?" · "+x.label:""))));left.append(vs)}
+  if(v)left.append(el("div",{class:"meta"},"v"+v.v+(v.label?" · "+v.label:"")+(v.date?" · "+v.date:"")+(v.durationSec?" · "+tc(v.durationSec):"")));
+  const acts=el("div",{class:"actions"});
+  if(v&&v.assetId)acts.append(el("button",{class:"btn primary",type:"button",id:"exportBtn",onclick:()=>exportVideo(p,v)},"Esporta video"));
+  if(canWrite&&p.status!=="approvato"&&v)acts.append(el("button",{class:"btn ok",type:"button",id:"approveBtn",onclick:()=>setStatus(p,"approvato","Approvato. Pronto da esportare.")},"Approva"));
+  if(canWrite&&p.status!=="lavorazione"&&v)acts.append(el("button",{class:"btn",type:"button",id:"changesBtn",onclick:()=>setStatus(p,"lavorazione","Richieste di modifica inviate a Claude.")},"Richiedi modifiche"));
+  left.append(acts);
+  if(v&&v.master&&/^https:\/\//.test(v.master))left.append(el("div",{class:"meta"},"Master alta qualità: ",el("a",{href:v.master,target:"_blank",rel:"noopener"},"apri su GitHub")));
+  if(!downloads&&v)left.append(el("div",{class:"meta"},"L’export non è disponibile in questa vista: apri l’app su claude.ai da browser o computer."));
+  const right=el("div",{class:"notes"});right.append(el("h2",{},"Revisione"));
+  if(canWrite&&v){const ta=el("textarea",{id:"noteText",placeholder:"Metti in pausa sul punto da cambiare e scrivi cosa non va…"});const lab=el("span",{class:"tc",id:"noteTc"},"a "+tc(0));
+    if(video)video.addEventListener("timeupdate",()=>{lab.textContent="a "+tc(video.currentTime)});
+    const add=el("button",{class:"btn primary",type:"button",id:"noteAdd",onclick:async()=>{const text=ta.value.trim();if(!text)return;add.disabled=true;try{await db.collection("projects/"+p.id+"/notes").add({t:video?Math.round(video.currentTime*10)/10:0,text:text.slice(0,2000),v:v.v,done:false,createdAt:new Date().toISOString()});ta.value="";toast("Nota salvata");if(p.status==="approvato")await setStatus(p,"revisione")}catch(e){toast(writeErr(e))}finally{add.disabled=false}}},"Aggiungi nota");
+    right.append(el("div",{class:"compose"},ta,el("div",{class:"row"},add,lab)))}
+  const list=el("div",{class:"notes",id:"noteList"});
+  const mine=notes.filter(n=>!v||n.v===v.v||n.v==null).sort((a,b)=>a.t-b.t);
+  if(!mine.length)list.append(el("div",{class:"meta"},v?"Nessuna nota su questa versione.":"Le note compariranno qui."));
+  for(const n of mine){const row=el("div",{class:"note"+(n.done?" done":"")},
+      el("button",{class:"jump",type:"button",title:"Vai a questo punto",onclick:()=>{if(video){video.currentTime=n.t||0;video.pause()}}},tc(n.t)),
+      el("div",{class:"txt"},n.text||""),
+      canWrite?el("button",{class:"chip",type:"button","aria-pressed":String(!!n.done),onclick:async()=>{try{await db.doc("projects/"+p.id+"/notes/"+n.id).update({done:!n.done})}catch(e){toast(writeErr(e))}}},n.done?"Fatto":"Da fare"):null);list.append(row)}
+  right.append(list);bay.append(left,right);d.append(bay)}
+
+function writeErr(e){if(e&&e.code==="invalid_argument"){canWrite=false;renderDetail();return "Non hai i permessi per modificare questo progetto."}if(e&&e.code==="quota_exceeded")return "Spazio dati esaurito: elimina vecchi progetti.";return "Non salvato, riprova tra poco."}
+async function setStatus(p,st,msg){if(!db)return;try{await db.doc("projects/"+p.id).update({status:st,updatedAt:new Date().toISOString()});if(msg)toast(msg)}catch(e){toast(writeErr(e))}}
+async function exportVideo(p,v){const b=$("exportBtn");if(!downloads){toast("Export non disponibile in questa vista.");return}b&&(b.disabled=true);
+  try{const r=await fetch("/_blob/"+v.assetId);if(!r.ok)throw{code:"fetch"};const blob=await r.blob();const name=(v.filename||((p.title||"video").replace(/[^\p{L}\p{N}]+/gu,"-").replace(/^-|-$/g,"").toLowerCase()+"-v"+v.v))+".mp4";
+    const res=await downloads.save({filename:name,data:blob});if(res.status==="saved")toast("Salvato: "+name)}
+  catch(e){const c=e&&e.code;toast(c==="declined"?"Export annullato.":c==="rate_limited"?"Un salvataggio è già in corso, riprova tra poco.":c==="fetch"?"Non riesco a leggere il video, usa il link al master.":"Export non riuscito: apri l’app da browser o computer.")}
+  finally{b&&(b.disabled=false)}}
+
+function subscribeNotes(){if(unNotes){unNotes();unNotes=null}notes=[];if(!db||!selId)return;
+  unNotes=db.collection("projects/"+selId+"/notes").onSnapshot(s=>{notes=s.docs.map(d=>({id:d.id,...d.data()}));renderDetail()},()=>{})}
+
+$("newBtn").addEventListener("click",()=>{if(!db){toast("I dati non sono disponibili in questa vista.");return}$("dlg").showModal();$("f_title").focus()});
+$("f_cancel").addEventListener("click",()=>$("dlg").close());
+$("briefForm").addEventListener("submit",async ev=>{ev.preventDefault();const title=$("f_title").value.trim();if(!title)return;const btn=$("f_save");btn.disabled=true;
+  try{const ref=await db.collection("projects").add({title,format:$("f_format").value,platform:$("f_platform").value,duration:$("f_duration").value.trim(),cta:$("f_cta").value.trim(),goal:$("f_goal").value.trim(),brief:$("f_notes").value.trim(),status:"brief",versions:[],openNotes:0,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+    $("dlg").close();$("briefForm").reset();selId=ref.id;subscribeNotes();toast("Brief salvato. Lo vedo e parto.")}catch(e){toast(writeErr(e))}finally{btn.disabled=false}});
+
+renderAll();
+(async()=>{const c=window.claude;if(!c||!c.use){banner("Apri questa pagina su claude.ai per vedere e salvare i tuoi progetti.");$("rail").replaceChildren(el("div",{class:"banner"},"Dati non disponibili qui."));return}
+  [db,user,downloads]=await Promise.all([c.use("db"),c.use("user"),c.use("downloads")]);
+  if(!db){banner("Accedi a claude.ai per vedere e salvare i progetti.");$("rail").replaceChildren(el("div",{class:"banner"},"Dati non disponibili in questa vista."));return}
+  try{const w=user&&await user.can("data.write");if(w===false)canWrite=false}catch(e){}
+  const timer=setTimeout(()=>banner("Non riesco ancora a raggiungere i dati: potrebbero non essere aggiornati."),10000);
+  db.collection("projects").orderBy("updatedAt","desc").onSnapshot(s=>{if(!s.metadata.fromCache){clearTimeout(timer);banner("")}
+    projects=s.docs.map(d=>({id:d.id,...d.data()}));if(!selId&&projects.length){selId=(projects.find(p=>p.status==="revisione")||projects[0]).id;subscribeNotes()}renderAll()},
+    e=>{clearTimeout(timer);banner("I progetti non si possono caricare in questa vista.")});
+})();
+</script>
