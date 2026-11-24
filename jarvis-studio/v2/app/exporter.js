@@ -49,15 +49,20 @@ async function decodeAudio(key, ac) {
 async function mixAudio(dur) {
   const sr = 48000; const len = Math.max(1, Math.ceil(dur * sr));
   const oc = new OfflineAudioContext(2, len, sr);
+  const comp = oc.createDynamicsCompressor(); comp.threshold.value = -6; comp.knee.value = 6; comp.ratio.value = 12; comp.attack.value = 0.003; comp.release.value = 0.15; comp.connect(oc.destination);
   for (const c of E.clips) {
     if (!c.mat || (c.kind !== 'audio' && c.kind !== 'video') || c.track === 'V2') continue;
     const ab = await decodeAudio(c.mat, oc); if (!ab) continue;
     const src = oc.createBufferSource(); src.buffer = ab; src.playbackRate.value = c.speed || 1;
-    const g = oc.createGain(); g.gain.value = Math.max(0, c.vol ?? 1); src.connect(g).connect(oc.destination);
+    const g = oc.createGain(); g.gain.value = Math.max(0, c.vol ?? 1); src.connect(g).connect(comp);
     const off = Math.max(0, c.in || 0); if (off >= ab.duration) continue;
     src.start(Math.max(0, c.start), off, Math.min(c.dur * (c.speed || 1), ab.duration - off));
   }
-  return oc.startRendering();
+  const out = await oc.startRendering();
+  // true-peak safety: never above -1 dBFS
+  let pk = 0; for (let ch = 0; ch < 2; ch++) { const d = out.getChannelData(ch); for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > pk) pk = v; } }
+  const lim = Math.pow(10, -1 / 20); if (pk > lim) { const k = lim / pk; for (let ch = 0; ch < 2; ch++) { const d = out.getChannelData(ch); for (let i = 0; i < d.length; i++) d[i] *= k; } }
+  return out;
 }
 function setProg(k, msg) { $('exProg').style.width = Math.round(k * 100) + '%'; if (msg) $('exMsg').textContent = msg; }
 async function go() {

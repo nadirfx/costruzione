@@ -48,7 +48,7 @@
     async list() { return { assets: [], usage: { files: 0, bytes: 0, maxFiles: 1000, maxBytes: 1e9 } }; },
     async delete() { return { deleted: true }; },
   };
-  const downloads = { async save({ filename, data }) { window.__downloads.push({ filename, size: data.size || data.length || data.byteLength }); return { status: 'saved' }; } };
+  const downloads = { async save({ filename, data }) { window.__downloads.push({ filename, size: data.size || data.length || data.byteLength }); window.__lastDownload = data; return { status: 'saved' }; } };
   const user = { async id() { return 'u_test'; }, async isOwner() { return true; }, async canEdit() { return true; }, async can() { return true; }, async me() { return { id: 'u_test', name: 'Nadir' }; }, async profiles() { return {}; } };
   // sample: scripted answers. Edit plans come back as JSON lines built from the prompt's materials.
   async function sample(input, opts = {}) {
