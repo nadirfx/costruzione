@@ -2,6 +2,7 @@
 import { S, $, el, toast, now, writeErr, feed, uid, emit, on, STATUS, FORMAT } from './state.js';
 import { E, openEdit, touch, flush } from './proj.js';
 import { FORMAT_CHECK, RULES } from './data.js';
+import { audioToContainer } from './audioconv.js';
 
 let api, turns = [], chatFor = null, busy = null, saveT = null;
 const MAX = 20 * 1024 * 1024;
@@ -159,8 +160,10 @@ async function addFiles(files) {
         if (blob.size > MAX) throw { code: 'too_large' };
         note = 'copia leggera'; m.proxy = true;
       }
+      if (kind === 'audio') { m.status = 'proxy'; renderMats(); const conv = await audioToContainer(f, (k) => { m.prog = k; renderMatRow(m); }); blob = conv.blob; if (!m.dur) m.dur = conv.dur; if (blob.size > MAX) throw { code: 'too_large' }; }
       m.status = 'upload'; renderMats();
-      const r = await S.assets.upload(blob, blob.type ? undefined : { type: kind === 'video' ? 'video/mp4' : 'audio/mpeg' });
+      const ty = blob.type === 'video/webm' || blob.type === 'video/mp4' ? blob.type : kind === 'video' ? (/webm/.test(f.type) ? 'video/webm' : 'video/mp4') : blob.type;
+      const r = await S.assets.upload(blob, { type: ty });
       m.assetId = r.id; m.status = 'ok'; m.note = note; delete m.prog;
       feed('Materiale caricato: ' + m.name); touch('materials');
     } catch (e) {
@@ -172,7 +175,7 @@ async function addFiles(files) {
     renderMats(); renderCheck();
   }
 }
-function renderMatRow(m) { const row = document.querySelector(`[data-mat="${m.id}"] .nm`); if (row && m.prog != null) row.textContent = m.name + ' · copia leggera ' + Math.round(m.prog * 100) + '%'; }
+function renderMatRow(m) { const row = document.querySelector(`[data-mat="${m.id}"] .nm`); if (row && m.prog != null) row.textContent = m.name + (m.kind === 'audio' ? ' · preparo l\'audio ' : ' · copia leggera ') + Math.round(m.prog * 100) + '%'; }
 function renderMats() {
   const box = $('matList'); box.replaceChildren();
   if (!E.materials.length) { box.append(el('div', { class: 'empty', text: 'Nessun materiale. L\'ordine qui è la sequenza che Jarvis userà per montare.' })); return; }
@@ -182,7 +185,7 @@ function renderMats() {
     role.style.width = 'auto';
     box.append(el('div', { class: 'mat', 'data-mat': m.id },
       el('span', { class: 'ord', text: String(i + 1) }), th,
-      el('div', { style: { minWidth: 0 } }, el('div', { class: 'nm', text: m.name + (m.status === 'upload' ? ' · carico…' : m.status === 'proxy' ? ' · copia leggera…' : '') }),
+      el('div', { style: { minWidth: 0 } }, el('div', { class: 'nm', text: m.name + (m.status === 'upload' ? ' · carico…' : m.status === 'proxy' ? (m.kind === 'audio' ? ' · preparo l\'audio…' : ' · copia leggera…') : '') }),
         el('div', { class: 'row' }, role, el('span', { class: 'lbl', text: (m.dur ? m.dur.toFixed(1) + ' s' : '') + (m.note ? ' · ' + m.note : '') }))),
       el('div', { class: 'row', style: { flexWrap: 'nowrap', gap: '4px' } },
         el('button', { class: 'btn sm', type: 'button', 'aria-label': 'Sposta su', disabled: i === 0 || m.status !== 'ok', onclick: () => move(i, -1) }, '↑'),

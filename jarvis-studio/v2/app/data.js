@@ -1,18 +1,18 @@
 // Static knowledge: sound library (asset ids filled at install), format rules, text styles, transitions.
 export const SFX = [
-  { key: 'whoosh', name: 'Whoosh pulito', use: 'Tagli e transizioni grandi', dur: 0.55, assetId: null },
-  { key: 'hit', name: 'Colpo cinematico', use: 'Parola chiave, impatto', dur: 2.0, assetId: null },
-  { key: 'sub', name: 'Sub drop', use: 'Notizia shock, "cancellato"', dur: 1.4, assetId: null },
-  { key: 'braam', name: 'Braam da trailer', use: 'Gancio, rivelazione', dur: 2.6, assetId: null },
-  { key: 'riser', name: 'Riser', use: 'Tensione che sale prima della svolta', dur: 2.0, assetId: null },
-  { key: 'revswell', name: 'Swell al contrario', use: 'Risucchio nella pausa', dur: 1.6, assetId: null },
-  { key: 'pop', name: 'Pop morbido', use: 'Elemento che appare', dur: 0.4, assetId: null },
-  { key: 'click', name: 'Click', use: 'UI, digitazione, toggle', dur: 0.2, assetId: null },
-  { key: 'shimmer', name: 'Shimmer', use: 'Svolta positiva, luce', dur: 2.5, assetId: null },
-  { key: 'flash', name: 'Flash brillante', use: 'Flash di luce sul taglio', dur: 0.8, assetId: null },
-  { key: 'suck', name: 'Risucchio', use: 'Prima di un colpo', dur: 2.0, assetId: null },
-  { key: 'sizzle', name: 'Sfrigolio', use: 'Cibo caldo', dur: 1.6, assetId: null },
-  { key: 'crunch', name: 'Crunch', use: 'Croccante, morso', dur: 0.45, assetId: null },
+  { key: 'whoosh', name: 'Whoosh pulito', use: 'Tagli e transizioni grandi', dur: 0.6, assetId: '760380d5f5d36dc687aca27670fa058d' },
+  { key: 'hit', name: 'Colpo cinematico', use: 'Parola chiave, impatto', dur: 1.85, assetId: 'f0d082a542612de009fd78baf3593393' },
+  { key: 'sub', name: 'Sub drop', use: 'Notizia shock, "cancellato"', dur: 1.44, assetId: 'b1920f5a1448923fb42082a66ce90f70' },
+  { key: 'braam', name: 'Braam da trailer', use: 'Gancio, rivelazione', dur: 2.64, assetId: '0c2245998b684fa1571c7f9e69edbd63' },
+  { key: 'riser', name: 'Riser', use: 'Tensione che sale prima della svolta', dur: 2.32, assetId: '5e56062fc2c16e56e79795e307fc0828' },
+  { key: 'revswell', name: 'Swell al contrario', use: 'Risucchio nella pausa', dur: 1.65, assetId: '50f320526da7be9655cbc13d25fdc565' },
+  { key: 'pop', name: 'Pop morbido', use: 'Elemento che appare', dur: 0.44, assetId: '43beaf77851fc61e730e70f5667aceea' },
+  { key: 'click', name: 'Click', use: 'UI, digitazione, toggle', dur: 0.26, assetId: '86f6aaf77f930fbd23b5c6899a1e5b17' },
+  { key: 'shimmer', name: 'Shimmer', use: 'Svolta positiva, luce', dur: 1.78, assetId: '9bb0b998a87e51b8c4413d3943ca42c3' },
+  { key: 'flash', name: 'Flash brillante', use: 'Flash di luce sul taglio', dur: 2.48, assetId: '3f89dd5cf90fc2a70802d9cbc145175f' },
+  { key: 'suck', name: 'Risucchio', use: 'Prima di un colpo', dur: 2.32, assetId: '6720e766ad69752568cca85e37c4eeba' },
+  { key: 'sizzle', name: 'Sfrigolio', use: 'Cibo caldo', dur: 1.65, assetId: '169c919f6bd3ef7dfadcf3833439b064' },
+  { key: 'crunch', name: 'Crunch', use: 'Croccante, morso', dur: 0.5, assetId: '4b5d5933434f74d5809a344d690fd975' },
 ];
 export const RULES = {
   A: { name: 'Luxury motion', rules: [

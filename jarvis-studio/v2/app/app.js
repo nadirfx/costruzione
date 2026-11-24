@@ -4,6 +4,8 @@ import * as Brief from './brief.js';
 import * as Editor from './editor.js';
 import * as Review from './review.js';
 import * as Lib from './lib.js';
+import * as Jarvis from './jarvis.js';
+import * as Exporter from './exporter.js';
 
 const ROOMS = { hub: null, brief: Brief, editor: Editor, review: Review, lib: Lib };
 const NEEDS_MISSION = { brief: true, editor: true };
@@ -34,6 +36,7 @@ export function go(room, opts = {}) {
   if (location.hash !== '#' + room && !opts.fromHash) { try { history.replaceState(null, '', '#' + room); } catch (e) { location.hash = room; } }
   if (room === 'hub') { ensureCore(); core && core.start(); } else if (core) core.stop();
   if (ROOMS[room] && ROOMS[room].enter) ROOMS[room].enter(opts);
+  if (room === 'editor') Jarvis.enterEditor();
 }
 window.addEventListener('hashchange', () => { const r = location.hash.slice(1); if (r && r !== S.room) go(r, { fromHash: true }); });
 document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => go(b.dataset.room)));
@@ -127,7 +130,7 @@ async function initRuntime() {
 
 /* ---------- start ---------- */
 boot();
-for (const m of Object.values(ROOMS)) if (m && m.init) m.init({ go, curP, setCur, sys });
+for (const m of [...Object.values(ROOMS), Jarvis, Exporter]) if (m && m.init) m.init({ go, curP, setCur, sys });
 const startRoom = (location.hash || '#hub').slice(1);
 go(startRoom in ROOMS && !NEEDS_MISSION[startRoom] ? startRoom : 'hub', { fromHash: true });
 initRuntime();

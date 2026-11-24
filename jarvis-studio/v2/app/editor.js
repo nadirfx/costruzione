@@ -104,10 +104,14 @@ function renderTL() {
   const ru = $('ruler'); ru.replaceChildren(); ru.style.width = W + 'px';
   const step = pps > 120 ? 0.5 : pps > 50 ? 1 : 2; const lab = pps > 120 ? 1 : pps > 50 ? 5 : 10;
   for (let t = 0; t <= end; t = +(t + step).toFixed(3)) { const major = Math.abs(t / lab - Math.round(t / lab)) < 1e-6; ru.append(el('span', { class: 'tk', style: { left: tToX(t) + 'px', height: major ? '100%' : '40%' }, text: major ? tc(t) : '' })); }
-  for (const trEl of document.querySelectorAll('.track')) { trEl.querySelectorAll('.clip').forEach(x => x.remove()); trEl.style.width = W + 'px'; }
+  // overlapping clips on one track are packed into lanes so nothing hides behind anything else
+  const lane = new Map(), lanesOf = {};
+  for (const tr of TRACKS) { const ends = []; for (const c of E.clips.filter(c => c.track === tr).sort((a, b) => a.start - b.start)) { let i = ends.findIndex(e => e <= c.start + 1e-3); if (i < 0) { i = ends.length; ends.push(0); } ends[i] = c.start + c.dur; lane.set(c.id, i); } lanesOf[tr] = Math.max(1, ends.length); }
+  for (const trEl of document.querySelectorAll('.track')) { trEl.querySelectorAll('.clip').forEach(x => x.remove()); trEl.style.width = W + 'px'; const n = lanesOf[trEl.dataset.track] || 1; trEl.style.height = (n > 1 ? 8 + n * 22 : 40) + 'px'; }
   for (const c of E.clips) {
     const trEl = document.querySelector(`.track[data-track="${c.track}"]`); if (!trEl) continue;
-    const d = el('div', { class: 'clip ' + c.track + (c.id === sel ? ' sel' : ''), 'data-id': c.id, title: labelOf(c), style: { left: tToX(c.start) + 'px', width: Math.max(6, c.dur * pps) + 'px' } },
+    const n = lanesOf[c.track] || 1, li = lane.get(c.id) || 0;
+    const d = el('div', { class: 'clip ' + c.track + (c.id === sel ? ' sel' : ''), 'data-id': c.id, title: labelOf(c), style: { left: tToX(c.start) + 'px', width: Math.max(6, c.dur * pps) + 'px', ...(n > 1 ? { top: (4 + li * 22) + 'px', bottom: 'auto', height: '20px', lineHeight: '14px' } : {}) } },
       c.trans && c.trans !== 'none' ? el('span', { class: 'tr', title: 'Transizione: ' + c.trans }) : null, labelOf(c),
       el('span', { class: 'hd l' }), el('span', { class: 'hd r' }));
     d.addEventListener('pointerdown', (e) => clipDown(e, c, d));
