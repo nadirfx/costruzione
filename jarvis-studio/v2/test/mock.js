@@ -44,7 +44,7 @@
   const colRef = (col) => Object.assign(query(col), { path: col, doc(id) { return docRef(col + '/' + (id || ('m' + (++n) + Math.random().toString(36).slice(2, 7)))); }, async add(d) { const r = this.doc(); await r.set(d); return r; } });
   const db = { doc: docRef, collection: colRef };
   const assets = {
-    async upload(blob, o) { if (blob.size > 20 * 1024 * 1024) throw { code: 'too_large', message: 'too large' }; const id = Math.random().toString(16).slice(2).padEnd(32, '0').slice(0, 32); blobs[id] = URL.createObjectURL(blob); return { id, url: blobs[id], sizeBytes: blob.size, contentType: (o && o.type) || blob.type }; },
+    async upload(blob, o) { if (blob.size > 20 * 1024 * 1024) throw { code: 'too_large', message: 'too large' }; const id = (Math.random().toString(16).slice(2) + Math.random().toString(16).slice(2) + '0'.repeat(32)).slice(0, 32); const r = await fetch('/__upload/' + id, { method: 'POST', body: blob, headers: { 'x-type': (o && o.type) || blob.type || 'application/octet-stream' } }); if (!r.ok) throw { code: 'upstream_error' }; return { id, url: '/_blob/' + id, sizeBytes: blob.size, contentType: (o && o.type) || blob.type }; },
     async list() { return { assets: [], usage: { files: 0, bytes: 0, maxFiles: 1000, maxBytes: 1e9 } }; },
     async delete() { return { deleted: true }; },
   };

@@ -10,7 +10,10 @@ const TYPES = { '.js': 'text/javascript', '.css': 'text/css', '.mp4': 'video/mp4
 const server = http.createServer((req, res) => {
   let u = decodeURIComponent(req.url.split('?')[0]);
   if (u === '/' || u === '/index.html') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(SKEL_HEAD + fs.readFileSync(path.join(APP, 'index.html'), 'utf8') + '</body></html>'); return; }
-  if (u.startsWith('/_blob/')) { const f = path.join(__dirname, 'blobs', u.slice(7)); if (fs.existsSync(f)) { const b = fs.readFileSync(f); res.writeHead(200, { 'content-type': 'video/mp4', 'content-length': b.length, 'accept-ranges': 'bytes' }); res.end(b); } else { res.writeHead(404); res.end(); } return; }
+  if (u.startsWith('/__upload/') && req.method === 'POST') { const id = u.slice(10); const chunks = []; req.on('data', c => chunks.push(c)); req.on('end', () => { fs.mkdirSync(path.join(__dirname, 'blobs'), { recursive: true }); fs.writeFileSync(path.join(__dirname, 'blobs', id), Buffer.concat(chunks)); fs.writeFileSync(path.join(__dirname, 'blobs', id + '.type'), req.headers['x-type'] || ''); res.writeHead(200); res.end('ok'); }); return; }
+  if (u.startsWith('/_blob/')) { const f = path.join(__dirname, 'blobs', u.slice(7)); if (fs.existsSync(f)) { const b = fs.readFileSync(f); const ty = fs.existsSync(f + '.type') ? fs.readFileSync(f + '.type', 'utf8') : 'video/mp4'; const rg = req.headers.range && /bytes=(\d+)-(\d*)/.exec(req.headers.range);
+      if (rg) { const st = +rg[1], en = rg[2] ? Math.min(+rg[2], b.length - 1) : b.length - 1; res.writeHead(206, { 'content-type': ty, 'content-length': en - st + 1, 'content-range': `bytes ${st}-${en}/${b.length}`, 'accept-ranges': 'bytes' }); res.end(b.slice(st, en + 1)); }
+      else { res.writeHead(200, { 'content-type': ty, 'content-length': b.length, 'accept-ranges': 'bytes' }); res.end(b); } } else { res.writeHead(404); res.end(); } return; }
   const f = path.join(APP, u); if (!f.startsWith(APP) || !fs.existsSync(f)) { res.writeHead(404); res.end(); return; }
   res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream' }); res.end(fs.readFileSync(f));
 });
