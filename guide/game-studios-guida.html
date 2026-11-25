@@ -1,0 +1,173 @@
+<title>Claude Code Game Studios</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one narrow reading column on a night-studio ground; a hero with a pixel-built game screen,
+   then the steps in order, each command in a copyable block. Deliberately single dark look. */
+:root{
+  --bg:#0B0C10;--card:#14161D;--card-2:#1A1D26;--line:rgba(238,234,226,.10);
+  --text:#EEEAE2;--soft:#B8B4AA;--mute:#86827A;
+  --ember:#EC8A5E;--ember-2:#F6B48F;--lime:#C8F25A;--sky:#7DB6FF;
+  --f-display:"Bricolage Grotesque","Inter",system-ui,sans-serif;--f-body:"Inter",system-ui,-apple-system,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font:16px/1.6 var(--f-body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:720px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:44px}
+a{color:var(--ember-2)}
+h1,h2,h3{font-family:var(--f-display);letter-spacing:-.02em;text-wrap:balance;margin:0}
+h1{font-size:clamp(36px,8vw,58px);line-height:1;font-weight:800}
+h1 em{font-style:normal;color:var(--ember-2)}
+h2{font-size:clamp(24px,4.6vw,30px);line-height:1.1;font-weight:800;margin-bottom:12px}
+h3{font-size:18px;font-weight:600}
+p{margin:0 0 10px;color:var(--soft)}
+p b,li b{color:var(--text);font-weight:600}
+.eyebrow{font:600 12px var(--f-body);letter-spacing:.18em;text-transform:uppercase;color:var(--ember)}
+.hero{display:grid;gap:18px}
+.lead{font-size:18.5px;color:var(--soft);max-width:58ch}
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border-radius:999px;font-weight:600;text-decoration:none;border:1px solid var(--line);color:var(--text);background:rgba(255,255,255,.04)}
+.btn.pri{background:var(--ember);color:#1a0d07;border-color:transparent;box-shadow:0 10px 28px rgba(236,138,94,.28)}
+/* the game screen in the hero: built from pixels, the kind of browser game the skill makes */
+.screen{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(#2b2160,#e0785c);aspect-ratio:16/9;max-width:100%}
+.screen canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+.screen .bar{position:absolute;left:0;right:0;top:0;display:flex;gap:6px;align-items:center;padding:8px 12px;background:rgba(10,11,14,.55);font:500 11.5px var(--f-mono);color:var(--soft)}
+.screen .bar i{width:9px;height:9px;border-radius:50%;background:#ff5f57}.screen .bar i:nth-child(2){background:#febc2e}.screen .bar i:nth-child(3){background:#28c840;margin-right:8px}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.fact{padding:14px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.fact b{display:block;font:800 28px/1.1 var(--f-display);color:var(--text)}
+.fact span{font-size:13px;color:var(--mute)}
+.need{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.need li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--soft)}
+.need li::before{content:"";width:16px;height:16px;margin-top:4px;border-radius:5px;border:1.6px solid var(--lime)}
+.steps{display:grid;gap:14px;margin:0;padding:0;list-style:none;counter-reset:s}
+.steps>li{counter-increment:s;display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px}
+.steps>li::before{content:counter(s);width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--ember);color:#1a0d07;font:800 18px var(--f-display)}
+.steps>li>div{min-width:0}
+.code{position:relative;margin:8px 0 4px;border-radius:12px;background:#07080A;border:1px solid var(--line)}
+.code pre{margin:0;padding:14px 92px 14px 16px;overflow-x:auto;font:500 13.5px/1.6 var(--f-mono);color:#E9E4D8;white-space:pre}
+.code button{position:absolute;top:8px;right:8px;border:1px solid var(--line);background:var(--card-2);color:var(--text);border-radius:999px;padding:6px 12px;font:600 12px var(--f-body);cursor:pointer}
+.code button.ok{background:var(--lime);color:#111;border-color:transparent}
+.tip{padding:14px 16px;border-radius:14px;background:rgba(236,138,94,.10);border:1px solid rgba(236,138,94,.3);color:var(--soft);font-size:15px}
+.tip b{color:var(--ember-2)}
+.ideas{display:grid;gap:8px}
+.tiers{display:grid;gap:10px}
+.tier{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;padding:14px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.tier b{font:800 15px var(--f-display);color:var(--c)}
+.tier span{color:var(--soft);font-size:14.5px}
+.after{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.after div{padding:14px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.after div p{margin:4px 0 0;font-size:14.5px}
+footer{display:grid;gap:6px;padding-top:24px;border-top:1px solid var(--line);color:var(--mute);font-size:13.5px}
+footer b{color:var(--text);font-family:var(--f-display);font-size:17px}
+:focus-visible{outline:2px solid var(--ember);outline-offset:3px;border-radius:8px}
+@media (max-width:560px){.facts{grid-template-columns:minmax(0,1fr)}.after{grid-template-columns:minmax(0,1fr)}.tier{grid-template-columns:minmax(0,1fr);gap:4px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <span class="eyebrow">Guida · skill gratuita per Claude Code</span>
+    <h1>Descrivi un gioco. <em>Claude lo costruisce.</em></h1>
+    <p class="lead">Claude Code Game Studios trasforma Claude Code in uno studio di videogiochi. Gli descrivi un'idea: ti fa qualche domanda, scrive il progetto in una pagina e costruisce un gioco che apri nel browser con un doppio clic.</p>
+    <div class="screen" aria-label="Esempio di gioco nel browser"><div class="bar"><i></i><i></i><i></i>prototypes/il-tuo-gioco/index.html</div><canvas id="game" width="320" height="180"></canvas></div>
+    <div class="btns"><a class="btn pri" href="https://github.com/Donchitos/Claude-Code-Game-Studios" target="_blank" rel="noopener">Apri la skill su GitHub</a><a class="btn" href="#installazione">Vai all'installazione</a></div>
+    <div class="facts">
+      <div class="fact"><b>49</b><span>agenti AI organizzati come uno studio</span></div>
+      <div class="fact"><b>75</b><span>comandi, uno per ogni fase</span></div>
+      <div class="fact"><b>Gratis</b><span>open source su GitHub</span></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>Cosa ti serve</h2>
+    <ul class="need">
+      <li><span><b>Claude Code</b>, lo strumento di Claude per computer (non l'app normale di chat). Serve un piano Claude a pagamento.</span></li>
+      <li><span><b>Git</b> e <b>Python 3</b> installati sul computer.</span></li>
+      <li><span><b>Chrome, Edge o Chromium</b>: la skill ci prova da sola il gioco prima di dartelo.</span></li>
+      <li><span>Consigliato: <b>Node.js</b>, per far crescere il gioco in un progetto vero.</span></li>
+    </ul>
+    <p style="margin-top:10px">Su Windows usa il terminale <b>Git Bash</b>, che arriva insieme a Git per Windows.</p>
+  </section>
+
+  <section id="installazione">
+    <h2>Installazione in 3 passi</h2>
+    <ol class="steps">
+      <li><div><h3>Scarica la skill</h3><p>Apri il terminale e copia questo comando. Crea una cartella <b>mio-gioco</b> con tutto lo studio dentro.</p>
+        <div class="code"><pre>git clone https://github.com/Donchitos/Claude-Code-Game-Studios.git mio-gioco</pre><button type="button">Copia</button></div></div></li>
+      <li><div><h3>Entra nella cartella e apri Claude Code</h3><p>Aprilo proprio in questa cartella, non in una sottocartella: altrimenti le regole dello studio non si attivano.</p>
+        <div class="code"><pre>cd mio-gioco
+claude</pre><button type="button">Copia</button></div></div></li>
+      <li><div><h3>Descrivi il tuo gioco</h3><p>Scrivi <b>/prototype</b> seguito dalla tua idea. Se non sai da dove partire, scrivi <b>/start</b> e ti guida lui.</p>
+        <div class="code"><pre>/prototype un gioco di pesca dove i pesci rari abboccano solo al tramonto</pre><button type="button">Copia</button></div></div></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Cosa succede dopo il comando</h2>
+    <ol class="steps">
+      <li><div><h3>Qualche domanda</h3><p>Un giro solo: come si gioca, che sensazione deve dare, lo stile, la difficoltà, l'obiettivo. Ogni domanda ha una risposta già pronta, quindi puoi anche dire "scegli tu".</p></div></li>
+      <li><div><h3>Il progetto in una pagina</h3><p>Scrive il brief del gioco con le tue parole, l'aspetto, il primo minuto di gioco e cosa lasciare per dopo. Lo leggi e dici "costruiscilo", oppure cambi qualcosa.</p></div></li>
+      <li><div><h3>Il gioco nel browser</h3><p>Costruisce il gioco nella cartella <b>prototypes</b>: si apre con un doppio clic.</p></div></li>
+      <li><div><h3>Il controllo prima di consegnartelo</h3><p>Lo prova da solo in un browser, sistema testi fuori schermo o schermate bloccate e ti dice cosa funziona, cosa no e cosa ha dovuto indovinare.</p></div></li>
+    </ol>
+    <div class="tip" style="margin-top:14px"><b>Consiglio:</b> giocalo, poi chiedigli le modifiche a parole: "rendilo più difficile", "aggiungi un boss". Ogni modifica che accetti diventa un punto a cui puoi tornare.</div>
+  </section>
+
+  <section>
+    <h2>Quando il gioco ti piace</h2>
+    <div class="after">
+      <div><h3>Regola tutto</h3><p>Chiedigli un pannello con un cursore per ogni valore: velocità, salto, nemici.</p></div>
+      <div><h3>Condividilo</h3><p>Ti prepara una copia pulita, pronta per itch.io o da mandare come link.</p></div>
+      <div><h3>Fallo crescere</h3><p>Lo trasforma in un progetto web vero e aggiunge una funzione per volta, provata e salvata.</p></div>
+      <div><h3>Finiscilo</h3><p>Con <b>/cut</b> ti propone cosa tagliare e cosa rifinire per arrivare alla fine.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Com'è fatta dentro</h2>
+    <p>Nella modalità studio, pensata per i progetti grandi, lavorano 49 agenti su tre livelli, come in uno studio vero.</p>
+    <div class="tiers">
+      <div class="tier" style="--c:#E9C46A"><b>Direttori</b><span>Direttore creativo, direttore tecnico, produttore.</span></div>
+      <div class="tier" style="--c:var(--sky)"><b>Capi reparto</b><span>Game design, programmazione, arte, audio, narrativa, test, rilascio, localizzazione.</span></div>
+      <div class="tier" style="--c:var(--lime)"><b>Specialisti</b><span>Chi scrive la storia, chi disegna i livelli, chi bilancia l'economia del gioco, chi programma l'intelligenza dei nemici e molti altri.</span></div>
+    </div>
+    <p style="margin-top:12px">Funziona nel browser e anche con Godot, Unity e Unreal.</p>
+  </section>
+
+  <footer>
+    <b>Guida di nadirfx</b>
+    <span>Ogni settimana una skill o uno strumento AI che quasi nessuno conosce. Seguimi per la prossima.</span>
+    <span>Guida non ufficiale. Il progetto è di Donchitos ed è su <a href="https://github.com/Donchitos/Claude-Code-Game-Studios" target="_blank" rel="noopener">GitHub</a>: lì trovi le istruzioni complete e sempre aggiornate.</span>
+  </footer>
+</div>
+
+<script>
+// copy buttons
+document.querySelectorAll('.code button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var pre = b.parentElement.querySelector('pre'); var txt = pre.textContent;
+    var done = function () { b.textContent = 'Copiato'; b.classList.add('ok'); setTimeout(function () { b.textContent = 'Copia'; b.classList.remove('ok'); }, 1600); };
+    var select = function () { var r = document.createRange(); r.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Selezionato'; };
+    try { navigator.clipboard.writeText(txt).then(done, select); } catch (e) { select(); }
+  });
+});
+// a tiny pixel game in the hero: the kind of thing the skill builds
+(function () {
+  var c = document.getElementById('game'); if (!c) return; var x = c.getContext('2d'); var W = 320, H = 180;
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function rnd(i) { var v = Math.sin(i * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); }
+  function frame(T) {
+    var g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2b2160'); g.addColorStop(1, '#e0785c'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.fillStyle = 'rgba(255,235,200,.9)'; x.beginPath(); x.arc(W * .78, H * .3, 16, 0, 7); x.fill();
+    for (var layer = 0; layer < 2; layer++) { x.fillStyle = layer ? '#3a2a5c' : '#26183f'; for (var i = -1; i < 12; i++) { var sp = T * (layer ? 10 : 22); var hx = ((i * 40 - sp) % (W + 80) + W + 80) % (W + 80) - 40; var hh = (layer ? 34 : 54) + rnd(i + layer * 9) * 30; x.fillRect(Math.round(hx / 4) * 4, H - hh, 40, hh); } }
+    x.fillStyle = '#C8F25A'; [[.06, .8, .28], [.42, .66, .2], [.7, .54, .24]].forEach(function (p) { x.fillRect(Math.round(W * p[0]), Math.round(H * p[1]), Math.round(W * p[2]), 6); });
+    for (var k = 0; k < 5; k++) { var cx = W * (.18 + k * .17), cy = H * (.5 + .06 * Math.sin(k * 2)) + Math.sin(T * 4 + k) * 3, sx = Math.abs(Math.cos(T * 5 + k)); x.fillStyle = '#E9C46A'; x.fillRect(Math.round(cx - 4 * sx), Math.round(cy - 4), Math.max(1, Math.round(8 * sx)), 8); }
+    var u = (T * .22) % 1, px = W * (.08 + u * .8), py = H * .8 - Math.abs(Math.sin(u * Math.PI * 3)) * H * .22 - 12;
+    x.fillStyle = '#fff'; x.fillRect(Math.round(px), Math.round(py), 12, 12); x.fillStyle = '#141414'; x.fillRect(Math.round(px) + 7, Math.round(py) + 3, 3, 3); x.fillStyle = '#EC8A5E'; x.fillRect(Math.round(px), Math.round(py) + 9, 12, 3);
+  }
+  if (reduce) { frame(1.3); return; }
+  var t0 = performance.now(); (function loop(now) { frame((now - t0) / 1000); requestAnimationFrame(loop); })(t0);
+})();
+</script>
