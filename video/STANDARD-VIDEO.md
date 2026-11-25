@@ -26,9 +26,14 @@ Riferimento base: `LweCraMDrRxrBzrd0HgQ_g.mp4` e le immagini nella cartella prin
 - Notizie finte: "NON È UNA NOTIZIA REALE" per almeno 1 s. Mai temi di banche, salute, tasse o governo.
 - Consegna: MP4 in allegato più il link raw GitHub, con voce, effetti e sorgenti nella cartella.
 
-## Sound design: regole fisse (dal feedback su Game Studios)
-- **Solo suoni corti e secchi:** clic, pop, colpi di basso, glitch, toni d'interfaccia. Ognuno su un evento che si vede.
-- **Vietati** whoosh d'aria lunghi, razzi, riser, swell al contrario e "tunnel": suonano come aerei che passano.
-- **La salita prima del colpo si taglia sempre** (al massimo 0,06 s prima del picco): il suono parte sull'evento, non prima.
-- **Code di massimo 1 secondo.** Un solo colpo grande per sezione.
-- **Niente tappeti di fondo lunghi:** diventano ronzio.
+## Sound design: regole fisse (dal feedback su Game Studios e dal riferimento "sound design showcase")
+- **Ogni suono imita l'oggetto e dura quanto il movimento:**
+  - numeri che contano → conteggio punteggio, per tutta la durata del conteggio;
+  - flash → otturatore;
+  - pezzi che si incastrano → ingranaggio metallico;
+  - salita verso una rivelazione → riser che finisce esattamente sul colpo;
+  - movimenti di camera → swoosh d'aria BASSO, con energia sotto i 1000 Hz.
+- **Vietati** i whoosh acuti e lunghi, i razzi e i "tunnel": suonano come aerei. Vietati anche i suoni di un decimo di secondo messi a raffica: sembrano interferenze.
+- **Salite:** il riser si usa solo se porta a un colpo; negli altri suoni la salita prima del colpo si taglia.
+- **Corpo:** un solo colpo grande per sezione, con i bassi. Niente tappeti di fondo lunghi.
+- **Volume:** gli effetti restano almeno 6 dB sotto la voce (controllo su finestre di 100 ms).
