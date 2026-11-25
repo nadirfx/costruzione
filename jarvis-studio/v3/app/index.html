@@ -372,6 +372,10 @@ dialog form{display:grid;gap:14px}
   .sheet{width:100vw}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* while exporting, drop every costly effect so all the machine goes to the render */
+body.exporting *,body.exporting *::before,body.exporting *::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;animation:none!important;transition:none!important;box-shadow:none!important}
+body.exporting::after,body.exporting::before{display:none}
+body.exporting dialog::backdrop{backdrop-filter:none;background:rgba(0,0,0,.85)}
 body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:200;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 </style>
 

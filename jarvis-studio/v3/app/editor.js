@@ -240,7 +240,7 @@ function loop() {
   const tick = (now) => {
     if (S.room !== 'editor') return;
     if (playing) { T = playT0 + (now - playStart) / 1000; const end = timelineEnd(E.clips); if (T >= end) { T = end; togglePlay(); } placeHead(); syncMedia(false); updTc(); if (T > 0) scrollTo(T); }
-    draw();
+    if (!document.body.classList.contains('exporting')) draw();
     if (analyser && playing) { analyser.getFloatTimeDomainData(meterBuf); let s = 0; for (const v of meterBuf) s += v * v; const db = 20 * Math.log10(Math.sqrt(s / meterBuf.length) + 1e-7); $('meter').textContent = 'Livello ' + (db < -60 ? '—' : db.toFixed(0) + ' dB'); }
     raf = requestAnimationFrame(tick);
   };

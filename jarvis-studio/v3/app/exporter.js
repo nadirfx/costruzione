@@ -72,6 +72,7 @@ async function go() {
   const vsel = await pickVideo(fmt, W, H, fps);
   if (!vsel) { $('exMsg').textContent = 'Questo browser non supporta questa combinazione: prova WebM o una risoluzione più bassa.'; return; }
   const asel = await pickAudio(fmt);
+  document.body.classList.add('exporting');
   working = true; abort = false; $('exGo').disabled = true; $('exCancel').textContent = 'Annulla'; $('exProgWrap').hidden = false; setProg(0, 'Preparo i materiali…');
   api.sys('busy', 'Export'); await flush();
   let out = null;
@@ -114,7 +115,7 @@ async function go() {
     muxer.finalize();
     out = new Blob([target.buffer], { type: fmt === 'mp4' ? 'video/mp4' : 'video/webm' });
   } catch (e) {
-    working = false; $('exGo').disabled = false; $('exCancel').textContent = 'Chiudi'; api.sys('ok', 'Online');
+    working = false; document.body.classList.remove('exporting'); $('exGo').disabled = false; $('exCancel').textContent = 'Chiudi'; api.sys('ok', 'Online');
     setProg(0, e && e.message === 'abort' ? 'Export annullato.' : 'Export non riuscito: ' + ((e && e.message) || 'errore') + '. Prova una risoluzione più bassa o WebM.'); return;
   }
   const name = (p.title || 'video').normalize('NFKD').replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').toLowerCase() + '-' + res + 'p.' + fmt;
@@ -123,7 +124,7 @@ async function go() {
   if (S.downloads) { try { const r = await S.downloads.save({ filename: name, data: out }); if (r.status === 'saved') toast('Salvato: ' + name); } catch (e) { toast(e.code === 'declined' ? 'Salvataggio annullato.' : e.code === 'too_large' ? 'File troppo grande per questa destinazione.' : 'Salvataggio non riuscito.'); } }
   else toast('Salvataggio non disponibile in questa vista.');
   if (after === 'both') await toReview(p, out, name, W, H, dur);
-  working = false; $('exGo').disabled = false; $('exCancel').textContent = 'Chiudi'; api.sys('ok', 'Online');
+  working = false; document.body.classList.remove('exporting'); $('exGo').disabled = false; $('exCancel').textContent = 'Chiudi'; api.sys('ok', 'Online');
 }
 async function toReview(p, blob, name, W, H, dur) {
   if (!S.assets) return;
