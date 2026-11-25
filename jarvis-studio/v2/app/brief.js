@@ -111,7 +111,8 @@ function setupMic() {
 }
 
 /* ---------- materials ---------- */
-function kindOf(f) { return f.type.startsWith('video/') ? 'video' : f.type.startsWith('image/') ? 'image' : f.type.startsWith('audio/') ? 'audio' : null; }
+const EXT = { mp4: 'video', m4v: 'video', mov: 'video', webm: 'video', jpg: 'image', jpeg: 'image', png: 'image', webp: 'image', gif: 'image', mp3: 'audio', wav: 'audio', m4a: 'audio', aac: 'audio', ogg: 'audio' };
+function kindOf(f) { const t = f.type || ''; if (t.startsWith('video/')) return 'video'; if (t.startsWith('image/')) return 'image'; if (t.startsWith('audio/')) return 'audio'; return EXT[(f.name.split('.').pop() || '').toLowerCase()] || null; }
 async function probe(file, kind) {
   const url = URL.createObjectURL(file);
   try {
@@ -131,16 +132,17 @@ async function proxyOf(file, info, onProg) {
   await new Promise((r, j) => { v.onloadedmetadata = r; v.onerror = j; });
   const sc = Math.min(1, 720 / Math.min(v.videoWidth, v.videoHeight)); const c = document.createElement('canvas'); c.width = Math.round(v.videoWidth * sc / 2) * 2; c.height = Math.round(v.videoHeight * sc / 2) * 2;
   const g = c.getContext('2d'); const stream = c.captureStream(30);
-  try { const as = v.captureStream ? v.captureStream().getAudioTracks() : []; as.forEach(t => stream.addTrack(t)); } catch (e) { }
+  let actx = null;
+  try { if (v.captureStream) v.captureStream().getAudioTracks().forEach(t => stream.addTrack(t)); else { actx = new AudioContext(); const d = actx.createMediaStreamDestination(); actx.createMediaElementSource(v).connect(d); d.stream.getAudioTracks().forEach(t => stream.addTrack(t)); v.volume = 1; } } catch (e) { }
   const bps = Math.max(600000, Math.min(4000000, (18 * 1024 * 1024 * 8) / Math.max(1, v.duration) - 128000));
-  const type = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find(t => MediaRecorder.isTypeSupported(t));
-  const rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: bps, audioBitsPerSecond: 96000 }); const chunks = [];
+  const type = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4'].find(t => MediaRecorder.isTypeSupported(t)) || '';
+  const rec = new MediaRecorder(stream, { ...(type ? { mimeType: type } : {}), videoBitsPerSecond: bps, audioBitsPerSecond: 96000 }); const chunks = [];
   rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
   const done = new Promise(r => rec.onstop = r);
   let raf; const draw = () => { g.drawImage(v, 0, 0, c.width, c.height); onProg && onProg(v.currentTime / (v.duration || 1)); if (!v.ended) raf = requestAnimationFrame(draw); };
   rec.start(1000); await v.play(); draw();
-  await new Promise(r => v.onended = r); cancelAnimationFrame(raf); rec.stop(); await done; URL.revokeObjectURL(url);
-  return new Blob(chunks, { type: 'video/webm' });
+  await new Promise(r => v.onended = r); cancelAnimationFrame(raf); rec.stop(); await done; URL.revokeObjectURL(url); if (actx) actx.close().catch(() => { });
+  return new Blob(chunks, { type: /mp4/.test(rec.mimeType || type) ? 'video/mp4' : 'video/webm' });
 }
 async function addFiles(files) {
   const pr = p(); if (!pr) return;

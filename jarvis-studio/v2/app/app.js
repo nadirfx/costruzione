@@ -33,12 +33,13 @@ export function go(room, opts = {}) {
   S.room = room;
   document.querySelectorAll('.room').forEach(r => r.classList.toggle('on', r.id === 'v-' + room));
   document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.room === room ? 'page' : 'false'));
-  if (location.hash !== '#' + room && !opts.fromHash) { try { history.replaceState(null, '', '#' + room); } catch (e) { location.hash = room; } }
+  if (location.hash !== '#' + room && !opts.fromHash) { try { history[prev ? 'pushState' : 'replaceState'](null, '', '#' + room); } catch (e) { location.hash = room; } }
   if (room === 'hub') { ensureCore(); core && core.start(); } else if (core) core.stop();
   if (ROOMS[room] && ROOMS[room].enter) ROOMS[room].enter(opts);
   if (room === 'editor') Jarvis.enterEditor();
 }
 window.addEventListener('hashchange', () => { const r = location.hash.slice(1); if (r && r !== S.room) go(r, { fromHash: true }); });
+window.addEventListener('popstate', () => { const r = location.hash.slice(1) || 'hub'; if (r !== S.room) go(r, { fromHash: true }); });
 document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => go(b.dataset.room)));
 
 export function curP() { return S.projects.find(p => p.id === S.cur) || null; }
@@ -122,7 +123,8 @@ async function initRuntime() {
   S.db.collection('projects').orderBy('updatedAt', 'desc').onSnapshot((snap) => {
     if (!snap.metadata.fromCache) { clearTimeout(timer); sys('ok', 'Online'); }
     S.projects = snap.docs.map(d => ({ id: d.id, ...plain(d.data()) }));
-    if (first) { first = false; const saved = store.get('cur'); if (saved && S.projects.some(p => p.id === saved)) S.cur = saved; }
+    if (first) { first = false; const saved = store.get('cur'); if (saved && S.projects.some(p => p.id === saved)) S.cur = saved;
+      if (pendingRoom) { const r = pendingRoom; pendingRoom = null; if (curP()) setTimeout(() => go(r, { fromHash: true }), 0); else { try { history.replaceState(null, '', '#hub'); } catch (e) { } } } }
     emit('projects');
     if (first === false && S.room && ROOMS[S.room] && ROOMS[S.room].refresh) ROOMS[S.room].refresh();
   }, (e) => { clearTimeout(timer); sys('off', 'Dati non disponibili'); });
@@ -132,6 +134,7 @@ async function initRuntime() {
 boot();
 for (const m of [...Object.values(ROOMS), Jarvis, Exporter]) if (m && m.init) m.init({ go, curP, setCur, sys });
 const startRoom = (location.hash || '#hub').slice(1);
-go(startRoom in ROOMS && !NEEDS_MISSION[startRoom] ? startRoom : 'hub', { fromHash: true });
+var pendingRoom = startRoom in ROOMS && NEEDS_MISSION[startRoom] ? startRoom : null;
+go(startRoom in ROOMS && !NEEDS_MISSION[startRoom] ? startRoom : 'hub', { fromHash: true, quiet: !!pendingRoom });
 initRuntime();
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.getElementById('boot')) document.getElementById('bootSkip').click(); });

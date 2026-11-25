@@ -16,7 +16,7 @@ export function init(a) {
 }
 function open() {
   if (!E.clips.length) { toast('La timeline è vuota: monta qualcosa prima di esportare.'); return; }
-  $('exMsg').textContent = support() ? '' : 'Questo browser non sa codificare video: usa Chrome, Edge o Safari aggiornati.';
+  $('exMsg').textContent = !support() ? 'Questo browser non sa codificare video: usa Chrome, Edge o Safari aggiornati.' : typeof AudioEncoder === 'undefined' ? 'Attenzione: questo browser non sa codificare l\'audio, il video uscirebbe MUTO. Aggiorna Safari o usa Chrome.' : '';
   $('exProgWrap').hidden = true; $('exGo').disabled = !support(); $('exCancel').textContent = 'Chiudi';
   $('exAfter').querySelector('[value="both"]').disabled = !S.assets;
   $('exportDlg').showModal();
@@ -118,7 +118,7 @@ async function go() {
     setProg(0, e && e.message === 'abort' ? 'Export annullato.' : 'Export non riuscito: ' + ((e && e.message) || 'errore') + '. Prova una risoluzione più bassa o WebM.'); return;
   }
   const name = (p.title || 'video').normalize('NFKD').replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').toLowerCase() + '-' + res + 'p.' + fmt;
-  setProg(1, `Pronto: ${(out.size / 1048576).toFixed(1)} MB${vsel.mux === 'vp9' && fmt === 'mp4' ? ' (codec VP9: questo browser non codifica H.264)' : ''}`);
+  setProg(1, `Pronto: ${(out.size / 1048576).toFixed(1)} MB${vsel.mux === 'vp9' && fmt === 'mp4' ? ' (codec VP9: questo browser non codifica H.264)' : ''}${asel ? '' : ' · SENZA AUDIO: questo browser non codifica l\'audio'}`);
   feed('Export pronto: ' + name);
   if (S.downloads) { try { const r = await S.downloads.save({ filename: name, data: out }); if (r.status === 'saved') toast('Salvato: ' + name); } catch (e) { toast(e.code === 'declined' ? 'Salvataggio annullato.' : e.code === 'too_large' ? 'File troppo grande per questa destinazione.' : 'Salvataggio non riuscito.'); } }
   else toast('Salvataggio non disponibile in questa vista.');

@@ -10,7 +10,8 @@
   window.__downloads = [];
   window.__sampleCalls = [];
   const clone = o => JSON.parse(JSON.stringify(o));
-  const snapDoc = (path) => { const b = store.get(path); return { id: path.split('/').pop(), exists: !!b, data: () => b ? clone(b) : undefined, metadata: { fromCache: false, hasPendingWrites: false } }; };
+  const freeze = (o) => { if (o && typeof o === 'object') { Object.values(o).forEach(freeze); Object.freeze(o); } return o; };
+  const snapDoc = (path) => { const b = store.get(path); return { id: path.split('/').pop(), exists: !!b, data: () => b ? freeze(clone(b)) : undefined, metadata: { fromCache: false, hasPendingWrites: false } }; };
   const notify = () => { persist(); for (const l of [...listeners]) setTimeout(l, 0); };
   function query(col, filters = [], order = null, lim = 1000) {
     const api = {
@@ -34,8 +35,8 @@
   const docRef = (path) => ({
     id: path.split('/').pop(), path,
     async get() { return snapDoc(path); },
-    async set(d) { if (!d || typeof d !== 'object' || Array.isArray(d)) throw { code: 'invalid_argument' }; store.set(path, clone(d)); notify(); },
-    async update(d) { if (!store.has(path)) throw { code: 'invalid_argument', message: 'missing' }; const b = store.get(path); for (const [k, v] of Object.entries(clone(d))) b[k] = v; notify(); },
+    async set(d) { if (window.__failWrite) throw { code: window.__failWrite, message: 'denied' }; if (!d || typeof d !== 'object' || Array.isArray(d)) throw { code: 'invalid_argument' }; store.set(path, clone(d)); notify(); },
+    async update(d) { if (window.__failWrite) throw { code: window.__failWrite, message: 'denied' }; if (!store.has(path)) throw { code: 'invalid_argument', message: 'missing' }; const b = store.get(path); for (const [k, v] of Object.entries(clone(d))) b[k] = v; notify(); },
     async delete() { store.delete(path); notify(); },
     onSnapshot(next) { const l = () => next(snapDoc(path)); listeners.add(l); setTimeout(l, 30); return () => listeners.delete(l); },
     collection(c) { return colRef(path + '/' + c); },
@@ -54,6 +55,7 @@
   async function sample(input, opts = {}) {
     const text0 = typeof input === 'string' ? input : input.map(t => t.content).join('\n');
     window.__sampleCalls.push(text0.slice(0, 400));
+    if (window.__failSample) throw { code: window.__failSample };
     let out;
     if (/OPERAZIONI|ONE JSON OBJECT PER LINE|una per riga/i.test(text0)) {
       const mats = [...text0.matchAll(/\[(m[^\]]+)\] (video|image|audio)/g)].map(m => ({ id: m[1], kind: m[2] }));

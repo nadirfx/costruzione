@@ -31,7 +31,8 @@ export const store = {
 };
 export function writeErr(e) {
   const c = e && e.code;
-  if (c === 'invalid_argument') return 'Non hai i permessi per salvare qui.';
+  if (c === 'invalid_argument' || c === 'permission_denied' || c === 'not_granted' || c === 'forbidden') return 'Non hai i permessi per salvare qui.';
+  if (c === 'unavailable' || c === 'network' || c === 'offline') return 'Connessione assente: non salvato, riprova appena torna la rete.';
   if (c === 'quota_exceeded') return 'Spazio dati esaurito: elimina vecchie missioni.';
   return 'Non salvato, riprova tra poco.';
 }

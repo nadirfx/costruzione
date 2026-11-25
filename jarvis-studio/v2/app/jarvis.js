@@ -17,8 +17,9 @@ export function init(a) {
   $('aiStop').addEventListener('click', stop);
   on('cur', () => subscribeLive());
   on('projects', () => subscribeLive());
+  on('edit', (d) => { if (d && d.remote && S.room === 'editor') { const p = api.curP(); if (p && liveFor === p.id) handleLive(p); } });
 }
-export function enterEditor() { subscribeLive(); if (!$('aiLog').children.length) log('say', 'Pronto. Premi “Jarvis, monta tu” o dammi un comando: lo vedi montare qui in diretta.'); }
+export function enterEditor() { const p0 = api.curP(); const again = liveFor === (p0 && p0.id); subscribeLive(); if (again && p0) setTimeout(() => { if (E.loaded) handleLive(p0); else setTimeout(() => handleLive(p0), 900); }, 60); if (!$('aiLog').children.length) log('say', 'Pronto. Premi “Jarvis, monta tu” o dammi un comando: lo vedi montare qui in diretta.'); }
 
 function log(kind, text, strong) {
   const box = $('aiLog'); const row = el('div', { class: 'l ' + kind }, strong ? el('b', { text: strong + ' ' }) : null, text);
@@ -141,9 +142,13 @@ function hideCursor() { $('aiCursor').style.opacity = '0'; }
 /* ---------- operations sent by a Claude session (projects/<id>/state/live) ---------- */
 function subscribeLive() {
   const p = api.curP(); if (!S.db || !p) return; if (liveFor === p.id) return;
-  if (liveUnsub) liveUnsub(); liveFor = p.id; applied = null;
-  liveUnsub = S.db.doc('projects/' + p.id + '/state/live').onSnapshot((snap) => {
-    const d = snap.exists ? plain(snap.data()) : null; if (!d) { applied = applied ?? 0; return; }
+  if (liveUnsub) liveUnsub(); liveFor = p.id; applied = null; liveLast = undefined;
+  liveUnsub = S.db.doc('projects/' + p.id + '/state/live').onSnapshot((snap) => { liveLast = snap.exists ? plain(snap.data()) : null; handleLive(p); }, () => { });
+}
+let liveLast;
+function handleLive(p) {
+    if (liveLast === undefined) return; // snapshot not received yet
+    const d = liveLast; if (!d) { applied = applied ?? 0; return; }
     if (d.message && d.message !== subscribeLive.lastMsg) { subscribeLive.lastMsg = d.message; feed('Jarvis (sessione): ' + String(d.message).slice(0, 80)); if (S.room === 'editor') log('say', String(d.message).slice(0, 300)); }
     const ops = Array.isArray(d.ops) ? d.ops : [];
     if (applied === null) applied = Number(d.applied || 0); // first read: anything already applied is skipped
@@ -154,6 +159,5 @@ function subscribeLive() {
     startedUndo = false; busy(true); log('op', 'Applico ' + fresh.length + ' modifiche dalla sessione', 'JARVIS');
     for (const o of fresh) enqueue(o);
     drain().then(() => { busy(false); if (ed.canEdit()) S.db.doc('projects/' + p.id + '/state/live').update({ applied, appliedAt: now() }).catch(() => { }); });
-  }, () => { });
 }
 export function retryLive() { liveFor = null; subscribeLive(); }

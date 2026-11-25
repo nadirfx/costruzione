@@ -48,3 +48,11 @@ Una sessione Claude può montare nell'app scrivendo nel documento `projects/<id>
 - **Codice:** `app/`.
 - **Banco di prova:** `test/`, con un finto claude.ai (`mock.js`) e Playwright (`run.js`).
 - **Esecuzione:** `node run.js t3_editor.js both`. Ogni test clicca tutto e fa gli screenshot su computer e telefono; fallisce a qualsiasi errore in console.
+
+## Collaudo
+- **Checklist completa:** `CHECKLIST-DEBUG.md`.
+- **Test:** 12 scenari, 239 controlli su computer e telefono.
+  - `t8_safari` simula i limiti di Safari: niente codificatore audio, niente `captureStream` sui video, registrazione solo MP4.
+  - `t10_errors` simula gli errori: troppe richieste, consenso negato, salvataggi rifiutati, mosse live non valide.
+  - `t11_nav` controlla Indietro, ricarica e sbordature in ogni stanza.
+- **File di prova:** i video e l'audio di prova non sono nel repository (`big.mp4` va creato con ffmpeg, vedi `t8_safari.js`).

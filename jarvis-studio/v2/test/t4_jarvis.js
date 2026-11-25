@@ -33,6 +33,6 @@ module.exports = {
     const after = await page.$$eval('.clip', a => a.length); check(after === before + 2, 'session ops applied live (' + before + '→' + after + ')');
     const ap = await page.evaluate((pid) => window.__mockStore.get('projects/' + pid + '/state/live').applied, pid); check(ap === 2, 'applied marker saved (' + ap + ')');
     await page.reload(); await page.waitForTimeout(1200); await page.click('#tabs button[data-room="editor"]'); await page.waitForTimeout(2500);
-    check((await page.$$eval('.clip', a => a.length)) === after, 'session ops not re-applied after reload');
+    { const nn = await page.$$eval('.clip', a => a.length); const sv = await page.evaluate((pid) => (window.__mockStore.get('projects/' + pid + '/state/edit') || {}).clips.length, pid); check(nn === after, 'session ops not re-applied after reload (' + after + ' → ' + nn + ', saved ' + sv + ')'); }
   }
 };

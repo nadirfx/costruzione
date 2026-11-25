@@ -29,8 +29,9 @@ export async function audioToContainer(file, onProg) {
   }
   // fallback: record in real time
   const ctx = new AudioContext(); const dest = ctx.createMediaStreamDestination(); const s = ctx.createBufferSource(); s.buffer = ab; s.connect(dest);
-  const rec = new MediaRecorder(dest.stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '' }); const chunks = [];
+  const mt = ['audio/webm;codecs=opus', 'audio/mp4;codecs=mp4a.40.2', 'audio/mp4'].find(t => MediaRecorder.isTypeSupported(t)) || '';
+  const rec = new MediaRecorder(dest.stream, mt ? { mimeType: mt } : {}); const chunks = [];
   rec.ondataavailable = (e) => e.data.size && chunks.push(e.data); const done = new Promise(r => rec.onstop = r);
   rec.start(500); s.start(); await new Promise(r => s.onended = r); rec.stop(); await done; ctx.close();
-  return { blob: new Blob(chunks, { type: 'video/webm' }), dur: ab.duration };
+  return { blob: new Blob(chunks, { type: /mp4/.test(rec.mimeType || mt) ? 'video/mp4' : 'video/webm' }), dur: ab.duration };
 }
