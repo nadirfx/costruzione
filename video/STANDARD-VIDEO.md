@@ -25,3 +25,10 @@ Riferimento base: `LweCraMDrRxrBzrd0HgQ_g.mp4` e le immagini nella cartella prin
 - Effetti sonori: solo s01–s10 dell'utente, ognuno legato a un evento visivo, sempre ≥ 6 dB sotto la voce (anche ai bordi delle parole). Niente musica.
 - Notizie finte: "NON È UNA NOTIZIA REALE" per almeno 1 s. Mai temi di banche, salute, tasse o governo.
 - Consegna: MP4 in allegato più il link raw GitHub, con voce, effetti e sorgenti nella cartella.
+
+## Sound design: regole fisse (dal feedback su Game Studios)
+- **Solo suoni corti e secchi:** clic, pop, colpi di basso, glitch, toni d'interfaccia. Ognuno su un evento che si vede.
+- **Vietati** whoosh d'aria lunghi, razzi, riser, swell al contrario e "tunnel": suonano come aerei che passano.
+- **La salita prima del colpo si taglia sempre** (al massimo 0,06 s prima del picco): il suono parte sull'evento, non prima.
+- **Code di massimo 1 secondo.** Un solo colpo grande per sezione.
+- **Niente tappeti di fondo lunghi:** diventano ronzio.
