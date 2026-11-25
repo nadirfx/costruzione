@@ -2,6 +2,7 @@
 // { status, progress 0..1, steps:[{at, text, dept?, agent?}], code:{file, text, hot:[line numbers]}, preview:{assetId, kind, caption} }
 import { S, $, el, on, blobUrl, plain } from './state.js';
 import { deptOf, agentOf } from './org.js';
+import { attach } from './player.js';
 
 let api, unsub = null, subFor = null, seen = 0, lastPreview = '';
 export function init(a) {
@@ -64,6 +65,6 @@ function paint(d) {
     lastPreview = key;
     if (!pv || !pv.assetId) box.replaceChildren(el('div', { class: 'empty', text: 'Nessuna anteprima ancora' }));
     else if (pv.kind === 'image') box.replaceChildren(el('img', { src: blobUrl(pv.assetId), alt: pv.caption || 'Anteprima' }));
-    else { const v = el('video', { src: blobUrl(pv.assetId), controls: true, playsinline: true, muted: true, loop: true, preload: 'metadata' }); v.muted = true; box.replaceChildren(v); v.play().catch(() => { }); }
+    else { const v = el('video', { controls: true, playsinline: true, muted: true, loop: true, preload: 'auto' }); v.muted = true; box.replaceChildren(v); box.classList.add('vstage'); attach(v, { assetId: pv.assetId, posterId: pv.posterId }, { box, autoplay: true }); }
   }
 }

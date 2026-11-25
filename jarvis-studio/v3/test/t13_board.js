@@ -6,10 +6,12 @@ module.exports = {
     check((await page.$$eval('#board .col', a => a.length)) === 7, 'seven production stages');
     check((await page.$$eval('#board .col[data-stage="revisione"] .mission', a => a.length)) === 2, 'two missions in Revisione');
     check((await page.$$eval('#board .col[data-stage="approvato"] .mission', a => a.length)) === 1, 'one mission approved');
-    check((await page.$$eval('#board .mission video', a => a.length)) === 2, 'cards carry a video preview of the last version');
+    check((await page.$$eval('#board .mission .pv img', a => a.filter(i => i.complete && i.naturalWidth > 0).length)) === 2, 'cards show the cover of the last version');
+    await page.hover('#board .col[data-stage="revisione"] .mission >> nth=0'); await page.waitForTimeout(1500);
+    check(await page.$eval('#board .col[data-stage="revisione"] .mission video', v => v.src.startsWith('blob:') && !v.paused), 'hover plays the video from memory');
     await shot('board');
     // move the approved one back to Revisione
-    await page.click('#board .col[data-stage="approvato"] .mission .mvBtns button >> nth=0'); await page.waitForTimeout(900);
+    await page.click('#board .col[data-stage="approvato"] .mission .mvBtns button[aria-label^="Sposta a"] >> nth=0'); await page.waitForTimeout(900);
     check((await page.$$eval('#board .col[data-stage="revisione"] .mission', a => a.length)) === 3, 'card moved one stage back');
     const st = await page.evaluate(() => window.__mockStore.get('projects/whatsapp').status); check(st === 'revisione', 'status follows the stage (' + st + ')');
     // new mission from the board

@@ -2,6 +2,7 @@
 import { S, $, el, toast, now, writeErr, feed, on } from './state.js';
 import { STAGES, stageOf, stageIdx, deptOf } from './org.js';
 import { missionCard } from './cards.js';
+import { confirmBtn, deleteMission } from './danger.js';
 
 let api;
 export function init(a) {
@@ -25,7 +26,7 @@ function render() {
     const d = deptOf(s.dept); const items = S.projects.filter(p => stageOf(p) === s.key);
     const list = el('div', { class: 'list' });
     if (!items.length) list.append(el('div', { class: 'empty', text: 'Nessuna missione' }));
-    for (const p of items) list.append(missionCard(p, { onOpen: (id) => api.openMission(id), extra: el('div', { class: 'mvBtns' }, el('span', { class: 'mvLbl', text: 'Sposta' }),
+    for (const p of items) list.append(missionCard(p, { onOpen: (id) => api.openMission(id), extra: el('div', { class: 'mvBtns' }, S.canWrite ? confirmBtn('Elimina', 'Sicuro?', () => deleteMission(p), 'cardDel') : null, el('span', { class: 'mvLbl', text: 'Sposta' }),
       el('button', { type: 'button', disabled: i === 0, 'aria-label': 'Sposta a ' + (STAGES[i - 1] || {}).name, onclick: (e) => { e.stopPropagation(); move(p, -1); } }, '‹'),
       el('button', { type: 'button', disabled: i === STAGES.length - 1, 'aria-label': 'Sposta a ' + (STAGES[i + 1] || {}).name, onclick: (e) => { e.stopPropagation(); move(p, 1); } }, '›')) }));
     b.append(el('section', { class: 'col', 'data-stage': s.key, style: '--c:' + d.color },

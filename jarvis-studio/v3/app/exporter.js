@@ -119,11 +119,12 @@ async function go() {
     setProg(0, e && e.message === 'abort' ? 'Export annullato.' : 'Export non riuscito: ' + ((e && e.message) || 'errore') + '. Prova una risoluzione più bassa o WebM.'); return;
   }
   const name = (p.title || 'video').normalize('NFKD').replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').toLowerCase() + '-' + res + 'p.' + fmt;
-  setProg(1, `Pronto: ${(out.size / 1048576).toFixed(1)} MB${vsel.mux === 'vp9' && fmt === 'mp4' ? ' (codec VP9: questo browser non codifica H.264)' : ''}${asel ? '' : ' · SENZA AUDIO: questo browser non codifica l\'audio'}`);
+  setProg(0.97, after === 'both' ? 'Salvo e mando in revisione…' : 'Salvo il file…');
   feed('Export pronto: ' + name);
   if (S.downloads) { try { const r = await S.downloads.save({ filename: name, data: out }); if (r.status === 'saved') toast('Salvato: ' + name); } catch (e) { toast(e.code === 'declined' ? 'Salvataggio annullato.' : e.code === 'too_large' ? 'File troppo grande per questa destinazione.' : 'Salvataggio non riuscito.'); } }
   else toast('Salvataggio non disponibile in questa vista.');
   if (after === 'both') await toReview(p, out, name, W, H, dur);
+  setProg(1, `Pronto: ${(out.size / 1048576).toFixed(1)} MB${vsel.mux === 'vp9' && fmt === 'mp4' ? ' (codec VP9: questo browser non codifica H.264)' : ''}${asel ? '' : ' · SENZA AUDIO: questo browser non codifica l\'audio'}`);
   working = false; document.body.classList.remove('exporting'); $('exGo').disabled = false; $('exCancel').textContent = 'Chiudi'; api.sys('ok', 'Online');
 }
 async function toReview(p, blob, name, W, H, dur) {
@@ -131,8 +132,15 @@ async function toReview(p, blob, name, W, H, dur) {
   if (blob.size > 20 * 1024 * 1024) { toast('Troppo grande per la revisione nell\'app (max 20 MB): esporta in 720p per mandarlo in revisione.', 6000); return; }
   try {
     const r = await S.assets.upload(blob, { type: blob.type });
+    let posterId;
+    try { // cover: one frame at 1 s (or the middle), 360 px wide
+      const cv = document.createElement('canvas'); const s = 360 / W; cv.width = 360; cv.height = Math.round(H * s);
+      drawFrame(cv.getContext('2d'), cv.width, cv.height, Math.min(1, dur / 2), E.clips, M.media);
+      const jpg = await new Promise(res => cv.toBlob(res, 'image/jpeg', 0.8));
+      if (jpg) posterId = (await S.assets.upload(jpg, { type: 'image/jpeg' })).id;
+    } catch (e) { }
     const vs = (p.versions || []).slice(); const v = vs.reduce((m, x) => Math.max(m, x.v || 0), 0) + 1;
-    vs.push({ v, assetId: r.id, label: W + '×' + H, date: new Date().toLocaleDateString('it-IT'), durationSec: +dur.toFixed(2), filename: name.replace(/\.\w+$/, '') });
+    vs.push({ v, assetId: r.id, ...(posterId ? { posterId } : {}), label: W + '×' + H, date: new Date().toLocaleDateString('it-IT'), durationSec: +dur.toFixed(2), filename: name.replace(/\.\w+$/, '') });
     await S.db.doc('projects/' + p.id).update({ versions: vs, status: 'revisione', updatedAt: now() });
     toast('Versione v' + v + ' in revisione.'); feed('v' + v + ' di ' + p.title + ' in revisione');
   } catch (e) { toast(e && e.code === 'too_large' ? 'File troppo grande per la revisione.' : writeErr(e)); }

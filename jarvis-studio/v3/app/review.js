@@ -1,5 +1,7 @@
 // Revisione: player, note al secondo con marcatori sulla barra, versioni, approva / richiedi modifiche, export.
 import { S, $, el, toast, tc, now, writeErr, feed, blobUrl, STATUS , plain , on } from './state.js';
+import { attach, fullscreen, forget } from './player.js';
+import { confirmBtn, deleteMission } from './danger.js';
 let api, unNotes = null, notes = [], selVer = null, notesFor = null;
 const video = () => $('revVideo');
 
@@ -38,14 +40,16 @@ function render() {
   $('revSt').replaceChildren(p ? el('span', { class: 'st ' + p.status, text: STATUS[p.status] || '' }) : '');
   const vs = $('revVers'); vs.replaceChildren();
   if (p) for (const x of versions(p)) vs.append(el('button', { class: 'chip', type: 'button', 'aria-pressed': String(v && x.v === v.v), onclick: () => { selVer = x.v; render(); } }, 'v' + x.v + (x.label ? ' · ' + x.label : '')));
-  const src = v && v.assetId ? blobUrl(v.assetId) : '';
-  if (video().getAttribute('src') !== src) { if (src) video().src = src; else video().removeAttribute('src'); }
+  if (video().dataset.asset !== ((v && v.assetId) || '')) attach(video(), v, { box: $('revStage') });
   const acts = $('revActs'); acts.replaceChildren();
   if (p && v) {
     acts.append(el('button', { class: 'btn pri sm', type: 'button', onclick: () => exportVer(p, v) }, 'Esporta'));
     if (S.canWrite && p.status !== 'approvato') acts.append(el('button', { class: 'btn ok sm', type: 'button', onclick: () => setStatus(p, 'approvato', 'Approvato. Pronto da esportare.') }, 'Approva'));
     if (S.canWrite && p.status !== 'lavorazione') acts.append(el('button', { class: 'btn warn sm', type: 'button', onclick: () => setStatus(p, 'lavorazione', 'Modifiche richieste: Jarvis legge le tue note.') }, 'Richiedi modifiche'));
+    acts.append(el('button', { class: 'btn sm', type: 'button', onclick: () => fullscreen(video()) }, 'Schermo intero'));
     acts.append(el('button', { class: 'btn sm', type: 'button', onclick: () => api.go('editor') }, 'Apri in editor'));
+    if (S.canWrite) acts.append(confirmBtn('Elimina v' + v.v, 'Conferma: elimina v' + v.v, () => deleteVersion(p, v)));
+    if (S.canWrite) acts.append(confirmBtn('Elimina missione', 'Conferma: elimina tutta la missione', async () => { await deleteMission(p); api.setCur(null); selVer = null; notesFor = null; render(); }));
     if (v.master && /^https:\/\//.test(v.master)) acts.append(el('a', { class: 'btn sm', href: v.master, target: '_blank', rel: 'noopener' }, 'Master HD'));
   }
   $('noteAdd').disabled = !(p && v && S.canWrite);
@@ -71,6 +75,15 @@ async function addNote() {
   const b = $('noteAdd'); b.disabled = true;
   try { await S.db.collection('projects/' + p.id + '/notes').add({ t: Math.round(video().currentTime * 10) / 10, text: text.slice(0, 2000), v: v.v, done: false, createdAt: now() }); $('noteIn').value = ''; toast('Nota salvata'); feed('Nota a ' + tc(video().currentTime) + ' su ' + p.title); if (p.status === 'approvato') await setStatus(p, 'revisione'); }
   catch (e) { toast(writeErr(e)); } finally { b.disabled = false; }
+}
+async function deleteVersion(p, v) {
+  try {
+    const vs = (p.versions || []).filter(x => x.v !== v.v);
+    const upd = { versions: vs, updatedAt: now() }; if (!vs.length && (p.status === 'revisione' || p.status === 'approvato')) { upd.status = 'lavorazione'; upd.stage = 'montaggio'; }
+    await S.db.doc('projects/' + p.id).update(upd);
+    if (S.assets && v.assetId) S.assets.delete(v.assetId).catch(() => { }); if (S.assets && v.posterId) S.assets.delete(v.posterId).catch(() => { }); forget(v.assetId);
+    selVer = null; toast('Versione v' + v.v + ' eliminata.'); feed('v' + v.v + ' eliminata · ' + p.title);
+  } catch (e) { toast(writeErr(e)); }
 }
 async function toggleNote(n) { try { await S.db.doc('projects/' + cur().id + '/notes/' + n.id).update({ done: !n.done }); } catch (e) { toast(writeErr(e)); } }
 async function setStatus(p, st, msg) { try { await S.db.doc('projects/' + p.id).update({ status: st, updatedAt: now() }); if (msg) toast(msg); feed(STATUS[st] + ' · ' + p.title); } catch (e) { toast(writeErr(e)); } }
