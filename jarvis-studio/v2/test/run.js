@@ -3,7 +3,7 @@
 // maps CDN imports to local copies, records every console error / page error / failed request.
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path'), http = require('http');
-const APP = path.join(__dirname, '..', 'app');
+const APP = path.join(__dirname, '..', process.env.APP_DIR || 'app');
 const NM = '/tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/t3d/node_modules/three';
 const SKEL_HEAD = '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}</style></head><body>';
 const TYPES = { '.js': 'text/javascript', '.css': 'text/css', '.mp4': 'video/mp4', '.mp3': 'audio/mpeg', '.png': 'image/png', '.jpg': 'image/jpeg', '.json': 'application/json', '.wav': 'audio/wav' };

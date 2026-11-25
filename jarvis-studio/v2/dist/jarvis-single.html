@@ -1,0 +1,2535 @@
+<title>Jarvis Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: mission-control HUD. A fixed top bar, then one full-height room at a time (Hub · Briefing · Editor · Revisione · Libreria).
+   Deliberately single dark theme (a control room), every color from these tokens. */
+:root{
+  --void:#020a0d;--deep:#041419;--panel:rgba(6,28,36,.78);--panel-solid:#061c24;--line:#11404f;--line-hi:#1e6b80;
+  --cyan:#43e5ff;--cyan-dim:#1d8ea6;--text:#d8f4fb;--muted:#6f9fae;--coral:#ff5b4f;--amber:#ffb648;--green:#3be38c;
+  --fa:#e9c46a;--fb:#b8f24c;--fc:#ff7b5e;--glow:0 0 18px rgba(67,229,255,.25);
+  --f-display:"Rajdhani","Arial Narrow",system-ui,sans-serif;--f-body:"Inter",system-ui,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--void);color:var(--text);font:14px/1.45 var(--f-body);overflow:hidden;-webkit-font-smoothing:antialiased}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);z-index:50}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.lbl{font:600 11px/1 var(--f-display);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.h{font:700 22px/1.1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;margin:0}
+/* top bar */
+#top{position:fixed;inset:0 0 auto;height:calc(52px + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:16px;background:linear-gradient(180deg,rgba(2,10,13,.95),rgba(2,10,13,.75));border-bottom:1px solid var(--line);z-index:30}
+.logo{display:flex;align-items:center;gap:10px;font:700 20px var(--f-display);letter-spacing:.22em}
+.logo i{width:22px;height:22px;border:2px solid var(--cyan);border-radius:50%;box-shadow:var(--glow);position:relative;display:inline-block}
+.logo i::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--cyan)}
+nav#tabs{display:flex;gap:2px;margin-left:8px;overflow-x:auto;scrollbar-width:none;min-width:0}
+nav#tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:16px 12px 14px;font:600 13px var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+nav#tabs button[aria-current="page"]{color:var(--cyan);border-color:var(--cyan)}
+nav#tabs button:disabled{opacity:.35;cursor:not-allowed}
+#clock{margin-left:auto;text-align:right;white-space:nowrap}
+#clock b{display:block;font:600 15px var(--f-mono);color:var(--cyan)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);margin-right:6px}
+.dot.off{background:var(--coral);box-shadow:0 0 8px var(--coral)}
+.dot.busy{background:var(--amber);box-shadow:0 0 8px var(--amber);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.35}}
+/* rooms */
+main{position:fixed;inset:calc(52px + env(safe-area-inset-top,0px)) 0 env(safe-area-inset-bottom,0px) 0}
+.room{position:absolute;inset:0;display:none}
+.room.on{display:block}
+.pad{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+/* HUD panel */
+.panel{background:var(--panel);border:1px solid var(--line);position:relative;backdrop-filter:blur(6px)}
+.panel::before,.panel::after{content:"";position:absolute;width:10px;height:10px;border:2px solid var(--cyan);pointer-events:none}
+.panel::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.panel::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.btn{background:rgba(67,229,255,.06);border:1px solid var(--line-hi);color:var(--text);padding:8px 14px;font:600 13px var(--f-display);letter-spacing:.12em;text-transform:uppercase;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn.pri{background:var(--cyan);border-color:var(--cyan);color:#02161c}
+.btn.pri:hover{filter:brightness(1.1);color:#02161c}
+.btn.warn{border-color:var(--amber);color:var(--amber)}
+.btn.ok{border-color:var(--green);color:var(--green)}
+.btn.danger{border-color:var(--coral);color:var(--coral)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.sm{padding:5px 9px;font-size:11px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--muted);padding:3px 9px;font:600 11px var(--f-display);letter-spacing:.1em;text-transform:uppercase}
+.chip[aria-pressed="true"]{color:var(--void);background:var(--cyan);border-color:var(--cyan)}
+.fmt{display:inline-grid;place-items:center;width:22px;height:22px;font:700 13px var(--f-display);color:var(--void)}
+.fmt.A{background:var(--fa)}.fmt.B{background:var(--fb)}.fmt.C{background:var(--fc)}
+.st{font:600 10px var(--f-display);letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;border:1px solid currentColor}
+.st.brief{color:var(--muted)}.st.lavorazione{color:var(--amber)}.st.revisione{color:var(--coral)}.st.approvato{color:var(--green)}
+input,select,textarea{background:rgba(2,10,13,.7);border:1px solid var(--line);padding:8px 10px;width:100%;border-radius:0}
+textarea{resize:vertical}
+.empty{color:var(--muted);font-size:13px;padding:14px;border:1px dashed var(--line);text-align:center}
+.scroll{overflow:auto;scrollbar-width:thin;scrollbar-color:var(--line-hi) transparent}
+/* boot */
+#boot{position:fixed;inset:0;z-index:60;background:var(--void);display:grid;place-items:center;transition:opacity .5s}
+#boot.gone{opacity:0;pointer-events:none}
+#boot .bx{width:min(420px,86vw);display:grid;gap:10px}
+#boot .bar{height:2px;background:var(--line);overflow:hidden}
+#boot .bar i{display:block;height:100%;width:0;background:var(--cyan);box-shadow:var(--glow);transition:width .25s}
+#boot pre{margin:0;font:12px/1.6 var(--f-mono);color:var(--cyan-dim);min-height:7.5em;white-space:pre-wrap}
+/* HUB */
+#v-hub{display:none}
+#v-hub.on{display:grid;grid-template-columns:300px minmax(0,1fr) 300px;grid-template-rows:minmax(0,1fr) auto;gap:14px;padding-top:14px;padding-bottom:14px}
+#coreWrap{position:relative;grid-column:2;grid-row:1;min-height:0}
+#core{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#coreLabels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.nodeLbl{position:absolute;transform:translate(-50%,-140%);font:600 11px var(--f-display);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;color:var(--text);text-shadow:0 0 8px #000;pointer-events:auto;cursor:pointer;background:rgba(2,10,13,.55);padding:2px 6px;border-left:2px solid var(--cyan)}
+.gauge{position:absolute;top:22%;bottom:22%;width:26px;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(67,229,255,.35) 0 1px,transparent 1px 12px);border-right:2px solid rgba(255,91,79,.7)}
+.gauge.l{left:6%;}.gauge.r{right:6%;border-right:0;border-left:2px solid rgba(255,91,79,.7)}
+.gauge span{position:absolute;top:-20px;font:600 10px var(--f-mono);color:var(--coral)}
+.gauge.l span{left:0}.gauge.r span{right:0}
+.gauge::after{content:"";position:absolute;top:50%;width:10px;height:10px;border:2px solid var(--coral);border-radius:50%;transform:translateY(-50%)}
+.gauge.l::after{right:-7px}.gauge.r::after{left:-7px}
+.brk{position:absolute;width:26px;height:26px;border:2px solid var(--line-hi);pointer-events:none}
+.brk.tl{top:0;left:0;border-right:0;border-bottom:0}.brk.tr{top:0;right:0;border-left:0;border-bottom:0}.brk.bl{bottom:0;left:0;border-right:0;border-top:0}.brk.br{bottom:0;right:0;border-left:0;border-top:0}
+@media (max-width:760px){.gauge{display:none}}
+#coreTitle{position:absolute;left:0;right:0;bottom:8px;text-align:center;pointer-events:none}
+#coreTitle .lbl{color:var(--cyan)}
+#coreTitle .h{font-size:30px;letter-spacing:.2em;margin-top:6px}
+#coreHint{position:absolute;top:8px;left:0;right:0;text-align:center;pointer-events:none}
+.side{display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;min-height:0;padding:12px}
+#missionList{display:grid;gap:8px;align-content:start}
+.mission{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:center;background:rgba(2,10,13,.55);border:1px solid var(--line);padding:9px 10px;text-align:left;width:100%}
+.mission:hover,.mission[aria-current="true"]{border-color:var(--cyan);box-shadow:inset 3px 0 0 var(--cyan)}
+.mission .t{font:600 14px var(--f-body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mission .m{grid-column:2;display:flex;gap:6px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:11px}
+#doors{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.door{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 14px;align-items:center;padding:14px 16px;text-align:left;background:var(--panel);border:1px solid var(--line);transition:border-color .2s,transform .2s}
+.door:hover{transform:translateY(-2px)}
+.door .big{grid-row:span 2;font:700 44px/1 var(--f-display);width:54px;text-align:center}
+.door.A .big{color:var(--fa)}.door.B .big{color:var(--fb)}.door.C .big{color:var(--fc)}
+.door.A:hover{border-color:var(--fa)}.door.B:hover{border-color:var(--fb)}.door.C:hover{border-color:var(--fc)}
+.door .nm{font:700 17px var(--f-display);letter-spacing:.1em;text-transform:uppercase}
+.door .ds{color:var(--muted);font-size:12px;grid-column:2}
+.door .go{grid-row:span 2;grid-column:3;font:600 12px var(--f-display);letter-spacing:.14em;color:var(--cyan)}
+.stat{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--line)}
+.stat b{font:600 20px var(--f-mono);color:var(--cyan)}
+#feed{display:grid;gap:6px;align-content:start;font-size:12px}
+#feed .ev{border-left:2px solid var(--line-hi);padding:2px 0 2px 8px;color:var(--muted)}
+#feed .ev b{color:var(--text);font-weight:500}
+@media (max-width:1100px){#v-hub.on{grid-template-columns:260px minmax(0,1fr)}#hubRight{display:none}}
+@media (max-width:760px){
+  body{overflow:auto}
+  main{position:static;padding-top:calc(96px + env(safe-area-inset-top,0px))}
+  #top{flex-wrap:wrap;height:auto;row-gap:0}
+  #top .logo{padding:12px 0 4px}
+  #clock{padding-top:8px}
+  nav#tabs{order:3;width:100%;margin-left:0}
+  nav#tabs button{padding:8px 10px 10px}
+  .room{position:static}
+  #v-hub.on{grid-template-columns:minmax(0,1fr);grid-template-rows:auto}
+  #coreWrap{grid-column:1;grid-row:1;height:52vh;min-height:300px}
+  #hubLeft{grid-row:3}
+  #doors{grid-row:2;grid-template-columns:minmax(0,1fr)}
+  #coreTitle .h{font-size:22px}
+}
+/* BRIEFING */
+#v-brief.on{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px;padding-top:14px;padding-bottom:14px}
+.chat{display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-height:0;padding:14px;gap:10px}
+#chatLog{display:grid;gap:10px;align-content:start}
+.msg{max-width:88%;padding:10px 12px;border:1px solid var(--line);white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.me{justify-self:end;background:rgba(67,229,255,.08);border-color:var(--line-hi)}
+.msg.ai{justify-self:start;background:rgba(2,10,13,.6)}
+.msg.ai::before{content:"JARVIS";display:block;font:600 10px var(--f-display);letter-spacing:.18em;color:var(--cyan);margin-bottom:4px}
+.composer{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:end}
+.composer textarea{min-height:44px;max-height:140px}
+.briefSide{display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:10px;min-height:0;padding:14px}
+.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.kv label{display:grid;gap:4px}
+.kv .full{grid-column:1/-1}
+#matList{display:grid;gap:6px;align-content:start}
+.mat{display:grid;grid-template-columns:auto 48px minmax(0,1fr) auto;gap:8px;align-items:center;border:1px solid var(--line);padding:6px;background:rgba(2,10,13,.5)}
+.mat .th{width:48px;height:48px;background:#000;object-fit:cover;display:grid;place-items:center;font:600 10px var(--f-display);color:var(--muted)}
+.mat .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mat .ord{font:600 13px var(--f-mono);color:var(--cyan);width:22px;text-align:center}
+.drop{border:1px dashed var(--line-hi);padding:14px;text-align:center;color:var(--muted)}
+.drop.over{border-color:var(--cyan);color:var(--cyan)}
+.checklist{display:grid;gap:4px;font-size:12px;color:var(--muted)}
+.checklist li{list-style:none}
+.checklist li::before{content:"▢ ";color:var(--cyan-dim)}
+.checklist li.ok::before{content:"■ ";color:var(--green)}
+@media (max-width:900px){#v-brief.on{grid-template-columns:minmax(0,1fr)}.chat{min-height:60vh}}
+/* EDITOR */
+#v-editor.on{display:grid;grid-template-columns:260px minmax(0,1fr) 280px;grid-template-rows:auto minmax(0,1fr) 250px;gap:8px;padding-top:8px;padding-bottom:8px}
+#edBar{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 10px}
+#edBar .ttl{font:700 16px var(--f-display);letter-spacing:.08em;text-transform:uppercase;margin-right:6px;max-width:28ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#edBar .sp{flex:1}
+#edLib{grid-column:1;grid-row:2;display:grid;grid-template-rows:auto minmax(0,1fr);min-height:0;padding:10px;gap:8px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+#libBody{display:grid;gap:6px;align-content:start}
+.libItem{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:8px;align-items:center;border:1px solid var(--line);padding:5px;background:rgba(2,10,13,.5);cursor:grab}
+.libItem .th{width:40px;height:40px;object-fit:cover;background:#000;display:grid;place-items:center;font:600 9px var(--f-display);color:var(--muted)}
+.libItem .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+#stage{grid-column:2;grid-row:2;display:grid;grid-template-rows:minmax(0,1fr) auto;min-height:0;padding:10px;gap:8px}
+#stageBox{position:relative;display:grid;place-items:center;min-height:0;overflow:hidden}
+#preview{background:#000;max-width:100%;max-height:100%;box-shadow:0 0 0 1px var(--line-hi),0 0 40px rgba(67,229,255,.12)}
+#safeOv{position:absolute;pointer-events:none;border:1px dashed rgba(255,91,79,.7)}
+#aiCursor{position:fixed;z-index:40;width:22px;height:22px;pointer-events:none;opacity:0;transition:left .45s cubic-bezier(.2,.8,.2,1),top .45s cubic-bezier(.2,.8,.2,1),opacity .2s}
+#aiCursor::before{content:"";position:absolute;inset:0;border:2px solid var(--cyan);border-radius:50%;box-shadow:0 0 14px var(--cyan)}
+#aiCursor::after{content:"JARVIS";position:absolute;left:24px;top:2px;font:600 10px var(--f-display);letter-spacing:.16em;color:var(--cyan);background:rgba(2,10,13,.8);padding:1px 5px}
+.transport{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.transport .tc{font:600 14px var(--f-mono);color:var(--cyan);min-width:120px}
+#edSide{grid-column:3;grid-row:2;display:grid;grid-template-rows:minmax(0,1fr) minmax(0,1.1fr);gap:8px;min-height:0}
+#inspector,#aiPanel{padding:10px;display:grid;grid-template-rows:auto minmax(0,1fr);gap:8px;min-height:0}
+#inspBody{display:grid;gap:8px;align-content:start}
+#inspBody label{display:grid;gap:3px;font-size:12px;color:var(--muted)}
+#aiLog{display:grid;gap:5px;align-content:start;font-size:12px}
+#aiLog .l{border-left:2px solid var(--line-hi);padding:1px 0 1px 8px;color:var(--muted)}
+#aiLog .l.say{border-color:var(--cyan);color:var(--text)}
+#aiLog .l.op b{color:var(--cyan);font-weight:600}
+.aiCmd{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px}
+#timeline{grid-column:1/-1;grid-row:3;display:grid;grid-template-rows:auto minmax(0,1fr);min-height:0;padding:6px 8px;gap:4px}
+#tlTools{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#tlScroll{position:relative;overflow:auto;min-height:0;scrollbar-width:thin;scrollbar-color:var(--line-hi) transparent}
+#tlInner{position:relative;min-height:100%}
+#ruler{position:sticky;top:0;height:22px;background:var(--panel-solid);z-index:3;border-bottom:1px solid var(--line);margin-left:58px;cursor:pointer}
+#ruler .tk{position:absolute;top:0;height:100%;border-left:1px solid var(--line);font:10px var(--f-mono);color:var(--muted);padding-left:3px}
+.track{position:relative;height:40px;border-bottom:1px solid rgba(17,64,79,.5);margin-left:58px}
+.track .tname{position:absolute;left:-58px;width:54px;top:0;bottom:0;display:grid;place-items:center;font:600 11px var(--f-display);letter-spacing:.12em;color:var(--muted);background:var(--panel-solid);border-right:1px solid var(--line);z-index:2}
+.clip{position:absolute;top:4px;bottom:4px;border:1px solid;overflow:hidden;font-size:11px;padding:2px 8px;white-space:nowrap;text-overflow:ellipsis;cursor:grab;touch-action:none;user-select:none}
+.clip.V1{background:rgba(67,229,255,.16);border-color:var(--cyan-dim)}
+.clip.V2{background:rgba(233,196,106,.16);border-color:#9b8040}
+.clip.A1{background:rgba(59,227,140,.14);border-color:#2a9a62}
+.clip.A2{background:rgba(255,91,79,.14);border-color:#a8433b}
+.clip.sel{box-shadow:0 0 0 2px var(--cyan) inset;border-color:var(--cyan)}
+.clip.born{animation:born .6s ease-out}
+@keyframes born{0%{transform:scaleY(.2);opacity:0;box-shadow:0 0 30px var(--cyan)}60%{transform:scaleY(1.1);opacity:1}100%{transform:none}}
+.clip .hd{position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize}
+.clip .hd.l{left:0}.clip .hd.r{right:0}
+.clip .hd:hover{background:rgba(67,229,255,.35)}
+.clip .tr{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--amber)}
+#playhead{position:absolute;top:0;bottom:0;width:2px;background:var(--coral);box-shadow:0 0 8px var(--coral);z-index:4;pointer-events:none}
+#playhead::before{content:"";position:absolute;top:0;left:-5px;border:6px solid transparent;border-top-color:var(--coral)}
+@media (max-width:1100px){#v-editor.on{grid-template-columns:220px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto 250px}#edSide{grid-column:1/-1;grid-row:3;grid-template-columns:1fr 1fr;grid-template-rows:auto;max-height:280px}#timeline{grid-row:4}}
+@media (max-width:760px){#v-editor.on{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 60vh auto auto 260px}#edLib{grid-row:3;max-height:300px}#stage{grid-column:1;grid-row:2}#edSide{grid-row:4;grid-template-columns:minmax(0,1fr)}#timeline{grid-row:5}}
+/* REVIEW */
+#v-review.on{display:grid;grid-template-columns:300px minmax(0,420px) minmax(0,1fr);gap:14px;padding-top:14px;padding-bottom:14px}
+#revList{padding:12px;display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;min-height:0}
+#revMon{display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:8px;min-height:0;padding:12px}
+#revMon video{width:100%;height:100%;object-fit:contain;background:#000;min-height:0}
+#revScrub{position:relative;height:10px;background:var(--line);cursor:pointer}
+#revScrub i{position:absolute;top:-3px;width:3px;height:16px;background:var(--amber)}
+#revScrub b{position:absolute;top:0;left:0;height:100%;background:var(--cyan-dim)}
+#revNotes{padding:12px;display:grid;grid-template-rows:auto auto auto minmax(0,1fr);gap:10px;min-height:0}
+.note{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:start;border:1px solid var(--line);padding:8px;background:rgba(2,10,13,.5)}
+.note.done{opacity:.5}.note.done .tx{text-decoration:line-through}
+.note .tx{white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-width:1100px){#v-review.on{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#revList{grid-column:1/-1;max-height:220px}}
+@media (max-width:760px){#v-review.on{grid-template-columns:minmax(0,1fr)}#revMon{height:70vh}}
+/* LIBRARY */
+#v-lib.on{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;padding-top:14px;padding-bottom:14px}
+#v-lib .panel{padding:14px;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px}
+.sfx{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--line);padding:7px 9px}
+.rules h3{font:700 15px var(--f-display);letter-spacing:.1em;text-transform:uppercase;margin:12px 0 4px}
+.rules ul{margin:0;padding-left:18px;color:var(--muted)}
+@media (max-width:760px){#v-lib.on{grid-template-columns:minmax(0,1fr)}}
+/* overlays */
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:70;display:grid;gap:6px;justify-items:center;pointer-events:none}
+#toast div{background:var(--panel-solid);border:1px solid var(--cyan);color:var(--text);padding:9px 14px;font-size:13px;box-shadow:var(--glow)}
+dialog{background:var(--panel-solid);color:var(--text);border:1px solid var(--line-hi);padding:18px;width:min(560px,calc(100vw - 32px));box-shadow:0 0 60px rgba(67,229,255,.15)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog form{display:grid;gap:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.prog{height:6px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--cyan);box-shadow:var(--glow)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="boot" role="status" aria-live="polite"><div class="bx"><div class="logo"><i></i>JARVIS</div><div class="bar"><i id="bootBar"></i></div><pre id="bootLog"></pre><button class="btn sm" id="bootSkip" type="button">Salta</button></div></div>
+
+<header id="top">
+  <div class="logo"><i></i><span>JARVIS</span></div>
+  <nav id="tabs" aria-label="Stanze">
+    <button type="button" data-room="hub">Hub</button>
+    <button type="button" data-room="brief">Briefing</button>
+    <button type="button" data-room="editor">Editor</button>
+    <button type="button" data-room="review">Revisione</button>
+    <button type="button" data-room="lib">Libreria</button>
+  </nav>
+  <div id="clock"><b class="mono" id="clockT">--:--</b><span class="lbl"><span class="dot" id="sysDot"></span><span id="sysTxt">Sistema</span></span></div>
+</header>
+
+<main>
+  <section class="room pad" id="v-hub" aria-label="Hub">
+    <aside class="panel side" id="hubLeft"><div class="row" style="justify-content:space-between"><span class="h" style="font-size:16px">Mission monitor</span><span class="lbl" id="missionCount">0</span></div><div class="scroll" id="missionList"><div class="empty">Carico le missioni…</div></div></aside>
+    <div id="coreWrap"><canvas id="core" aria-label="Nucleo 3D delle missioni: trascina per ruotare, tocca un punto per aprirlo"></canvas><div id="coreLabels"></div>
+      <div class="gauge l" aria-hidden="true"><span>50%</span></div><div class="gauge r" aria-hidden="true"><span>50%</span></div><div class="brk tl"></div><div class="brk tr"></div><div class="brk bl"></div><div class="brk br"></div><div id="coreHint" class="lbl">Trascina per ruotare · tocca una missione</div>
+      <div id="coreTitle"><div class="lbl">Jarvis studio</div><div class="h">Missioni</div></div></div>
+    <aside class="panel side" id="hubRight"><span class="h" style="font-size:16px">Stato Jarvis</span>
+      <div style="display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;min-height:0"><div id="hubStats"></div><div class="scroll" id="feed"></div></div></aside>
+    <div id="doors">
+      <button class="door A" type="button" data-fmt="A"><span class="big">A</span><span class="nm">Luxury motion</span><span class="ds">Spot stile Apple / Netflix per brand premium</span><span class="go">Avvia ›</span></button>
+      <button class="door B" type="button" data-fmt="B"><span class="big">B</span><span class="nm">Faceless premium</span><span class="ds">Video virali senza volto, motion e sound da film</span><span class="go">Avvia ›</span></button>
+      <button class="door C" type="button" data-fmt="C"><span class="big">C</span><span class="nm">Creator</span><span class="ds">Video parlati: tagli, zoom, sottotitoli, B-roll</span><span class="go">Avvia ›</span></button>
+    </div>
+  </section>
+
+  <section class="room pad" id="v-brief" aria-label="Briefing">
+    <div class="panel chat"><div class="row" style="justify-content:space-between"><span class="h" style="font-size:16px">Briefing con Jarvis</span><span id="briefFmt"></span></div>
+      <div class="scroll" id="chatLog"></div>
+      <div class="composer"><textarea id="chatIn" rows="2" placeholder="Raccontami il video: di cosa parla, per chi, che effetto deve fare…"></textarea><button class="btn" id="micBtn" type="button" hidden title="Detta">Mic</button><button class="btn pri" id="chatSend" type="button">Invia</button></div></div>
+    <div class="panel briefSide">
+      <div class="row" style="justify-content:space-between"><span class="h" style="font-size:16px">Scheda missione</span><span class="st brief" id="briefStatus">Brief</span></div>
+      <div class="kv">
+        <label class="full"><span class="lbl">Titolo</span><input id="bTitle" maxlength="120"></label>
+        <label><span class="lbl">Obiettivo</span><input id="bGoal" maxlength="120"></label>
+        <label><span class="lbl">Durata</span><input id="bDur" maxlength="20"></label>
+        <label><span class="lbl">Formato video</span><select id="bAspect"><option value="9:16">9:16 Reels / TikTok</option><option value="16:9">16:9 YouTube</option><option value="1:1">1:1 Feed</option></select></label>
+        <label><span class="lbl">CTA</span><input id="bCta" maxlength="80"></label>
+        <label class="full"><span class="lbl">Gancio</span><input id="bHook" maxlength="200"></label>
+      </div>
+      <div style="display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:8px;min-height:0">
+        <div class="row" style="justify-content:space-between"><span class="lbl">Materiali in sequenza</span><label class="btn sm" for="matFile">Carica</label><input type="file" id="matFile" multiple accept="video/mp4,video/webm,image/png,image/jpeg,image/webp,audio/mpeg,audio/wav,audio/mp4" hidden></div>
+        <div class="drop" id="matDrop">Trascina qui voce, video, foto e loghi nell'ordine in cui vanno nel video (max 20 MB a file)</div>
+        <div class="scroll" id="matList"></div>
+      </div>
+      <div style="display:grid;gap:8px"><ul class="checklist" id="briefCheck"></ul><button class="btn pri" id="toEditor" type="button">Entra in sala editor ›</button></div>
+    </div>
+  </section>
+
+  <section class="room pad" id="v-editor" aria-label="Editor">
+    <div class="panel" id="edBar"><span class="fmt" id="edFmt">B</span><span class="ttl" id="edTitle">—</span>
+      <button class="btn sm" id="undoBtn" type="button" title="Annulla (Ctrl+Z)">Annulla</button><button class="btn sm" id="redoBtn" type="button" title="Ripeti (Ctrl+Shift+Z)">Ripeti</button>
+      <span class="sp"></span><span class="lbl" id="saveState">Salvato</span>
+      <button class="btn pri" id="aiBuild" type="button">Jarvis, monta tu</button><button class="btn" id="exportBtn" type="button">Esporta</button></div>
+    <div class="panel" id="edLib"><div class="tabs" id="libTabs"><button class="chip" data-lib="mat" aria-pressed="true" type="button">Materiali</button><button class="chip" data-lib="txt" type="button">Testi</button><button class="chip" data-lib="trn" type="button">Transizioni</button><button class="chip" data-lib="sfx" type="button">Suoni</button></div><div class="scroll" id="libBody"></div></div>
+    <div class="panel" id="stage"><div id="stageBox"><canvas id="preview" width="540" height="960"></canvas><div id="safeOv" hidden></div></div>
+      <div class="transport"><button class="btn sm" id="playBtn" type="button">Play</button><button class="btn sm" id="stepB" type="button" title="Indietro di un frame">‹</button><button class="btn sm" id="stepF" type="button" title="Avanti di un frame">›</button><span class="tc" id="tcLbl">00:00.00 / 00:00.00</span><button class="chip" id="safeBtn" type="button" aria-pressed="false">Safe zone</button><span class="lbl" id="meter">Livello —</span></div></div>
+    <div id="edSide"><div class="panel" id="inspector"><span class="lbl">Ispettore</span><div class="scroll" id="inspBody"><div class="empty">Seleziona una clip nella timeline.</div></div></div>
+      <div class="panel" id="aiPanel"><div class="row" style="justify-content:space-between"><span class="lbl"><span class="dot" id="aiDot"></span>Jarvis live</span><button class="btn sm" id="aiStop" type="button" hidden>Ferma</button></div>
+        <div style="display:grid;grid-template-rows:minmax(0,1fr) auto;gap:6px;min-height:0"><div class="scroll" id="aiLog"></div><div class="aiCmd"><input id="aiIn" placeholder="Es. metti uno zoom su ogni parola chiave"><button class="btn sm" id="aiMic" type="button" hidden>Mic</button><button class="btn sm pri" id="aiSend" type="button">Vai</button></div></div></div></div>
+    <div class="panel" id="timeline"><div id="tlTools"><button class="btn sm" id="splitBtn" type="button" title="Dividi al cursore (S)">Dividi</button><button class="btn sm" id="delBtn" type="button" title="Elimina (Canc)">Elimina</button><button class="btn sm" id="dupBtn" type="button">Duplica</button><span class="lbl" style="margin-left:auto">Zoom</span><input type="range" id="zoomIn" min="20" max="240" value="70" style="width:140px" aria-label="Zoom timeline"></div>
+      <div id="tlScroll"><div id="tlInner"><div id="ruler"></div><div class="track" data-track="V2"><span class="tname">V2</span></div><div class="track" data-track="V1"><span class="tname">V1</span></div><div class="track" data-track="A1"><span class="tname">A1</span></div><div class="track" data-track="A2"><span class="tname">A2</span></div><div id="playhead"></div></div></div></div>
+  </section>
+
+  <section class="room pad" id="v-review" aria-label="Revisione">
+    <div class="panel" id="revList"><span class="h" style="font-size:16px">Video</span><div class="scroll" id="revItems" style="display:grid;gap:8px;align-content:start"></div></div>
+    <div class="panel" id="revMon"><video id="revVideo" controls playsinline preload="metadata"></video><div id="revScrub" aria-label="Note sulla timeline"><b id="revProg"></b></div><div class="row" id="revActs"></div></div>
+    <div class="panel" id="revNotes"><div class="row" style="justify-content:space-between"><span class="h" style="font-size:16px" id="revTitle">Revisione</span><span id="revSt"></span></div>
+      <div class="row" id="revVers"></div>
+      <div style="display:grid;gap:6px"><textarea id="noteIn" rows="3" placeholder="Metti in pausa sul punto da cambiare e scrivi cosa non va…"></textarea><div class="row"><button class="btn pri sm" id="noteAdd" type="button">Aggiungi nota</button><span class="mono" id="noteTc" style="color:var(--cyan)">a 00:00</span></div></div>
+      <div class="scroll" id="noteList" style="display:grid;gap:6px;align-content:start"></div></div>
+  </section>
+
+  <section class="room pad" id="v-lib" aria-label="Libreria">
+    <div class="panel"><span class="h" style="font-size:16px">Suoni</span><div class="scroll" id="sfxList" style="display:grid;gap:6px;align-content:start"></div></div>
+    <div class="panel"><span class="h" style="font-size:16px">Regole dei formati</span><div class="scroll rules" id="rules"></div></div>
+  </section>
+</main>
+
+<div id="aiCursor" aria-hidden="true"></div>
+<div id="toast" aria-live="polite"></div>
+
+<dialog id="exportDlg"><form method="dialog" id="exportForm">
+  <span class="h" style="font-size:18px">Esporta video</span>
+  <div class="kv"><label><span class="lbl">Risoluzione</span><select id="exRes"><option value="720">720p (bozza veloce)</option><option value="1080" selected>1080p (Full HD)</option><option value="2160">4K (2160p)</option></select></label>
+  <label><span class="lbl">Formato file</span><select id="exFmt"><option value="mp4">MP4 (H.264)</option><option value="webm">WebM (VP9)</option></select></label>
+  <label><span class="lbl">Fotogrammi al secondo</span><select id="exFps"><option>24</option><option selected>30</option><option>60</option></select></label>
+  <label><span class="lbl">Dopo l'export</span><select id="exAfter"><option value="save">Salva sul dispositivo</option><option value="both">Salva e manda in revisione</option></select></label></div>
+  <div class="prog" id="exProgWrap" hidden><i id="exProg"></i></div><div class="lbl" id="exMsg"></div>
+  <div class="row"><button class="btn pri" id="exGo" type="button">Avvia export</button><button class="btn" id="exCancel" type="button">Chiudi</button></div>
+</form></dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/build/mp4-muxer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/webm-muxer@5.0.3/build/webm-muxer.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __esm = (fn, res) => function() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all2) => {
+  for (var name in all2)
+    __defProp(target, name, { get: all2[name], enumerable: !0 });
+};
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/core3d.js
+var core3d_exports = {};
+__export(core3d_exports, {
+  createCore: () => createCore
+});
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+function createCore(canvas, labelsEl, { onPick } = {}) {
+  let reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: !0, alpha: !1, powerPreference: "high-performance" });
+  } catch {
+    return null;
+  }
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)), renderer.setClearColor(133645, 1), renderer.toneMapping = THREE.NoToneMapping;
+  let scene = new THREE.Scene();
+  scene.background = new THREE.Color(133645);
+  let cam = new THREE.PerspectiveCamera(38, 1, 0.1, 200);
+  cam.position.set(0, 0.4, 9.2);
+  let world = new THREE.Group();
+  scene.add(world);
+  let globe = new THREE.Group();
+  world.add(globe);
+  let N = 5200, R = 2.3, pos = new Float32Array(N * 3), seed = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    let y = 1 - i / (N - 1) * 2, r = Math.sqrt(1 - y * y), th = i * 2.399963;
+    pos[i * 3] = Math.cos(th) * r * R, pos[i * 3 + 1] = y * R, pos[i * 3 + 2] = Math.sin(th) * r * R, seed[i] = Math.random();
+  }
+  let pg = new THREE.BufferGeometry();
+  pg.setAttribute("position", new THREE.BufferAttribute(pos, 3)), pg.setAttribute("seed", new THREE.BufferAttribute(seed, 1));
+  let pUni = { uT: { value: 0 }, uPix: { value: renderer.getPixelRatio() } }, pMat = new THREE.ShaderMaterial({
+    uniforms: pUni,
+    transparent: !0,
+    depthWrite: !1,
+    blending: THREE.AdditiveBlending,
+    vertexShader: `attribute float seed;uniform float uT;uniform float uPix;varying float vA;varying float vS;
+      void main(){vec3 p=position;float w=sin(p.y*2.4-uT*1.6+seed*.6)*.5+.5;p*=1.0+w*.035;
+      vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;
+      float tw=.55+.45*sin(uT*2.2+seed*40.);vA=tw*(.35+w*.65);vS=seed;gl_PointSize=(1.1+seed*1.4+w*1.1)*uPix*(9./-mv.z);}`,
+    fragmentShader: `varying float vA;varying float vS;void main(){vec2 c=gl_PointCoord-.5;float d=length(c);if(d>.5)discard;
+      vec3 col=mix(vec3(.16,.75,.95),vec3(.75,.97,1.),vS*vS);gl_FragColor=vec4(col,vA*.55*smoothstep(.5,.15,d));}`
+  });
+  globe.add(new THREE.Points(pg, pMat));
+  let shell = new THREE.Mesh(new THREE.SphereGeometry(R * 0.985, 64, 48), new THREE.ShaderMaterial({
+    transparent: !0,
+    depthWrite: !1,
+    blending: THREE.AdditiveBlending,
+    side: THREE.FrontSide,
+    vertexShader: "varying vec3 n;varying vec3 v;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);n=normalize(normalMatrix*normal);v=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}",
+    fragmentShader: "varying vec3 n;varying vec3 v;void main(){float f=pow(1.-max(dot(n,v),0.),2.6);gl_FragColor=vec4(vec3(.06,.42,.6)*f,f*.32);}"
+  }));
+  globe.add(shell);
+  let latMat = new THREE.LineBasicMaterial({ color: 1937062, transparent: !0, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: !1 });
+  for (let lat of [-0.6, -0.3, 0, 0.3, 0.6]) {
+    let r = Math.cos(lat) * R * 1.003, y = Math.sin(lat) * R * 1.003, pts = [];
+    for (let i = 0; i <= 128; i++) {
+      let a = i / 128 * Math.PI * 2;
+      pts.push(new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r));
+    }
+    globe.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), latMat));
+  }
+  let rings = new THREE.Group();
+  world.add(rings);
+  let ringDefs = [[3.05, 0.012, 0.35, 0.2], [3.45, 8e-3, -0.5, 0.9], [3.9, 6e-3, 0.15, -0.6]];
+  for (let [rr, w2, tx, tz] of ringDefs) {
+    let m = new THREE.Mesh(new THREE.TorusGeometry(rr, w2, 8, 220), new THREE.MeshBasicMaterial({ color: 4449791, transparent: !0, opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: !1 }));
+    m.rotation.set(Math.PI / 2 + tx, 0, tz), rings.add(m);
+  }
+  let beam = new THREE.Mesh(new THREE.TorusGeometry(R * 1.01, 0.012, 6, 160), new THREE.MeshBasicMaterial({ color: 12580607, transparent: !0, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: !1 }));
+  beam.rotation.x = Math.PI / 2, globe.add(beam);
+  let sigN = 200, sigPos = new Float32Array(sigN * 3), sigGeo = new THREE.BufferGeometry();
+  sigGeo.setAttribute("position", new THREE.BufferAttribute(sigPos, 3));
+  let signal = new THREE.Line(sigGeo, new THREE.LineBasicMaterial({ color: 10354554, transparent: !0, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: !1 }));
+  world.add(signal);
+  let dN = 900, dPos = new Float32Array(dN * 3);
+  for (let i = 0; i < dN; i++) {
+    let r = 8 + Math.random() * 30, a = Math.random() * 6.283, b = Math.acos(2 * Math.random() - 1);
+    dPos[i * 3] = r * Math.sin(b) * Math.cos(a), dPos[i * 3 + 1] = r * Math.cos(b) * 0.6, dPos[i * 3 + 2] = -Math.abs(r * Math.sin(b) * Math.sin(a));
+  }
+  let dGeo = new THREE.BufferGeometry();
+  dGeo.setAttribute("position", new THREE.BufferAttribute(dPos, 3)), scene.add(new THREE.Points(dGeo, new THREE.PointsMaterial({ color: 2784658, size: 0.05, transparent: !0, opacity: 0.7, depthWrite: !1 })));
+  let nodeGroup = new THREE.Group();
+  world.add(nodeGroup);
+  let glowTex = (() => {
+    let c = document.createElement("canvas");
+    c.width = c.height = 64;
+    let x = c.getContext("2d"), g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    return g.addColorStop(0, "rgba(255,255,255,1)"), g.addColorStop(0.25, "rgba(255,255,255,.6)"), g.addColorStop(1, "rgba(255,255,255,0)"), x.fillStyle = g, x.fillRect(0, 0, 64, 64), new THREE.CanvasTexture(c);
+  })(), nodes = [];
+  function setMissions(list2) {
+    for (let n of nodes)
+      nodeGroup.remove(n.obj), n.label.remove();
+    nodes = [], list2.slice(0, 40).forEach((p2, i) => {
+      let col2 = STATUS_COL[p2.status] || 4449791, obj = new THREE.Group(), sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: col2, transparent: !0, blending: THREE.AdditiveBlending, depthWrite: !1 }));
+      sp.scale.setScalar(0.42);
+      let core2 = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 12), new THREE.MeshBasicMaterial({ color: col2 }));
+      obj.add(sp, core2);
+      let k = (i + 0.5) / Math.max(1, Math.min(40, list2.length)), lat = Math.asin(1.6 * k - 0.8), lon = i * 2.399963, rr = R * 1.12;
+      obj.userData.base = new THREE.Vector3(Math.cos(lat) * Math.cos(lon) * rr, Math.sin(lat) * rr, Math.cos(lat) * Math.sin(lon) * rr), obj.position.copy(obj.userData.base);
+      let s0 = obj.userData.base.clone().multiplyScalar(R / rr), stalk = new THREE.Line(new THREE.BufferGeometry().setFromPoints([s0, obj.userData.base]), new THREE.LineBasicMaterial({ color: col2, transparent: !0, opacity: 0.6, blending: THREE.AdditiveBlending }));
+      nodeGroup.add(stalk), nodeGroup.add(obj);
+      let label = document.createElement("div");
+      label.className = "nodeLbl", label.textContent = (p2.format || "?") + " \xB7 " + (p2.title || "Missione"), label.addEventListener("click", () => onPick && onPick(p2.id)), labelsEl.append(label), nodes.push({ id: p2.id, obj, stalk, label, phase: Math.random() * 6.28, col: col2 });
+    });
+  }
+  let composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, cam));
+  let bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.85, 0.45, 0.42);
+  window.__noBloom || composer.addPass(bloom), composer.addPass(new OutputPass());
+  let rotY = 0, rotX = -0.12, velY = reduce ? 0 : 25e-4, velX = 0, dragging = !1, lastX = 0, lastY = 0, moved = 0, idleT = 0, ray = new THREE.Raycaster(), mouse = new THREE.Vector2(), hover = null, toNdc = (e) => {
+    let r = canvas.getBoundingClientRect();
+    mouse.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  };
+  canvas.addEventListener("pointerdown", (e) => {
+    dragging = !0, moved = 0, lastX = e.clientX, lastY = e.clientY, canvas.setPointerCapture(e.pointerId);
+  }), canvas.addEventListener("pointermove", (e) => {
+    if (toNdc(e), dragging) {
+      let dx = e.clientX - lastX, dy = e.clientY - lastY;
+      moved += Math.abs(dx) + Math.abs(dy), velY = dx * 45e-4, velX = dy * 3e-3, rotY += velY, rotX = Math.max(-0.9, Math.min(0.9, rotX + velX)), lastX = e.clientX, lastY = e.clientY, idleT = 0;
+    }
+  });
+  let end2 = (e) => {
+    if (dragging && (dragging = !1, moved < 6)) {
+      toNdc(e), ray.setFromCamera(mouse, cam);
+      let hit = ray.intersectObjects(nodes.map((n) => n.obj), !0)[0];
+      if (hit) {
+        let n = nodes.find((n2) => n2.obj === hit.object.parent || n2.obj === hit.object);
+        n && onPick && onPick(n.id);
+      }
+    }
+  };
+  canvas.addEventListener("pointerup", end2), canvas.addEventListener("pointercancel", () => {
+    dragging = !1;
+  }), canvas.addEventListener("pointerleave", () => {
+    mouse.set(9, 9);
+  });
+  let running2 = !1, raf2 = 0, t0 = performance.now(), last = t0, w = 0, h = 0, highlight = null, focusT = 0;
+  function resize() {
+    let r = canvas.getBoundingClientRect(), nw = Math.max(1, Math.round(r.width)), nh = Math.max(1, Math.round(r.height));
+    nw === w && nh === h || (w = nw, h = nh, renderer.setSize(w, h, !1), composer.setSize(w, h), bloom.setSize(w / 2, h / 2), cam.aspect = w / h, cam.position.z = w / h < 1 ? Math.min(14, 9.2 / (w / h) * 0.95) : 9.2, cam.updateProjectionMatrix());
+  }
+  let v3 = new THREE.Vector3();
+  function frame(now2) {
+    if (!running2) return;
+    raf2 = requestAnimationFrame(frame);
+    let dt = Math.min(0.05, (now2 - last) / 1e3);
+    last = now2;
+    let t = (now2 - t0) / 1e3;
+    resize(), dragging || (idleT += dt, velY += ((reduce ? 0 : 22e-4) - velY) * Math.min(1, dt * (idleT > 1.5 ? 1.2 : 0.3)), velX *= Math.pow(0.02, dt), rotY += velY * (dt * 60), rotX += velX * (dt * 60), rotX += (-0.12 - rotX) * dt * 0.4), world.rotation.set(rotX, rotY, 0), rings.children.forEach((m, i) => {
+      m.rotation.z += dt * (0.08 + i * 0.05) * (i % 2 ? -1 : 1);
+    }), pUni.uT.value = t;
+    let by = Math.sin(t * 0.55) * R * 0.95;
+    beam.position.y = by;
+    let br = Math.sqrt(Math.max(1e-4, R * R - by * by)) * 1.01;
+    beam.scale.setScalar(br / (R * 1.01)), beam.material.opacity = 0.12 + 0.25 * Math.abs(Math.cos(t * 0.55));
+    for (let i = 0; i < sigN; i++) {
+      let x = -R * 1.9 + i / (sigN - 1) * R * 3.8, y = Math.exp(-Math.pow(x / (R * 0.95), 2) * 1.8) * (Math.sin(x * 9 + t * 7) * 0.12 + Math.sin(x * 23 - t * 11) * 0.06 + Math.sin(x * 3.1 + t * 2.3) * 0.08);
+      sigPos[i * 3] = x, sigPos[i * 3 + 1] = y, sigPos[i * 3 + 2] = R * 0.02;
+    }
+    sigGeo.attributes.position.needsUpdate = !0, signal.rotation.y = -rotY, ray.setFromCamera(mouse, cam);
+    let hit = ray.intersectObjects(nodes.map((n) => n.obj), !0)[0];
+    hover = hit ? nodes.find((n) => n.obj === hit.object.parent || n.obj === hit.object) : null, canvas.style.cursor = hover ? "pointer" : "grab";
+    let r = canvas.getBoundingClientRect();
+    for (let n of nodes) {
+      let s = 1 + 0.18 * Math.sin(t * 2.4 + n.phase) + (hover === n || highlight === n.id ? 0.6 : 0);
+      n.obj.children[0].scale.setScalar(0.42 * s), n.obj.getWorldPosition(v3);
+      let facing = v3.clone().normalize().dot(cam.position.clone().normalize());
+      v3.project(cam);
+      let vis = facing > -0.15 && v3.z < 1;
+      if (n.label.style.display = vis ? "" : "none", vis) {
+        let lw = n.label.offsetWidth || 120;
+        n.label.style.left = Math.max(lw / 2 + 4, Math.min(r.width - lw / 2 - 4, (v3.x + 1) / 2 * r.width)) + "px", n.label.style.top = (1 - v3.y) / 2 * r.height + "px", n.label.style.opacity = String(Math.max(0.25, Math.min(1, facing + 0.6))), n.label.style.borderLeftColor = "#" + n.col.toString(16).padStart(6, "0");
+      }
+    }
+    composer.render(dt);
+  }
+  return {
+    setMissions,
+    highlight(id) {
+      highlight = id;
+    },
+    start() {
+      running2 || (running2 = !0, last = performance.now(), raf2 = requestAnimationFrame(frame));
+    },
+    stop() {
+      running2 = !1, cancelAnimationFrame(raf2);
+    },
+    get running() {
+      return running2;
+    }
+  };
+}
+var STATUS_COL, init_core3d = __esm({
+  "../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/core3d.js"() {
+    STATUS_COL = { brief: 7315374, lavorazione: 16758344, revisione: 16735055, approvato: 3924876 };
+  }
+});
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/state.js
+var S = {
+  db: null,
+  user: null,
+  assets: null,
+  downloads: null,
+  sample: null,
+  dictation: null,
+  tts: null,
+  projects: [],
+  cur: null,
+  room: "hub",
+  canWrite: !0,
+  uid: null
+}, STATUS = { brief: "Brief", lavorazione: "In lavorazione", revisione: "Da revisionare", approvato: "Approvato" }, FORMAT = { A: "Luxury motion", B: "Faceless premium", C: "Creator" }, $ = (id) => document.getElementById(id);
+function el(tag, props = {}, ...kids) {
+  let e = document.createElement(tag);
+  for (let [k, v] of Object.entries(props))
+    v == null || v === !1 || (k === "class" ? e.className = v : k === "text" ? e.textContent = v : k.startsWith("on") && typeof v == "function" ? e.addEventListener(k.slice(2), v) : k === "style" && typeof v == "object" ? Object.assign(e.style, v) : e.setAttribute(k, v === !0 ? "" : v));
+  for (let c of kids.flat())
+    c == null || c === !1 || e.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return e;
+}
+var clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v)), tc = (s, frac = !1) => {
+  s = Math.max(0, s || 0);
+  let m = Math.floor(s / 60), x = s - m * 60;
+  return String(m).padStart(2, "0") + ":" + (frac ? x.toFixed(2).padStart(5, "0") : String(Math.floor(x)).padStart(2, "0"));
+};
+function toast(msg, ms = 2800) {
+  let t = el("div", { text: msg });
+  $("toast").append(t), setTimeout(() => t.remove(), ms);
+}
+var uid = (p2 = "c") => p2 + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), now = () => (/* @__PURE__ */ new Date()).toISOString(), blobUrl = (id) => window.__mockBlobs && window.__mockBlobs[id] || "/_blob/" + id, store = {
+  get(k) {
+    try {
+      return localStorage.getItem("jarvis." + k);
+    } catch {
+      return null;
+    }
+  },
+  set(k, v) {
+    try {
+      localStorage.setItem("jarvis." + k, v);
+    } catch {
+    }
+  }
+};
+function writeErr(e) {
+  let c = e && e.code;
+  return c === "invalid_argument" ? "Non hai i permessi per salvare qui." : c === "quota_exceeded" ? "Spazio dati esaurito: elimina vecchie missioni." : "Non salvato, riprova tra poco.";
+}
+var bus = new EventTarget(), emit = (name, detail) => bus.dispatchEvent(new CustomEvent(name, { detail })), on = (name, fn) => bus.addEventListener(name, (e) => fn(e.detail));
+function feed(text, kind = "") {
+  emit("feed", { text, kind, at: Date.now() });
+}
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/brief.js
+var brief_exports = {};
+__export(brief_exports, {
+  enter: () => enter,
+  init: () => init,
+  leave: () => leave,
+  refresh: () => refresh
+});
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/proj.js
+var E = { pid: null, materials: [], clips: [], rev: 0, loaded: !1 }, unsub = null, timer = null, writing = !1, again = !1, lastSaved = 0;
+function editPath(pid) {
+  return "projects/" + pid + "/state/edit";
+}
+function openEdit(pid) {
+  E.pid === pid && unsub || (unsub && (unsub(), unsub = null), Object.assign(E, { pid, materials: [], clips: [], rev: 0, loaded: !1 }), emit("edit", { remote: !0 }), !(!S.db || !pid) && (unsub = S.db.doc(editPath(pid)).onSnapshot((snap2) => {
+    if (E.pid !== pid) return;
+    let d = snap2.exists ? snap2.data() : null;
+    d && (d.rev || 0) <= lastSaved && E.loaded || d && (writing || timer) && E.loaded || (E.materials = d && d.materials || [], E.clips = d && d.clips || [], E.rev = d && d.rev || 0, E.loaded = !0, lastSaved = E.rev, emit("edit", { remote: !0 }));
+  }, () => {
+    E.loaded = !0, emit("edit", { remote: !0 });
+  })));
+}
+function touch(reason) {
+  emit("edit", { remote: !1, reason }), emit("saveState", "pending"), clearTimeout(timer), timer = setTimeout(flush, 700);
+}
+async function flush() {
+  if (clearTimeout(timer), timer = null, !S.db || !E.pid) return;
+  if (writing) {
+    again = !0;
+    return;
+  }
+  writing = !0, emit("saveState", "saving");
+  let pid = E.pid;
+  E.rev = Math.max(E.rev, lastSaved) + 1;
+  let rev = E.rev, body = { materials: E.materials.filter((m) => !m.status || m.status === "ok").map(({ prog, ...m }) => m), clips: E.clips, rev, savedAt: now() };
+  try {
+    if (JSON.stringify(body).length > 24e4) throw { code: "too_big" };
+    await S.db.doc(editPath(pid)).set(body), lastSaved = rev, emit("saveState", "saved");
+    let p2 = S.projects.find((p3) => p3.id === pid);
+    p2 && !p2.hasEdit && E.clips.length && S.db.doc("projects/" + pid).update({ hasEdit: !0, updatedAt: now() }).catch(() => {
+    });
+  } catch (e) {
+    emit("saveState", "error"), toast(e && e.code === "too_big" ? "Progetto troppo grande per un salvataggio: elimina clip o materiali inutili." : writeErr(e));
+  } finally {
+    writing = !1, again && (again = !1, flush());
+  }
+}
+function matById(id) {
+  return E.materials.find((m) => m.id === id) || null;
+}
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/data.js
+var SFX = [
+  { key: "whoosh", name: "Whoosh pulito", use: "Tagli e transizioni grandi", dur: 0.6, assetId: "760380d5f5d36dc687aca27670fa058d" },
+  { key: "hit", name: "Colpo cinematico", use: "Parola chiave, impatto", dur: 1.85, assetId: "f0d082a542612de009fd78baf3593393" },
+  { key: "sub", name: "Sub drop", use: 'Notizia shock, "cancellato"', dur: 1.44, assetId: "b1920f5a1448923fb42082a66ce90f70" },
+  { key: "braam", name: "Braam da trailer", use: "Gancio, rivelazione", dur: 2.64, assetId: "0c2245998b684fa1571c7f9e69edbd63" },
+  { key: "riser", name: "Riser", use: "Tensione che sale prima della svolta", dur: 2.32, assetId: "5e56062fc2c16e56e79795e307fc0828" },
+  { key: "revswell", name: "Swell al contrario", use: "Risucchio nella pausa", dur: 1.65, assetId: "50f320526da7be9655cbc13d25fdc565" },
+  { key: "pop", name: "Pop morbido", use: "Elemento che appare", dur: 0.44, assetId: "43beaf77851fc61e730e70f5667aceea" },
+  { key: "click", name: "Click", use: "UI, digitazione, toggle", dur: 0.26, assetId: "86f6aaf77f930fbd23b5c6899a1e5b17" },
+  { key: "shimmer", name: "Shimmer", use: "Svolta positiva, luce", dur: 1.78, assetId: "9bb0b998a87e51b8c4413d3943ca42c3" },
+  { key: "flash", name: "Flash brillante", use: "Flash di luce sul taglio", dur: 2.48, assetId: "3f89dd5cf90fc2a70802d9cbc145175f" },
+  { key: "suck", name: "Risucchio", use: "Prima di un colpo", dur: 2.32, assetId: "6720e766ad69752568cca85e37c4eeba" },
+  { key: "sizzle", name: "Sfrigolio", use: "Cibo caldo", dur: 1.65, assetId: "169c919f6bd3ef7dfadcf3833439b064" },
+  { key: "crunch", name: "Crunch", use: "Croccante, morso", dur: 0.5, assetId: "4b5d5933434f74d5809a344d690fd975" }
+], RULES = {
+  A: { name: "Luxury motion", rules: [
+    "Un'idea per inquadratura, tanto spazio vuoto, griglia rigorosa",
+    "Massimo 2 font, palette del brand",
+    "Testo cinetico elegante: sfocato \u2192 a fuoco, gradiente solo sulla parola chiave",
+    "Transizioni di classe: finestre arrotondate, carrellate continue",
+    "Prodotto sempre reale (asset del brand o clip generate), mai loghi inventati",
+    "Inquadrature da 1.5\u20133 s, packshot finale con logo \u2265 1.5 s",
+    "Versioni 9:16 + 16:9 + 1:1"
+  ] },
+  B: { name: "Faceless premium", rules: [
+    "Gancio nel primo secondo",
+    "Un oggetto protagonista, scritta gigante sfumata dietro, parola chiave evidenziata",
+    "Ogni scena con un'animazione diversa e legata alla frase",
+    "Nessun secondo fermo; pause solo se piene di tensione",
+    "Sound design da film, sempre \u2265 6 dB sotto la voce, niente musica",
+    'Notizia finta: "NON \xC8 UNA NOTIZIA REALE" \u2265 1 s',
+    "CTA con parola da commentare"
+  ] },
+  C: { name: "Creator", rules: [
+    "Jump cut: via silenzi, respiri lunghi, errori",
+    "Zoom a scatto sulle parole chiave (100% \u2194 115\u2013125%)",
+    "Sottotitoli parola per parola, parola chiave colorata",
+    "B-roll o grafica ogni 3\u20135 s",
+    "Whoosh solo sui tagli grandi, boom sugli impatti",
+    "Voce pulita a \u221214 LUFS, effetti mai sopra la voce",
+    "Open loop e CTA a met\xE0 video"
+  ] }
+}, TEXT_STYLES = [
+  { key: "keyword", name: "Parola chiave", desc: "Riga piccola + parola grande evidenziata" },
+  { key: "apple", name: "Apple", desc: "Entra sfocata e va a fuoco, gradiente" },
+  { key: "caption", name: "Sottotitolo", desc: "Parola per parola in basso (formato C)" },
+  { key: "title", name: "Titolo", desc: "Grande, centrato, d'impatto" },
+  { key: "label", name: "Etichetta", desc: "Pillola piccola (es. disclaimer)" }
+], TRANSITIONS = [
+  { key: "none", name: "Taglio netto" },
+  { key: "fade", name: "Dissolvenza" },
+  { key: "window", name: "Finestra arrotondata" },
+  { key: "flash", name: "Flash di luce" },
+  { key: "whip", name: "Whip pan" },
+  { key: "zoom", name: "Zoom-through" }
+], COLORS = { red: "#E5323F", lime: "#C8F25A", orange: "#D97757", white: "#FFFFFF", ink: "#141414", cyan: "#43E5FF", gold: "#E9C46A" }, ASPECTS = { "9:16": [1080, 1920], "16:9": [1920, 1080], "1:1": [1080, 1080] }, FORMAT_CHECK = {
+  A: ["Titolo e obiettivo", "Brand / prodotto", "Durata 15\u201330 s", "Materiali del prodotto caricati", "CTA o packshot finale"],
+  B: ["Titolo e obiettivo", "Gancio del primo secondo", "Durata", "Voce caricata", "CTA con parola da commentare"],
+  C: ["Titolo e obiettivo", "Facecam caricata", "Durata", "B-roll o grafiche", "CTA"]
+};
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/audioconv.js
+async function audioToContainer(file, onProg) {
+  let buf = await file.arrayBuffer(), ab = await new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 48e3, 48e3).decodeAudioData(buf.slice(0)), len = Math.ceil(ab.duration * 48e3), oc = new OfflineAudioContext(2, Math.max(1, len), 48e3), src = oc.createBufferSource();
+  src.buffer = ab, src.connect(oc.destination), src.start(0);
+  let out = await oc.startRendering();
+  if (typeof AudioEncoder < "u")
+    for (let [codec, kind] of [["mp4a.40.2", "mp4"], ["opus", "mp4"], ["opus", "webm"]]) {
+      let cfg = { codec, sampleRate: 48e3, numberOfChannels: 2, bitrate: 16e4 }, ok = !1;
+      try {
+        ok = (await AudioEncoder.isConfigSupported(cfg)).supported;
+      } catch {
+      }
+      if (!ok) continue;
+      let Mux = kind === "mp4" ? window.Mp4Muxer : window.WebMMuxer;
+      if (!Mux) continue;
+      let target = new Mux.ArrayBufferTarget(), muxer = new Mux.Muxer({ target, audio: { codec: kind === "mp4" ? codec === "opus" ? "opus" : "aac" : "A_OPUS", numberOfChannels: 2, sampleRate: 48e3 }, ...kind === "mp4" ? { fastStart: "in-memory" } : {} }), err = null, enc = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: (e) => err = e });
+      enc.configure(cfg);
+      let L = out.getChannelData(0), R = out.getChannelData(1), B = 4800;
+      for (let o = 0; o < out.length; o += B) {
+        let n = Math.min(B, out.length - o), d = new Float32Array(n * 2);
+        d.set(L.subarray(o, o + n), 0), d.set(R.subarray(o, o + n), n);
+        let a = new AudioData({ format: "f32-planar", sampleRate: 48e3, numberOfFrames: n, numberOfChannels: 2, timestamp: Math.round(o / 48e3 * 1e6), data: d });
+        if (enc.encode(a), a.close(), err) throw err;
+        onProg && o % (B * 50) === 0 && onProg(o / out.length);
+      }
+      return await enc.flush(), enc.close(), muxer.finalize(), { blob: new Blob([target.buffer], { type: kind === "mp4" ? "video/mp4" : "video/webm" }), dur: ab.duration };
+    }
+  let ctx2 = new AudioContext(), dest = ctx2.createMediaStreamDestination(), s = ctx2.createBufferSource();
+  s.buffer = ab, s.connect(dest);
+  let rec = new MediaRecorder(dest.stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "" }), chunks = [];
+  rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  let done = new Promise((r) => rec.onstop = r);
+  return rec.start(500), s.start(), await new Promise((r) => s.onended = r), rec.stop(), await done, ctx2.close(), { blob: new Blob(chunks, { type: "video/webm" }), dur: ab.duration };
+}
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/brief.js
+var api, turns = [], chatFor = null, busy = null, saveT = null, MAX = 20 * 1024 * 1024, ROLES = { voce: "Voce", facecam: "Facecam", broll: "B-roll", foto: "Foto", logo: "Logo", musica: "Musica", sfx: "Effetto" };
+function init(a) {
+  api = a, $("chatSend").addEventListener("click", send), $("chatIn").addEventListener("keydown", (e) => {
+    e.key === "Enter" && !e.shiftKey && (e.preventDefault(), send());
+  });
+  for (let [id, key] of [["bTitle", "title"], ["bGoal", "goal"], ["bDur", "duration"], ["bCta", "cta"], ["bHook", "hook"], ["bAspect", "aspect"]])
+    $(id).addEventListener("input", () => {
+      clearTimeout(saveT), saveT = setTimeout(() => saveFields({ [key]: $(id).value.trim() }), 600), renderCheck();
+    });
+  $("matFile").addEventListener("change", (e) => {
+    addFiles([...e.target.files]), e.target.value = "";
+  });
+  let drop = $("matDrop");
+  drop.addEventListener("dragover", (e) => {
+    e.preventDefault(), drop.classList.add("over");
+  }), drop.addEventListener("dragleave", () => drop.classList.remove("over")), drop.addEventListener("drop", (e) => {
+    e.preventDefault(), drop.classList.remove("over"), addFiles([...e.dataTransfer.files]);
+  }), $("toEditor").addEventListener("click", async () => {
+    await flush(), api.go("editor");
+  }), on("edit", () => {
+    S.room === "brief" && (renderMats(), renderCheck());
+  }), on("caps", setupMic);
+}
+function p() {
+  return api.curP();
+}
+function enter(opts = {}) {
+  let pr = p();
+  if (!pr) return;
+  openEdit(pr.id), $("briefFmt").replaceChildren(el("span", { class: "fmt " + pr.format, text: pr.format }), " ", el("span", { class: "lbl", text: FORMAT[pr.format] || "" })), $("briefStatus").className = "st " + pr.status, $("briefStatus").textContent = STATUS[pr.status] || pr.status;
+  let set = (id, v) => {
+    document.activeElement !== $(id) && ($(id).value = v || "");
+  };
+  set("bTitle", pr.title), set("bGoal", pr.goal), set("bDur", pr.duration), set("bCta", pr.cta), set("bHook", pr.hook), $("bAspect").value = pr.aspect || "9:16", chatFor !== pr.id && loadChat(pr), $("matFile").disabled = !S.assets, $("matDrop").textContent = S.assets ? "Trascina qui voce, video, foto e loghi nell'ordine in cui vanno nel video (fino a 20 MB a file; i video pi\xF9 grandi li alleggerisco io)" : "Il caricamento dei file \xE8 disponibile solo a chi pu\xF2 modificare Jarvis.", renderMats(), renderCheck();
+}
+function refresh() {
+  S.room === "brief" && enter();
+}
+function leave() {
+  clearTimeout(saveT);
+}
+async function saveFields(patch) {
+  let pr = p();
+  if (!(!pr || !S.db || !S.canWrite))
+    try {
+      await S.db.doc("projects/" + pr.id).update({ ...patch, updatedAt: now() });
+    } catch (e) {
+      toast(writeErr(e));
+    }
+}
+function greeting(pr) {
+  let g = {
+    A: 'Missione A, luxury motion. Dimmi il brand, il prodotto e la sensazione che deve lasciare (es. "Apple, essenziale, potente"). Se hai foto o video del prodotto caricali a destra.',
+    B: "Missione B, faceless premium. Raccontami la notizia o l'idea, il gancio dei primi secondi e chi parla (la tua voce o una voce AI). Carica la voce a destra appena ce l'hai.",
+    C: "Missione C, creator. Dimmi di cosa parli e per chi. Carica la facecam e gli eventuali B-roll a destra, nell'ordine giusto."
+  };
+  return "Ciao, sono Jarvis. " + (g[pr.format] || g.B);
+}
+async function loadChat(pr) {
+  if (chatFor = pr.id, turns = [], renderChat(), !!S.db) {
+    try {
+      let d = await S.db.doc("projects/" + pr.id + "/state/chat").get();
+      if (chatFor !== pr.id) return;
+      turns = d.exists && d.data().turns || [];
+    } catch {
+    }
+    renderChat();
+  }
+}
+function renderChat(streamText) {
+  let log2 = $("chatLog");
+  log2.replaceChildren();
+  let pr = p();
+  if (pr) {
+    log2.append(el("div", { class: "msg ai", text: greeting(pr) }));
+    for (let t of turns) log2.append(el("div", { class: "msg " + (t.role === "user" ? "me" : "ai"), text: stripBrief(t.content) }));
+    streamText !== void 0 && log2.append(el("div", { class: "msg ai", text: stripBrief(streamText) || "Sto pensando\u2026" })), log2.scrollTop = log2.scrollHeight;
+  }
+}
+var stripBrief = (t) => (t || "").replace(/\n?BRIEF:\s*\{[\s\S]*$/, "").trim();
+function rulesFor(pr) {
+  let r = RULES[pr.format] || RULES.B;
+  return `Sei Jarvis, il direttore creativo di uno studio video italiano. Stai facendo il briefing di una missione formato ${pr.format} (${r.name}).
+Regole del formato: ${r.rules.join("; ")}.
+Parla in italiano, frasi brevi e concrete, una o due domande alla volta, proponi idee forti (ganci, struttura, CTA).
+Scheda attuale: titolo="${pr.title || ""}", obiettivo="${pr.goal || ""}", durata="${pr.duration || ""}", CTA="${pr.cta || ""}", gancio="${pr.hook || ""}", formato video="${pr.aspect || "9:16"}".
+Materiali caricati: ${E.materials.map((m, i) => `${i + 1}. ${m.name} (${ROLES[m.role] || m.kind}${m.dur ? ", " + m.dur.toFixed(1) + " s" : ""})`).join("; ") || "nessuno"}.
+Alla fine di OGNI risposta aggiungi una riga che inizia con "BRIEF:" seguita da un oggetto JSON con i campi che hai capito o migliorato tra title, goal, duration, cta, hook (solo stringhe; ometti quelli non noti).`;
+}
+async function send() {
+  let text = $("chatIn").value.trim(), pr = p();
+  if (!(!text || !pr || busy)) {
+    if (!S.sample) {
+      toast("Jarvis non pu\xF2 rispondere in questa vista: apri l'app su claude.ai.");
+      return;
+    }
+    $("chatIn").value = "", turns.push({ role: "user", content: text.slice(0, 4e3) }), renderChat(""), busy = new AbortController(), $("chatSend").disabled = !0;
+    try {
+      let input = [{ role: "user", content: rulesFor(pr) }, ...turns.slice(-16)], { text: out } = await S.sample(input, { cache: !1, signal: busy.signal, onText: ({ text: text2 }) => renderChat(text2) });
+      turns.push({ role: "assistant", content: out });
+      let m = out.match(/BRIEF:\s*(\{[\s\S]*\})/);
+      if (m)
+        try {
+          let b = JSON.parse(m[1]), patch = {};
+          for (let k of ["title", "goal", "duration", "cta", "hook"]) typeof b[k] == "string" && b[k].trim() && (patch[k] = b[k].trim().slice(0, 200));
+          Object.keys(patch).length && (await saveFields(patch), feed("Brief aggiornato da Jarvis"));
+        } catch {
+        }
+    } catch (e) {
+      e && e.code !== "cancelled" && turns.push({ role: "assistant", content: (e.text ? e.text + `
+` : "") + chatErr(e.code) });
+    } finally {
+      busy = null, $("chatSend").disabled = !1, renderChat(), S.db && S.canWrite && S.db.doc("projects/" + pr.id + "/state/chat").set({ turns: turns.slice(-40), updatedAt: now() }).catch(() => {
+      });
+    }
+  }
+}
+function chatErr(c) {
+  return c === "not_granted" ? "(Per parlare con me devi consentire a Jarvis di usare Claude.)" : c === "rate_limited" ? "(Troppe richieste: riprova tra poco.)" : "(Non sono riuscito a rispondere, riprova.)";
+}
+function setupMic() {
+  let d = S.dictation;
+  if (d) {
+    for (let [btnId, inId] of [["micBtn", "chatIn"], ["aiMic", "aiIn"]]) {
+      let b = $(btnId);
+      b.hidden = !1, b.addEventListener("click", () => {
+        if (d.active()) {
+          d.stop().catch(() => {
+          });
+          return;
+        }
+        d.start().catch((e) => {
+          e.code === "not_granted" || e.code === "unavailable" ? $("micBtn").hidden = $("aiMic").hidden = !0 : e.code !== "stopped" && e.code !== "dismissed" && toast("Microfono non disponibile ora.");
+        }), d.__target = inId;
+      });
+    }
+    d.onFinal(({ text }) => {
+      let t = $(d.__target || "chatIn");
+      t.value = (t.value ? t.value : "") + (t.value ? text : text.trimStart());
+    }), d.onState(({ state }) => {
+      for (let id of ["micBtn", "aiMic"]) $(id).textContent = state === "idle" ? "Mic" : "Stop";
+    });
+  }
+}
+function kindOf(f) {
+  return f.type.startsWith("video/") ? "video" : f.type.startsWith("image/") ? "image" : f.type.startsWith("audio/") ? "audio" : null;
+}
+async function probe(file, kind) {
+  let url = URL.createObjectURL(file);
+  try {
+    if (kind === "image") {
+      let img = await new Promise((r, j) => {
+        let i = new Image();
+        i.onload = () => r(i), i.onerror = j, i.src = url;
+      });
+      return { w: img.naturalWidth, h: img.naturalHeight, dur: 0, thumb: thumbOf(img, img.naturalWidth, img.naturalHeight) };
+    }
+    let m = document.createElement(kind === "video" ? "video" : "audio");
+    m.muted = !0, m.preload = "auto", m.src = url, await new Promise((r, j) => {
+      m.onloadedmetadata = r, m.onerror = () => j(new Error("decode")), setTimeout(() => j(new Error("timeout")), 15e3);
+    });
+    let info = { dur: isFinite(m.duration) ? m.duration : 0, w: m.videoWidth || 0, h: m.videoHeight || 0, thumb: null };
+    return kind === "video" && (m.currentTime = Math.min(0.5, info.dur / 2), await new Promise((r) => {
+      m.onseeked = r, setTimeout(r, 3e3);
+    }), info.thumb = thumbOf(m, info.w, info.h)), info;
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 1e3);
+  }
+}
+function thumbOf(src, w, h) {
+  try {
+    let c = document.createElement("canvas"), s = 96 / Math.max(w, h || 1);
+    return c.width = Math.max(1, Math.round(w * s)), c.height = Math.max(1, Math.round(h * s)), c.getContext("2d").drawImage(src, 0, 0, c.width, c.height), c.toDataURL("image/jpeg", 0.6);
+  } catch {
+    return null;
+  }
+}
+async function proxyOf(file, info, onProg) {
+  if (typeof MediaRecorder > "u") throw new Error("norec");
+  let url = URL.createObjectURL(file), v = document.createElement("video");
+  v.src = url, v.playsInline = !0, v.muted = !1, v.volume = 1e-4, await new Promise((r, j) => {
+    v.onloadedmetadata = r, v.onerror = j;
+  });
+  let sc = Math.min(1, 720 / Math.min(v.videoWidth, v.videoHeight)), c = document.createElement("canvas");
+  c.width = Math.round(v.videoWidth * sc / 2) * 2, c.height = Math.round(v.videoHeight * sc / 2) * 2;
+  let g = c.getContext("2d"), stream = c.captureStream(30);
+  try {
+    (v.captureStream ? v.captureStream().getAudioTracks() : []).forEach((t) => stream.addTrack(t));
+  } catch {
+  }
+  let bps = Math.max(6e5, Math.min(4e6, 18 * 1024 * 1024 * 8 / Math.max(1, v.duration) - 128e3)), type = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"].find((t) => MediaRecorder.isTypeSupported(t)), rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: bps, audioBitsPerSecond: 96e3 }), chunks = [];
+  rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  let done = new Promise((r) => rec.onstop = r), raf2, draw2 = () => {
+    g.drawImage(v, 0, 0, c.width, c.height), onProg && onProg(v.currentTime / (v.duration || 1)), v.ended || (raf2 = requestAnimationFrame(draw2));
+  };
+  return rec.start(1e3), await v.play(), draw2(), await new Promise((r) => v.onended = r), cancelAnimationFrame(raf2), rec.stop(), await done, URL.revokeObjectURL(url), new Blob(chunks, { type: "video/webm" });
+}
+async function addFiles(files) {
+  let pr = p();
+  if (pr) {
+    if (!S.assets) {
+      toast("Caricamento non disponibile in questa vista.");
+      return;
+    }
+    for (let f of files) {
+      let kind = kindOf(f);
+      if (!kind) {
+        toast(f.name + ": formato non supportato (usa MP4, WebM, JPG, PNG, WebP, MP3, WAV).");
+        continue;
+      }
+      let m = { id: uid("m"), name: f.name.slice(0, 120), kind, role: kind === "audio" ? "voce" : kind === "image" ? "foto" : pr.format === "C" && !E.materials.some((x) => x.role === "facecam") ? "facecam" : "broll", status: "upload", size: f.size, order: E.materials.length };
+      E.materials.push(m), renderMats();
+      try {
+        let info = await probe(f, kind);
+        Object.assign(m, info);
+        let blob = f, note = "";
+        if (f.size > MAX) {
+          if (kind !== "video") throw { code: "too_large" };
+          if (m.status = "proxy", renderMats(), toast("File grande: creo una copia leggera in tempo reale (" + Math.round(info.dur) + " s)\u2026", 5e3), blob = await proxyOf(f, info, (k) => {
+            m.prog = k, renderMatRow(m);
+          }), blob.size > MAX) throw { code: "too_large" };
+          note = "copia leggera", m.proxy = !0;
+        }
+        if (kind === "audio") {
+          m.status = "proxy", renderMats();
+          let conv = await audioToContainer(f, (k) => {
+            m.prog = k, renderMatRow(m);
+          });
+          if (blob = conv.blob, m.dur || (m.dur = conv.dur), blob.size > MAX) throw { code: "too_large" };
+        }
+        m.status = "upload", renderMats();
+        let ty = blob.type === "video/webm" || blob.type === "video/mp4" ? blob.type : kind === "video" ? /webm/.test(f.type) ? "video/webm" : "video/mp4" : blob.type, r = await S.assets.upload(blob, { type: ty });
+        m.assetId = r.id, m.status = "ok", m.note = note, delete m.prog, feed("Materiale caricato: " + m.name), touch("materials");
+      } catch (e) {
+        let c = e && e.code;
+        E.materials = E.materials.filter((x) => x !== m), toast(m.name + ": " + (c === "too_large" ? "troppo grande anche dopo la compressione. Mettilo su Drive: il render finale lo faccio io." : c === "unsupported_type" ? "tipo di file non accettato." : c === "quota_or_state" ? "spazio esaurito." : "caricamento non riuscito."), 5e3), touch("materials");
+      }
+      renderMats(), renderCheck();
+    }
+  }
+}
+function renderMatRow(m) {
+  let row = document.querySelector(`[data-mat="${m.id}"] .nm`);
+  row && m.prog != null && (row.textContent = m.name + (m.kind === "audio" ? " \xB7 preparo l'audio " : " \xB7 copia leggera ") + Math.round(m.prog * 100) + "%");
+}
+function renderMats() {
+  let box = $("matList");
+  if (box.replaceChildren(), !E.materials.length) {
+    box.append(el("div", { class: "empty", text: "Nessun materiale. L'ordine qui \xE8 la sequenza che Jarvis user\xE0 per montare." }));
+    return;
+  }
+  E.materials.forEach((m, i) => {
+    let th = m.thumb ? el("img", { class: "th", src: m.thumb, alt: "" }) : el("div", { class: "th", text: m.kind === "audio" ? "AUDIO" : m.kind.toUpperCase() }), role = el("select", { "aria-label": "Ruolo di " + m.name, onchange: (e) => {
+      m.role = e.target.value, touch("materials"), renderCheck();
+    } }, Object.entries(ROLES).map(([k, v]) => {
+      let o = el("option", { value: k, text: v });
+      return k === m.role && (o.selected = !0), o;
+    }));
+    role.style.width = "auto", box.append(el(
+      "div",
+      { class: "mat", "data-mat": m.id },
+      el("span", { class: "ord", text: String(i + 1) }),
+      th,
+      el(
+        "div",
+        { style: { minWidth: 0 } },
+        el("div", { class: "nm", text: m.name + (m.status === "upload" ? " \xB7 carico\u2026" : m.status === "proxy" ? m.kind === "audio" ? " \xB7 preparo l'audio\u2026" : " \xB7 copia leggera\u2026" : "") }),
+        el("div", { class: "row" }, role, el("span", { class: "lbl", text: (m.dur ? m.dur.toFixed(1) + " s" : "") + (m.note ? " \xB7 " + m.note : "") }))
+      ),
+      el(
+        "div",
+        { class: "row", style: { flexWrap: "nowrap", gap: "4px" } },
+        el("button", { class: "btn sm", type: "button", "aria-label": "Sposta su", disabled: i === 0 || m.status !== "ok", onclick: () => move(i, -1) }, "\u2191"),
+        el("button", { class: "btn sm", type: "button", "aria-label": "Sposta gi\xF9", disabled: i === E.materials.length - 1 || m.status !== "ok", onclick: () => move(i, 1) }, "\u2193"),
+        el("button", { class: "btn sm danger", type: "button", "aria-label": "Rimuovi " + m.name, disabled: m.status !== "ok", onclick: () => removeMat(m) }, "\xD7")
+      )
+    ));
+  });
+}
+function move(i, d) {
+  let a = E.materials, j = i + d;
+  j < 0 || j >= a.length || ([a[i], a[j]] = [a[j], a[i]], a.forEach((m, k) => m.order = k), touch("materials"), renderMats());
+}
+function removeMat(m) {
+  if (E.clips.some((c) => c.mat === m.id)) {
+    toast("Questo materiale \xE8 usato nella timeline: toglilo prima dalle clip.");
+    return;
+  }
+  E.materials = E.materials.filter((x) => x !== m), touch("materials"), renderMats(), renderCheck();
+}
+function renderCheck() {
+  let pr = p(), box = $("briefCheck");
+  if (box.replaceChildren(), !pr) return;
+  let v = (id) => $(id).value.trim(), has = (roles) => E.materials.some((m) => roles.includes(m.role) && m.status === "ok"), checks = {
+    A: [v("bTitle") && v("bGoal"), /brand|marchio|prodotto/i.test(turns.map((t) => t.content).join(" ") + v("bGoal") + v("bTitle")), !!v("bDur"), has(["broll", "foto", "logo", "facecam"]), !!v("bCta")],
+    B: [v("bTitle") && v("bGoal"), !!v("bHook"), !!v("bDur"), has(["voce"]), !!v("bCta")],
+    C: [v("bTitle") && v("bGoal"), has(["facecam"]), !!v("bDur"), has(["broll", "foto"]), !!v("bCta")]
+  }[pr.format] || [];
+  (FORMAT_CHECK[pr.format] || []).forEach((t, i) => box.append(el("li", { class: checks[i] ? "ok" : "", text: t })));
+}
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/editor.js
+var editor_exports = {};
+__export(editor_exports, {
+  ed: () => ed,
+  enter: () => enter2,
+  init: () => init2,
+  leave: () => leave2,
+  refresh: () => refresh2,
+  seek: () => seek
+});
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/render.js
+var TD = 0.45, clamp2 = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+var e4o = (k) => 1 - Math.pow(1 - k, 4), eio = (k) => k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2, visualAt = (clips, track, t) => clips.filter((c) => c.track === track && t >= c.start && t < c.start + c.dur).sort((a, b) => a.start - b.start), end = (c) => c.start + c.dur, timelineEnd = (clips) => clips.reduce((m, c) => Math.max(m, c.start + c.dur), 0), col = (k) => COLORS[k] || k || COLORS.white;
+function srcOf(c, media2) {
+  return c.kind === "video" ? media2.video(c.mat) : c.kind === "image" ? media2.image(c.mat) : null;
+}
+function srcSize(s) {
+  return s ? [s.videoWidth || s.naturalWidth || s.width || 0, s.videoHeight || s.naturalHeight || s.height || 0] : [0, 0];
+}
+function zoomAt(clips, t) {
+  let z = 1;
+  for (let c of clips) if (c.kind === "zoom" && t >= c.start && t < c.start + c.dur) {
+    let k = t - c.start, out = c.start + c.dur - t, s = c.zoom || 1.15, a = e4o(clamp2(k / 0.12)) * (out < 0.18 ? eio(clamp2(out / 0.18)) : 1);
+    z *= 1 + (s - 1) * a;
+  }
+  return z;
+}
+function drawMedia(ctx2, W, H, c, media2, t, extraScale = 1) {
+  let s = srcOf(c, media2), [sw, sh] = srcSize(s);
+  if (!s || !sw || !sh) {
+    ctx2.fillStyle = "#0a1a20", ctx2.fillRect(0, 0, W, H), ctx2.fillStyle = "#2b6575", ctx2.font = `600 ${Math.round(H * 0.022)}px Inter, sans-serif`, ctx2.textAlign = "center", ctx2.fillText("caricamento\u2026", W / 2, H / 2);
+    return;
+  }
+  let fit = c.fit || "cover", base = fit === "contain" ? Math.min(W / sw, H / sh) : Math.max(W / sw, H / sh), k = clamp2((t - c.start) / Math.max(0.01, c.dur)), kb = c.kenburns ? 1 + 0.08 * eio(k) : 1, sc = base * (c.zoom || 1) * kb * extraScale, dw = sw * sc, dh = sh * sc, ox = (c.x || 0) * W, oy = (c.y0 || 0) * H;
+  fit === "contain" && (ctx2.fillStyle = "#000", ctx2.fillRect(0, 0, W, H)), ctx2.drawImage(s, (W - dw) / 2 + ox, (H - dh) / 2 + oy, dw, dh);
+}
+function roundRect(ctx2, x, y, w, h, r) {
+  ctx2.beginPath(), ctx2.roundRect ? ctx2.roundRect(x, y, w, h, r) : ctx2.rect(x, y, w, h);
+}
+function drawBase(ctx2, W, H, t, clips, media2) {
+  let z = zoomAt(clips, t), act = visualAt(clips, "V1", t), cur2 = act[act.length - 1];
+  if (!cur2) {
+    ctx2.fillStyle = "#000", ctx2.fillRect(0, 0, W, H);
+    return;
+  }
+  let into = t - cur2.start, tr = cur2.trans || "none", prev = clips.filter((c) => c.track === "V1" && c !== cur2 && Math.abs(end(c) - cur2.start) < 0.06).sort((a, b) => end(b) - end(a))[0];
+  if (tr === "none" || !prev || into >= TD) {
+    drawMedia(ctx2, W, H, cur2, media2, t, z), tr === "flash" && into < TD && flash(ctx2, W, H, into / TD);
+    return;
+  }
+  let k = into / TD, tp = Math.min(t, end(prev) - 0.01);
+  if (tr === "fade")
+    drawMedia(ctx2, W, H, prev, media2, tp, z), ctx2.globalAlpha = eio(k), drawMedia(ctx2, W, H, cur2, media2, t, z), ctx2.globalAlpha = 1;
+  else if (tr === "window") {
+    ctx2.save();
+    let s = 1 - 0.12 * eio(k);
+    ctx2.translate(W / 2, H / 2), ctx2.scale(s, s), ctx2.translate(-W / 2, -H / 2), drawMedia(ctx2, W, H, prev, media2, tp, z), ctx2.restore(), ctx2.fillStyle = `rgba(0,0,0,${0.45 * k})`, ctx2.fillRect(0, 0, W, H);
+    let m = 1 - e4o(k), r = Math.min(W, H) * 0.06 * m, rect = [W * 0.09 * m, H * 0.2 * m, W - W * 0.18 * m, H - H * 0.4 * m];
+    ctx2.save(), roundRect(ctx2, ...rect, r), ctx2.clip();
+    let s2 = 1.1 - 0.1 * e4o(k);
+    ctx2.translate(W / 2, H / 2), ctx2.scale(s2, s2), ctx2.translate(-W / 2, -H / 2), drawMedia(ctx2, W, H, cur2, media2, t, z), ctx2.restore();
+  } else if (tr === "flash")
+    k < 0.5 ? drawMedia(ctx2, W, H, prev, media2, tp, z) : drawMedia(ctx2, W, H, cur2, media2, t, z), flash(ctx2, W, H, k);
+  else if (tr === "whip") {
+    let e = eio(k);
+    ctx2.save(), ctx2.filter = `blur(${Math.round(Math.sin(k * Math.PI) * W * 0.012)}px)`, ctx2.translate(-e * W, 0), drawMedia(ctx2, W, H, prev, media2, tp, z), ctx2.translate(W, 0), drawMedia(ctx2, W, H, cur2, media2, t, z), ctx2.restore();
+  } else if (tr === "zoom") {
+    ctx2.save(), ctx2.globalAlpha = 1 - eio(k);
+    let s = 1 + 0.6 * eio(k);
+    ctx2.translate(W / 2, H / 2), ctx2.scale(s, s), ctx2.translate(-W / 2, -H / 2), drawMedia(ctx2, W, H, prev, media2, tp, z), ctx2.restore(), ctx2.save(), ctx2.globalAlpha = eio(k);
+    let s2 = 0.75 + 0.25 * e4o(k);
+    ctx2.translate(W / 2, H / 2), ctx2.scale(s2, s2), ctx2.translate(-W / 2, -H / 2), drawMedia(ctx2, W, H, cur2, media2, t, z), ctx2.restore();
+  } else drawMedia(ctx2, W, H, cur2, media2, t, z);
+}
+function flash(ctx2, W, H, k) {
+  let a = Math.sin(clamp2(k) * Math.PI);
+  if (a <= 0) return;
+  ctx2.save(), ctx2.globalCompositeOperation = "lighter";
+  let g = ctx2.createRadialGradient(W / 2, H * 0.45, 0, W / 2, H * 0.45, Math.max(W, H) * 0.6);
+  g.addColorStop(0, `rgba(255,255,255,${0.9 * a})`), g.addColorStop(0.4, `rgba(255,240,225,${0.35 * a})`), g.addColorStop(1, "rgba(255,255,255,0)"), ctx2.fillStyle = g, ctx2.fillRect(0, 0, W, H), ctx2.restore();
+}
+function inOut(c, t) {
+  let a = clamp2((t - c.start) / 0.28), b = clamp2((c.start + c.dur - t) / 0.18);
+  return [e4o(a), b];
+}
+function fitFont(ctx2, txt2, weight, size, maxW, family = "Inter, sans-serif") {
+  let s = size;
+  for (ctx2.font = `${weight} ${s}px ${family}`; ctx2.measureText(txt2).width > maxW && s > 8; )
+    s *= 0.94, ctx2.font = `${weight} ${s}px ${family}`;
+  return s;
+}
+function drawText(ctx2, W, H, c, t) {
+  let [a, b] = inOut(c, t);
+  if (a <= 0 || b <= 0) return;
+  let U = Math.min(W, H) / 1080, y = (c.y ?? 0.66) * H, maxW = W * 0.86, style = c.style || "keyword", C = col(c.color || (style === "keyword" ? "red" : "white"));
+  if (ctx2.save(), ctx2.textAlign = "center", ctx2.textBaseline = "middle", style === "keyword") {
+    if (c.sub) {
+      let s = fitFont(ctx2, c.sub, 500, 46 * U, maxW);
+      ctx2.globalAlpha = a * b, ctx2.fillStyle = c.subColor ? col(c.subColor) : "#ffffff", ctx2.shadowColor = "rgba(0,0,0,.55)", ctx2.shadowBlur = 14 * U, ctx2.fillText(c.sub, W / 2, y - 96 * U + (1 - a) * 30 * U), ctx2.shadowBlur = 0;
+    }
+    let size = fitFont(ctx2, c.text || "", 900, 112 * U, maxW), pop = 1 + 0.1 * (1 - a);
+    ctx2.globalAlpha = Math.min(1, a * 1.6) * b, ctx2.translate(W / 2, y + (1 - a) * 50 * U - (1 - b) * 40 * U), ctx2.scale(pop, pop);
+    let w = ctx2.measureText(c.text || "").width;
+    if ((c.color || "") === "lime") {
+      ctx2.fillStyle = COLORS.lime;
+      let hk = e4o(clamp2((t - c.start - 0.05) / 0.3));
+      roundRect(ctx2, -w / 2 - 14 * U, -size * 0.52, (w + 28 * U) * hk, size * 1.04, 10 * U), ctx2.fill(), ctx2.fillStyle = COLORS.ink;
+    } else
+      ctx2.fillStyle = C, ctx2.shadowColor = "rgba(0,0,0,.35)", ctx2.shadowBlur = 18 * U;
+    ctx2.fillText(c.text || "", 0, size * 0.04);
+  } else if (style === "apple") {
+    let size = fitFont(ctx2, c.text || "", 700, 120 * U, maxW);
+    ctx2.globalAlpha = Math.min(1, a * 2) * b, ctx2.filter = `blur(${Math.round((1 - a) * 14 * U)}px)`;
+    let w = ctx2.measureText(c.text || "").width, g = ctx2.createLinearGradient(W / 2 - w / 2, 0, W / 2 + w / 2, 0);
+    g.addColorStop(0, C), g.addColorStop(1, "#ffb36b"), ctx2.fillStyle = c.color === "white" ? "#fff" : g, ctx2.fillText(c.text || "", W / 2, y + (1 - a) * 36 * U);
+  } else if (style === "caption") {
+    let words = (c.text || "").split(/\s+/).filter(Boolean), n = words.length || 1, span = Math.max(0.2, c.dur - 0.25), size = 64 * U;
+    ctx2.font = `800 ${size}px Inter, sans-serif`;
+    let sp = size * 0.28, ws = words.map((w) => ctx2.measureText(w.replace(/\*/g, "")).width), tot = ws.reduce((x2, y2) => x2 + y2, 0) + sp * (n - 1), sc = tot > maxW ? maxW / tot : 1;
+    ctx2.translate(W / 2, y), ctx2.scale(sc, sc);
+    let x = -tot / 2;
+    ctx2.textAlign = "left", ctx2.globalAlpha = b, words.forEach((w, i) => {
+      let tw = c.start + i / n * span, k = clamp2((t - tw) / 0.12);
+      if (k > 0) {
+        let key = /^\*.*\*$/.test(w);
+        ctx2.globalAlpha = k * b, ctx2.fillStyle = key ? col(c.color || "lime") : "#ffffff", ctx2.lineWidth = 8 * U, ctx2.strokeStyle = "rgba(0,0,0,.65)", ctx2.lineJoin = "round";
+        let s = w.replace(/\*/g, "");
+        ctx2.strokeText(s, x, (1 - e4o(k)) * 18 * U), ctx2.fillText(s, x, (1 - e4o(k)) * 18 * U);
+      }
+      x += ws[i] + sp;
+    });
+  } else if (style === "title") {
+    let size = fitFont(ctx2, c.text || "", 900, 150 * U, maxW), s = 0.8 + 0.2 * e4o(a);
+    ctx2.globalAlpha = a * b, ctx2.translate(W / 2, y), ctx2.scale(s, s), ctx2.fillStyle = C, ctx2.shadowColor = "rgba(0,0,0,.5)", ctx2.shadowBlur = 30 * U, ctx2.fillText(c.text || "", 0, 0);
+  } else if (style === "label") {
+    let size = 30 * U;
+    ctx2.font = `800 ${size}px Inter, sans-serif`;
+    let w = ctx2.measureText(c.text || "").width + 70 * U;
+    ctx2.globalAlpha = a * b, ctx2.fillStyle = "rgba(20,20,20,.92)", roundRect(ctx2, W / 2 - w / 2, y - 40 * U, w, 80 * U, 40 * U), ctx2.fill(), ctx2.fillStyle = COLORS.lime, ctx2.beginPath(), ctx2.arc(W / 2 - w / 2 + 34 * U, y, 9 * U, 0, 7), ctx2.fill(), ctx2.fillStyle = "#fff", ctx2.fillText(c.text || "", W / 2 + 14 * U, y + 2 * U);
+  }
+  ctx2.restore();
+}
+function drawOverlayImage(ctx2, W, H, c, media2, t) {
+  let s = media2.image(c.mat) || media2.video(c.mat), [sw, sh] = srcSize(s);
+  if (!s || !sw) return;
+  let [a, b] = inOut(c, t), sc = (c.scale || 0.5) * W / sw * (0.9 + 0.1 * a);
+  ctx2.save(), ctx2.globalAlpha = a * b;
+  let dw = sw * sc, dh = sh * sc, cx = W / 2 + (c.x || 0) * W, cy = (c.y ?? 0.5) * H + (1 - a) * 30;
+  ctx2.shadowColor = "rgba(0,0,0,.35)", ctx2.shadowBlur = 30, ctx2.drawImage(s, cx - dw / 2, cy - dh / 2, dw, dh), ctx2.restore();
+}
+function drawFrame(ctx2, W, H, t, clips, media2) {
+  ctx2.save(), ctx2.setTransform(1, 0, 0, 1, 0, 0), ctx2.globalAlpha = 1, ctx2.filter = "none", ctx2.globalCompositeOperation = "source-over", drawBase(ctx2, W, H, t, clips, media2);
+  for (let c of visualAt(clips, "V2", t))
+    c.kind === "text" ? drawText(ctx2, W, H, c, t) : (c.kind === "image" || c.kind === "video") && drawOverlayImage(ctx2, W, H, c, media2, t);
+  ctx2.restore();
+}
+var srcTime = (c, t) => (c.in || 0) + (t - c.start) * (c.speed || 1);
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/media.js
+var els = /* @__PURE__ */ new Map();
+function srcFor(key) {
+  if (key.startsWith("sfx:")) {
+    let s = SFX.find((x) => x.key === key.slice(4));
+    return s && s.assetId ? { url: blobUrl(s.assetId), kind: "audio" } : null;
+  }
+  let m = E.materials.find((x) => x.id === key);
+  return m && m.assetId ? { url: blobUrl(m.assetId), kind: m.kind } : null;
+}
+function get(key) {
+  if (!key) return null;
+  let e = els.get(key), s = srcFor(key);
+  if (!s) return null;
+  if (e && e.src === s.url) return e;
+  e && dispose(key);
+  let el3;
+  return s.kind === "image" ? (el3 = new Image(), el3.decoding = "async", el3.src = s.url) : (el3 = document.createElement(s.kind === "video" ? "video" : "audio"), el3.preload = "auto", el3.playsInline = !0, el3.src = s.url, s.kind === "video" && (el3.muted = !1)), e = { el: el3, kind: s.kind, src: s.url }, els.set(key, e), e;
+}
+function dispose(key) {
+  let e = els.get(key);
+  e && (e.el.pause && (e.el.pause(), e.el.removeAttribute("src"), e.el.load && e.el.load()), els.delete(key));
+}
+function pauseAll() {
+  for (let e of els.values()) e.el.pause && !e.el.paused && e.el.pause();
+}
+function all() {
+  return els;
+}
+var media = {
+  video(key) {
+    let e = get(key);
+    return e && e.kind === "video" && e.el.readyState >= 2 ? e.el : null;
+  },
+  image(key) {
+    let e = get(key);
+    return e && e.kind === "image" && e.el.complete && e.el.naturalWidth ? e.el : null;
+  }
+};
+function seekTo(el3, t) {
+  return new Promise((res) => {
+    if (!el3 || el3.readyState < 1) {
+      res();
+      return;
+    }
+    let want = Math.max(0, Math.min(t, (el3.duration || t) - 0.02));
+    if (Math.abs(el3.currentTime - want) < 4e-3 && el3.readyState >= 2) {
+      res();
+      return;
+    }
+    let done = !1, fin = () => {
+      done || (done = !0, el3.removeEventListener("seeked", fin), res());
+    };
+    el3.addEventListener("seeked", fin), el3.currentTime = want, setTimeout(fin, 2500);
+  });
+}
+function whenReady(el3) {
+  return new Promise((res) => {
+    if (!el3) return res();
+    if (el3 instanceof HTMLImageElement) {
+      if (el3.complete) return res();
+      el3.onload = el3.onerror = () => res();
+      return;
+    }
+    if (el3.readyState >= 2) return res();
+    let f = () => {
+      el3.removeEventListener("loadeddata", f), res();
+    };
+    el3.addEventListener("loadeddata", f), el3.addEventListener("error", () => res(), { once: !0 }), setTimeout(res, 8e3);
+  });
+}
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/editor.js
+var api2, pps = 70, T = 0, playing = !1, playStart = 0, playT0 = 0, raf = 0, sel = null, libTab = "mat", undo = [], redo = [], lastUndoKey = "", lastUndoAt = 0, TRACKS = ["V2", "V1", "A1", "A2"], FPS = 30, ctx = null, PW = 540, PH = 960, audioCtx = null, analyser = null, meterBuf = null, ed = {};
+function init2(a) {
+  api2 = a, ctx = $("preview").getContext("2d"), $("playBtn").addEventListener("click", togglePlay), $("stepB").addEventListener("click", () => seek(T - 1 / FPS)), $("stepF").addEventListener("click", () => seek(T + 1 / FPS)), $("undoBtn").addEventListener("click", doUndo), $("redoBtn").addEventListener("click", doRedo), $("splitBtn").addEventListener("click", split), $("delBtn").addEventListener("click", del), $("dupBtn").addEventListener("click", dup), $("zoomIn").addEventListener("input", (e) => {
+    let keep = T;
+    pps = +e.target.value, renderTL(), scrollTo(keep);
+  }), $("safeBtn").addEventListener("click", (e) => {
+    let on_ = e.currentTarget.getAttribute("aria-pressed") !== "true";
+    e.currentTarget.setAttribute("aria-pressed", String(on_)), $("safeOv").hidden = !on_, layoutStage();
+  }), document.querySelectorAll("#libTabs .chip").forEach((b) => b.addEventListener("click", () => {
+    libTab = b.dataset.lib, document.querySelectorAll("#libTabs .chip").forEach((x) => x.setAttribute("aria-pressed", String(x === b))), renderLib();
+  })), $("ruler").addEventListener("pointerdown", rulerDown);
+  for (let tr of document.querySelectorAll(".track"))
+    tr.addEventListener("pointerdown", (e) => {
+      e.target === tr && (select(null), seek(xToT(e)));
+    }), tr.addEventListener("dragover", (e) => {
+      e.dataTransfer.types.includes("text/jv-mat") && e.preventDefault();
+    }), tr.addEventListener("drop", (e) => {
+      let id = e.dataTransfer.getData("text/jv-mat");
+      id && (e.preventDefault(), addMaterial(id, xToT(e), tr.dataset.track));
+    });
+  window.addEventListener("keydown", keys), window.addEventListener("resize", () => {
+    S.room === "editor" && layoutStage();
+  }), on("edit", (d) => {
+    S.room === "editor" && d && d.remote && (pauseAll(), renderAll());
+  }), on("saveState", (s) => {
+    $("saveState").textContent = s === "saved" ? "Salvato" : s === "saving" ? "Salvo\u2026" : s === "error" ? "Non salvato" : "Modifiche\u2026";
+  });
+}
+var P = () => api2.curP();
+function enter2() {
+  let p2 = P();
+  if (!p2) return;
+  openEdit(p2.id), $("edFmt").className = "fmt " + p2.format, $("edFmt").textContent = p2.format, $("edTitle").textContent = p2.title || "Missione";
+  let [w, h] = ASPECTS[p2.aspect || "9:16"] || ASPECTS["9:16"], s = 960 / Math.max(w, h);
+  PW = Math.round(w * s), PH = Math.round(h * s), $("preview").width = PW, $("preview").height = PH;
+  let ro = canEdit();
+  for (let id of ["aiBuild", "splitBtn", "delBtn", "dupBtn", "undoBtn", "redoBtn"]) $(id).disabled = !ro;
+  renderAll(), layoutStage(), loop();
+}
+function refresh2() {
+  if (S.room === "editor") {
+    let p2 = P();
+    p2 && ($("edTitle").textContent = p2.title || "Missione");
+  }
+}
+function leave2() {
+  playing && togglePlay(), cancelAnimationFrame(raf), raf = 0, pauseAll(), flush();
+}
+var canEdit = () => S.canWrite && !!S.db, tToX = (t) => t * pps;
+function xToT(e) {
+  let r = $("ruler").getBoundingClientRect();
+  return Math.max(0, (e.clientX - r.left) / pps);
+}
+function layoutStage() {
+  let box = $("stageBox").getBoundingClientRect(), cv = $("preview"), s = Math.min(box.width / PW, box.height / PH);
+  cv.style.width = Math.floor(PW * s) + "px", cv.style.height = Math.floor(PH * s) + "px";
+  let ov = $("safeOv");
+  if (!ov.hidden) {
+    let r = cv.getBoundingClientRect(), b = box, top = r.top - b.top + r.height * (168 / 1920), bot = r.top - b.top + r.height * (1330 / 1920);
+    Object.assign(ov.style, { left: r.left - b.left + r.width * 0.05 + "px", width: r.width * 0.9 + "px", top: top + "px", height: bot - top + "px" });
+  }
+}
+function scrollTo(t) {
+  let sc = $("tlScroll"), x = tToX(t) + 58;
+  (x < sc.scrollLeft + 40 || x > sc.scrollLeft + sc.clientWidth - 40) && (sc.scrollLeft = Math.max(0, x - sc.clientWidth / 3));
+}
+function pushUndo(key = "") {
+  let nowMs = Date.now();
+  if (key && key === lastUndoKey && nowMs - lastUndoAt < 900) {
+    lastUndoAt = nowMs;
+    return;
+  }
+  lastUndoKey = key, lastUndoAt = nowMs, undo.push(JSON.stringify(E.clips)), undo.length > 80 && undo.shift(), redo.length = 0;
+}
+function doUndo() {
+  !undo.length || !canEdit() || (redo.push(JSON.stringify(E.clips)), E.clips = JSON.parse(undo.pop()), afterChange("undo"));
+}
+function doRedo() {
+  !redo.length || !canEdit() || (undo.push(JSON.stringify(E.clips)), E.clips = JSON.parse(redo.pop()), afterChange("redo"));
+}
+function afterChange(reason) {
+  sel && !E.clips.some((c) => c.id === sel) && (sel = null), renderTL(), renderInspector(), touch(reason), draw();
+}
+var clipById = (id) => E.clips.find((c) => c.id === id);
+function labelOf(c) {
+  if (c.kind === "text") return "\u201C" + (c.text || "") + "\u201D";
+  if (c.kind === "zoom") return "Zoom " + Math.round((c.zoom || 1.15) * 100) + "%";
+  if (c.mat && c.mat.startsWith("sfx:")) {
+    let s = SFX.find((x) => x.key === c.mat.slice(4));
+    return "\u266A " + (s ? s.name : c.mat.slice(4));
+  }
+  let m = matById(c.mat);
+  return m ? m.name : "materiale mancante";
+}
+function trackFor(kind) {
+  return kind === "audio" ? "A1" : "V1";
+}
+function fits(track, kind) {
+  return kind === "text" || kind === "zoom" ? track === "V2" : kind === "audio" ? track === "A1" || track === "A2" : track === "V1" || track === "V2";
+}
+function addMaterial(id, t, track) {
+  if (!canEdit()) return;
+  let m = matById(id);
+  if (!m) return;
+  let tr = track && fits(track, m.kind) ? track : trackFor(m.kind);
+  pushUndo();
+  let c = mkClip({ track: tr, kind: m.kind, mat: m.id, start: t, dur: m.kind === "image" ? 3 : Math.max(0.5, m.dur || 3), in: 0 });
+  return E.clips.push(c), select(c.id), afterChange("add"), c;
+}
+function mkClip(o) {
+  let c = { id: uid("c"), vol: 1, ...o };
+  return c.start = Math.max(0, +(+c.start || 0).toFixed(3)), c.dur = Math.max(0.1, +(+c.dur || 1).toFixed(3)), c;
+}
+function select(id) {
+  sel = id, document.querySelectorAll(".clip").forEach((x) => x.classList.toggle("sel", x.dataset.id === id)), renderInspector();
+}
+function split() {
+  let c = clipById(sel) || E.clips.find((c2) => c2.track === "V1" && T > c2.start && T < c2.start + c2.dur);
+  if (!c || !canEdit()) {
+    toast("Metti il cursore dentro una clip per dividerla.");
+    return;
+  }
+  if (T <= c.start + 0.05 || T >= c.start + c.dur - 0.05) {
+    toast("Sposta il cursore dentro la clip.");
+    return;
+  }
+  pushUndo();
+  let k = T - c.start, b = { ...c, id: uid("c"), start: +T.toFixed(3), dur: +(c.dur - k).toFixed(3), in: +((c.in || 0) + k * (c.speed || 1)).toFixed(3), trans: "none" };
+  c.dur = +k.toFixed(3), E.clips.push(b), select(b.id), afterChange("split");
+}
+function del() {
+  let c = clipById(sel);
+  !c || !canEdit() || (pushUndo(), E.clips = E.clips.filter((x) => x !== c), sel = null, afterChange("delete"));
+}
+function dup() {
+  let c = clipById(sel);
+  if (!c || !canEdit()) return;
+  pushUndo();
+  let d = { ...c, id: uid("c"), start: +(c.start + c.dur).toFixed(3) };
+  E.clips.push(d), select(d.id), afterChange("dup");
+}
+function renderAll() {
+  renderTL(), renderLib(), renderInspector(), draw();
+}
+function renderTL() {
+  let end2 = Math.max(20, timelineEnd(E.clips) + 8), W = Math.ceil(end2 * pps);
+  $("tlInner").style.width = W + 58 + 20 + "px";
+  let ru = $("ruler");
+  ru.replaceChildren(), ru.style.width = W + "px";
+  let step = pps > 120 ? 0.5 : pps > 50 ? 1 : 2, lab = pps > 120 ? 1 : pps > 50 ? 5 : 10;
+  for (let t = 0; t <= end2; t = +(t + step).toFixed(3)) {
+    let major = Math.abs(t / lab - Math.round(t / lab)) < 1e-6;
+    ru.append(el("span", { class: "tk", style: { left: tToX(t) + "px", height: major ? "100%" : "40%" }, text: major ? tc(t) : "" }));
+  }
+  let lane = /* @__PURE__ */ new Map(), lanesOf = {};
+  for (let tr of TRACKS) {
+    let ends = [];
+    for (let c of E.clips.filter((c2) => c2.track === tr).sort((a, b) => a.start - b.start)) {
+      let i = ends.findIndex((e) => e <= c.start + 1e-3);
+      i < 0 && (i = ends.length, ends.push(0)), ends[i] = c.start + c.dur, lane.set(c.id, i);
+    }
+    lanesOf[tr] = Math.max(1, ends.length);
+  }
+  for (let trEl of document.querySelectorAll(".track")) {
+    trEl.querySelectorAll(".clip").forEach((x) => x.remove()), trEl.style.width = W + "px";
+    let n = lanesOf[trEl.dataset.track] || 1;
+    trEl.style.height = (n > 1 ? 8 + n * 22 : 40) + "px";
+  }
+  for (let c of E.clips) {
+    let trEl = document.querySelector(`.track[data-track="${c.track}"]`);
+    if (!trEl) continue;
+    let n = lanesOf[c.track] || 1, li = lane.get(c.id) || 0, d = el(
+      "div",
+      { class: "clip " + c.track + (c.id === sel ? " sel" : ""), "data-id": c.id, title: labelOf(c), style: { left: tToX(c.start) + "px", width: Math.max(6, c.dur * pps) + "px", ...n > 1 ? { top: 4 + li * 22 + "px", bottom: "auto", height: "20px", lineHeight: "14px" } : {} } },
+      c.trans && c.trans !== "none" ? el("span", { class: "tr", title: "Transizione: " + c.trans }) : null,
+      labelOf(c),
+      el("span", { class: "hd l" }),
+      el("span", { class: "hd r" })
+    );
+    d.addEventListener("pointerdown", (e) => clipDown(e, c, d)), trEl.append(d);
+  }
+  placeHead();
+}
+function placeHead() {
+  $("playhead").style.left = 58 + tToX(T) + "px";
+}
+function snapPoints(except) {
+  let pts = [0, T];
+  for (let c of E.clips) c.id !== except && pts.push(c.start, c.start + c.dur);
+  return pts;
+}
+function snap(v, pts) {
+  let th = 8 / pps, best = v, bd = th;
+  for (let p2 of pts) {
+    let d = Math.abs(p2 - v);
+    d < bd && (bd = d, best = p2);
+  }
+  return best;
+}
+function clipDown(e, c, d) {
+  if (e.stopPropagation(), select(c.id), !canEdit()) return;
+  let mode = e.target.classList.contains("l") ? "l" : e.target.classList.contains("r") ? "r" : "move", x0 = e.clientX, y0 = e.clientY, s0 = c.start, d0 = c.dur, in0 = c.in || 0, pts = snapPoints(c.id), moved = !1, newTrack = c.track, srcMax = (() => {
+    let m = matById(c.mat);
+    return m && m.kind !== "image" && m.dur ? m.dur : 1 / 0;
+  })();
+  d.setPointerCapture(e.pointerId);
+  let mv = (ev) => {
+    let dt = (ev.clientX - x0) / pps;
+    if (!(!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 3)) {
+      if (moved || (moved = !0, pushUndo()), mode === "move") {
+        let ns = Math.max(0, s0 + dt), se = snap(ns + c.dur, pts) - c.dur, ss = snap(ns, pts);
+        ns = Math.abs(ss - ns) <= Math.abs(se - ns) ? ss : se, c.start = Math.max(0, +ns.toFixed(3));
+        let over = document.elementsFromPoint(ev.clientX, ev.clientY).find((x) => x.classList && x.classList.contains("track"));
+        over && over.dataset.track !== newTrack && fits(over.dataset.track, c.kind) && (newTrack = over.dataset.track, over.append(d), d.className = "clip " + newTrack + " sel");
+      } else if (mode === "r") {
+        let ne = snap(s0 + d0 + dt, pts);
+        c.dur = clamp(+(ne - c.start).toFixed(3), 0.1, (srcMax - in0) / (c.speed || 1));
+      } else {
+        let ns = snap(s0 + dt, pts);
+        ns = clamp(ns, Math.max(0, s0 - in0 / (c.speed || 1)), s0 + d0 - 0.1), c.in = +(in0 + (ns - s0) * (c.speed || 1)).toFixed(3), c.dur = +(s0 + d0 - ns).toFixed(3), c.start = +ns.toFixed(3);
+      }
+      d.style.left = tToX(c.start) + "px", d.style.width = Math.max(6, c.dur * pps) + "px", draw();
+    }
+  }, up = () => {
+    d.removeEventListener("pointermove", mv), d.removeEventListener("pointerup", up), d.removeEventListener("pointercancel", up), moved && (c.track = newTrack, afterChange("drag"));
+  };
+  d.addEventListener("pointermove", mv), d.addEventListener("pointerup", up), d.addEventListener("pointercancel", up);
+}
+function rulerDown(e) {
+  seek(xToT(e));
+  let ru = $("ruler");
+  ru.setPointerCapture(e.pointerId);
+  let mv = (ev) => seek(xToT(ev)), up = () => {
+    ru.removeEventListener("pointermove", mv), ru.removeEventListener("pointerup", up);
+  };
+  ru.addEventListener("pointermove", mv), ru.addEventListener("pointerup", up);
+}
+function renderLib() {
+  let box = $("libBody");
+  if (box.replaceChildren(), libTab === "mat") {
+    let mats = E.materials.filter((m) => !m.status || m.status === "ok");
+    mats.length || box.append(el("div", { class: "empty" }, "Nessun materiale. ", el("button", { class: "btn sm", type: "button", onclick: () => api2.go("brief") }, "Caricali nel Briefing")));
+    for (let m of mats) {
+      let it = el(
+        "div",
+        { class: "libItem", draggable: "true", title: "Trascina sulla timeline o premi +" },
+        m.thumb ? el("img", { class: "th", src: m.thumb, alt: "" }) : el("div", { class: "th", text: m.kind === "audio" ? "AUDIO" : m.kind.toUpperCase() }),
+        el("div", { style: { minWidth: 0 } }, el("div", { class: "nm", text: m.name }), el("div", { class: "lbl", text: (m.dur ? m.dur.toFixed(1) + " s \xB7 " : "") + (m.role || m.kind) })),
+        el("button", { class: "btn sm", type: "button", "aria-label": "Aggiungi " + m.name + " al cursore", disabled: !canEdit(), onclick: () => addMaterial(m.id, T) }, "+")
+      );
+      it.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/jv-mat", m.id), e.dataTransfer.effectAllowed = "copy";
+      }), box.append(it);
+    }
+  } else if (libTab === "txt") {
+    let fmt = (P() || {}).format;
+    for (let s of TEXT_STYLES) box.append(el(
+      "button",
+      { class: "libItem", type: "button", disabled: !canEdit(), onclick: () => addText({ style: s.key, text: s.key === "caption" ? "Scrivi qui il *sottotitolo*" : s.key === "label" ? "NON \xC8 UNA NOTIZIA REALE" : "Parola", sub: s.key === "keyword" ? "" : void 0, color: s.key === "keyword" ? "red" : "white", y: s.key === "label" ? 0.14 : s.key === "caption" ? 0.72 : 0.62 }) },
+      el("div", { class: "th", text: "Aa" }),
+      el("div", { style: { minWidth: 0, textAlign: "left" } }, el("div", { class: "nm", text: s.name }), el("div", { class: "lbl", text: s.desc })),
+      el("span", { class: "btn sm" }, "+")
+    ));
+    box.append(el("button", { class: "btn sm", type: "button", disabled: !canEdit(), onclick: () => addZoom(T, 0.7, fmt === "C" ? 1.2 : 1.12) }, "+ Zoom a scatto al cursore"));
+  } else if (libTab === "trn") {
+    let c = clipById(sel);
+    box.append(el("div", { class: "lbl", text: c && c.track === "V1" ? "Si applica all'inizio della clip selezionata" : "Seleziona una clip sulla traccia V1" }));
+    for (let t of TRANSITIONS) box.append(el("button", { class: "btn sm", type: "button", disabled: !(c && c.track === "V1") || !canEdit(), onclick: () => {
+      pushUndo(), c.trans = t.key, afterChange("trans");
+    } }, t.name));
+    box.append(el("button", { class: "btn sm warn", type: "button", disabled: !canEdit(), onclick: () => {
+      pushUndo(), E.clips.filter((x) => x.track === "V1" && x.start > 0.05).forEach((x) => x.trans = "window"), afterChange("trans-all"), toast("Finestra applicata a tutti i tagli");
+    } }, "Finestra su tutti i tagli"));
+  } else if (libTab === "sfx")
+    for (let s of SFX) box.append(el(
+      "div",
+      { class: "libItem" },
+      el("div", { class: "th", text: "\u266A" }),
+      el("div", { style: { minWidth: 0 } }, el("div", { class: "nm", text: s.name }), el("div", { class: "lbl", text: s.use })),
+      el("button", { class: "btn sm", type: "button", disabled: !s.assetId || !canEdit(), "aria-label": "Aggiungi " + s.name, onclick: () => addSfx(s.key, T) }, "+")
+    ));
+}
+function addText(o, at = T) {
+  if (!canEdit()) return;
+  pushUndo();
+  let c = mkClip({ track: "V2", kind: "text", start: at, dur: o.dur || 2, ...o });
+  return E.clips.push(c), select(c.id), afterChange("text"), c;
+}
+function addZoom(at, dur, z) {
+  if (!canEdit()) return;
+  pushUndo();
+  let c = mkClip({ track: "V2", kind: "zoom", start: at, dur, zoom: z });
+  return E.clips.push(c), select(c.id), afterChange("zoom"), c;
+}
+function addSfx(key, at, vol = 0.8) {
+  if (!canEdit()) return;
+  let s = SFX.find((x) => x.key === key);
+  if (!s) return;
+  pushUndo();
+  let c = mkClip({ track: "A2", kind: "audio", mat: "sfx:" + key, start: at, dur: s.dur, vol });
+  return E.clips.push(c), select(c.id), afterChange("sfx"), c;
+}
+function field(label, input) {
+  return el("label", {}, el("span", { text: label }), input);
+}
+function num(c, key, min, max, step, fmt = (v) => v) {
+  let i = el("input", { type: "number", min, max, step, value: String(+(c[key] ?? (key === "vol" || key === "zoom" ? 1 : 0)).toFixed(3)) });
+  return i.addEventListener("input", () => {
+    let v = parseFloat(i.value);
+    isFinite(v) && (pushUndo("f:" + c.id + key), c[key] = clamp(v, min, max), afterChangeSoft());
+  }), i;
+}
+function sel_(c, key, opts, def) {
+  let s = el("select", {}, opts.map(([k, v]) => {
+    let o = el("option", { value: k, text: v });
+    return String(c[key] ?? def) === k && (o.selected = !0), o;
+  }));
+  return s.addEventListener("change", () => {
+    pushUndo(), c[key] = key === "speed" ? +s.value : s.value, afterChange("insp");
+  }), s;
+}
+function txt(c, key, multi) {
+  let i = el(multi ? "textarea" : "input", { rows: multi ? 2 : void 0 });
+  return i.value = c[key] || "", i.addEventListener("input", () => {
+    pushUndo("f:" + c.id + key), c[key] = i.value.slice(0, 300), afterChangeSoft();
+  }), i;
+}
+var softT = 0;
+function afterChangeSoft() {
+  draw(), clearTimeout(softT), softT = setTimeout(() => {
+    renderTL(), touch("insp");
+  }, 350);
+}
+function renderInspector() {
+  let box = $("inspBody");
+  box.replaceChildren();
+  let c = clipById(sel);
+  if (!c) {
+    box.append(el("div", { class: "empty", text: "Seleziona una clip nella timeline." }));
+    return;
+  }
+  let ro = !canEdit();
+  if (box.append(el("div", { class: "row" }, el("span", { class: "chip", text: c.track }), el("b", { text: labelOf(c) }))), box.append(field("Inizio (s)", num(c, "start", 0, 3600, 0.05)), field("Durata (s)", num(c, "dur", 0.1, 3600, 0.05))), c.kind === "text")
+    box.append(field("Testo", txt(c, "text", !0))), (c.style || "keyword") === "keyword" && box.append(field("Riga piccola", txt(c, "sub"))), box.append(field("Stile", sel_(c, "style", TEXT_STYLES.map((s) => [s.key, s.name]), "keyword")), field("Colore", sel_(c, "color", Object.keys(COLORS).map((k) => [k, k]), "red")), field("Posizione verticale (0\u20131)", num(c, "y", 0.05, 0.95, 0.01))), c.style === "caption" && box.append(el("div", { class: "lbl", text: "Metti *asterischi* attorno alla parola chiave" }));
+  else if (c.kind === "zoom") box.append(field("Zoom (1.0\u20131.6)", num(c, "zoom", 1, 1.6, 0.01)));
+  else if (c.track === "V1" && box.append(field("Transizione in entrata", sel_(c, "trans", TRANSITIONS.map((t) => [t.key, t.name]), "none")), field("Zoom base", num(c, "zoom", 1, 2, 0.01)), field("Adattamento", sel_(c, "fit", [["cover", "Riempi"], ["contain", "Intero"]], "cover"))), c.track === "V2" && box.append(field("Scala (0.1\u20131)", num(c, "scale", 0.1, 1, 0.01)), field("Posizione verticale (0\u20131)", num(c, "y", 0.05, 0.95, 0.01))), (c.kind === "video" || c.kind === "audio") && box.append(field("Volume (0\u20131.5)", num(c, "vol", 0, 1.5, 0.05)), field("Inizio nel file (s)", num(c, "in", 0, 3600, 0.05))), c.kind === "video" && box.append(field("Velocit\xE0", sel_(c, "speed", [["0.5", "0.5\xD7"], ["1", "1\xD7"], ["1.5", "1.5\xD7"], ["2", "2\xD7"]], "1"))), c.kind !== "audio") {
+    let kb = el("input", { type: "checkbox" });
+    kb.checked = !!c.kenburns, kb.style.width = "auto", kb.addEventListener("change", () => {
+      pushUndo(), c.kenburns = kb.checked, afterChange("kb");
+    }), box.append(el("label", { class: "row" }, kb, el("span", { text: "Carrellata lenta (Ken Burns)" })));
+  }
+  box.append(el("div", { class: "row" }, el("button", { class: "btn sm", type: "button", onclick: split, disabled: ro }, "Dividi"), el("button", { class: "btn sm", type: "button", onclick: dup, disabled: ro }, "Duplica"), el("button", { class: "btn sm danger", type: "button", onclick: del, disabled: ro }, "Elimina"))), ro && box.querySelectorAll("input,select,textarea").forEach((x) => x.disabled = !0);
+}
+function ensureAudio() {
+  if (!audioCtx)
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)(), analyser = audioCtx.createAnalyser(), analyser.fftSize = 1024, analyser.connect(audioCtx.destination), meterBuf = new Float32Array(analyser.fftSize);
+    } catch {
+      audioCtx = null;
+    }
+}
+var routed = /* @__PURE__ */ new WeakSet();
+function route(elx) {
+  if (!(!audioCtx || routed.has(elx) || elx instanceof HTMLImageElement))
+    try {
+      audioCtx.createMediaElementSource(elx).connect(analyser), routed.add(elx);
+    } catch {
+      routed.add(elx);
+    }
+}
+function togglePlay() {
+  if (playing = !playing, $("playBtn").textContent = playing ? "Pausa" : "Play", playing) {
+    ensureAudio(), audioCtx && audioCtx.resume && audioCtx.resume().catch(() => {
+    });
+    let end2 = timelineEnd(E.clips);
+    T >= end2 - 0.05 && (T = 0), playStart = performance.now(), playT0 = T;
+  } else pauseAll();
+  syncMedia(!0);
+}
+function seek(t) {
+  T = clamp(t, 0, Math.max(0, timelineEnd(E.clips) + 5)), playing && (playStart = performance.now(), playT0 = T), placeHead(), syncMedia(!0), draw(), updTc();
+}
+function updTc() {
+  $("tcLbl").textContent = tc(T, !0) + " / " + tc(timelineEnd(E.clips), !0);
+}
+function syncMedia(force) {
+  let want = /* @__PURE__ */ new Map();
+  for (let c of E.clips)
+    !c.mat || c.kind === "image" || c.kind === "text" || c.kind === "zoom" || T >= c.start && T < c.start + c.dur && want.set(c.mat, c);
+  for (let c of E.clips) c.mat && (c.kind === "image" || c.kind === "video") && get(c.mat);
+  for (let [key, e] of all()) {
+    let c = want.get(key), elx = e.el;
+    if (!elx.pause) continue;
+    if (!c) {
+      elx.paused || elx.pause();
+      continue;
+    }
+    audioCtx && route(elx);
+    let st = srcTime(c, T);
+    elx.playbackRate = c.speed || 1, elx.volume = clamp((c.vol ?? 1) * (c.track === "V2" ? 0 : 1), 0, 1), playing ? elx.paused ? (Math.abs(elx.currentTime - st) > 0.05 && (elx.currentTime = st), elx.play().catch(() => {
+    })) : Math.abs(elx.currentTime - st) > 0.25 && (elx.currentTime = st) : (force || Math.abs(elx.currentTime - st) > 0.04) && (elx.paused || elx.pause(), elx.readyState >= 1 && (elx.currentTime = st));
+  }
+}
+function draw() {
+  ctx && drawFrame(ctx, PW, PH, T, E.clips, media);
+}
+function loop() {
+  cancelAnimationFrame(raf);
+  let tick = (now2) => {
+    if (S.room === "editor") {
+      if (playing) {
+        T = playT0 + (now2 - playStart) / 1e3;
+        let end2 = timelineEnd(E.clips);
+        T >= end2 && (T = end2, togglePlay()), placeHead(), syncMedia(!1), updTc(), T > 0 && scrollTo(T);
+      }
+      if (draw(), analyser && playing) {
+        analyser.getFloatTimeDomainData(meterBuf);
+        let s = 0;
+        for (let v of meterBuf) s += v * v;
+        let db = 20 * Math.log10(Math.sqrt(s / meterBuf.length) + 1e-7);
+        $("meter").textContent = "Livello " + (db < -60 ? "\u2014" : db.toFixed(0) + " dB");
+      }
+      raf = requestAnimationFrame(tick);
+    }
+  };
+  raf = requestAnimationFrame(tick), updTc();
+}
+function keys(e) {
+  if (S.room !== "editor") return;
+  let tag = (e.target.tagName || "").toLowerCase();
+  if (tag === "input" || tag === "textarea" || tag === "select" || e.target.isContentEditable) return;
+  let k = e.key.toLowerCase();
+  k === " " ? (e.preventDefault(), togglePlay()) : k === "s" && !e.ctrlKey && !e.metaKey ? (e.preventDefault(), split()) : k === "delete" || k === "backspace" ? (e.preventDefault(), del()) : (e.ctrlKey || e.metaKey) && k === "z" ? (e.preventDefault(), e.shiftKey ? doRedo() : doUndo()) : (e.ctrlKey || e.metaKey) && k === "d" ? (e.preventDefault(), dup()) : k === "arrowleft" ? (e.preventDefault(), seek(T - (e.shiftKey ? 1 : 1 / FPS))) : k === "arrowright" ? (e.preventDefault(), seek(T + (e.shiftKey ? 1 : 1 / FPS))) : k === "home" && seek(0);
+}
+Object.assign(ed, {
+  get T() {
+    return T;
+  },
+  canEdit,
+  pushUndo,
+  select,
+  seek,
+  draw,
+  renderTL,
+  afterChange,
+  renderLib,
+  clipById,
+  labelOf,
+  mkClip,
+  fits,
+  clipRect(id) {
+    let d = document.querySelector(`.clip[data-id="${id}"]`);
+    return d ? d.getBoundingClientRect() : null;
+  },
+  trackRect(track) {
+    let d = document.querySelector(`.track[data-track="${track}"]`);
+    return d ? d.getBoundingClientRect() : null;
+  },
+  timeX(t) {
+    return $("ruler").getBoundingClientRect().left + tToX(t);
+  },
+  reveal(t) {
+    scrollTo(t);
+  },
+  born(id) {
+    let d = document.querySelector(`.clip[data-id="${id}"]`);
+    d && (d.classList.remove("born"), d.offsetWidth, d.classList.add("born"));
+  },
+  stop() {
+    playing && togglePlay();
+  },
+  get playing() {
+    return playing;
+  }
+});
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/review.js
+var review_exports = {};
+__export(review_exports, {
+  enter: () => enter3,
+  init: () => init3,
+  leave: () => leave3,
+  refresh: () => refresh3
+});
+var api3, unNotes = null, notes = [], selVer = null, notesFor = null, video = () => $("revVideo");
+function init3(a) {
+  api3 = a, video().addEventListener("timeupdate", () => {
+    $("noteTc").textContent = "a " + tc(video().currentTime);
+    let d = video().duration;
+    $("revProg").style.width = (d ? video().currentTime / d * 100 : 0) + "%";
+  }), video().addEventListener("loadedmetadata", renderMarks), $("revScrub").addEventListener("click", (e) => {
+    let r = e.currentTarget.getBoundingClientRect(), d = video().duration;
+    d && (video().currentTime = (e.clientX - r.left) / r.width * d);
+  }), $("noteAdd").addEventListener("click", addNote);
+}
+function cur() {
+  return api3.curP();
+}
+function list() {
+  return S.projects.filter((p2) => (p2.versions || []).length);
+}
+function enter3() {
+  if (!cur() || !(cur().versions || []).length) {
+    let first = list().find((p2) => p2.status === "revisione") || list()[0];
+    first && api3.setCur(first.id);
+  }
+  subscribe(), render();
+}
+function refresh3() {
+  S.room === "review" && (subscribe(), render());
+}
+function leave3() {
+  video().pause();
+}
+function subscribe() {
+  let p2 = cur();
+  !p2 || !S.db || notesFor !== p2.id && (notesFor = p2.id, selVer = null, unNotes && unNotes(), notes = [], unNotes = S.db.collection("projects/" + p2.id + "/notes").onSnapshot((s) => {
+    notes = s.docs.map((d) => ({ id: d.id, ...d.data() })), renderNotes(), renderMarks();
+  }, () => {
+  }));
+}
+function versions(p2) {
+  return (p2.versions || []).slice().sort((a, b) => a.v - b.v);
+}
+function curVer(p2) {
+  let vs = versions(p2);
+  return vs.find((v) => v.v === selVer) || vs[vs.length - 1] || null;
+}
+function render() {
+  let items = $("revItems");
+  items.replaceChildren();
+  let L = list();
+  L.length || items.append(el("div", { class: "empty", text: "Nessun video da revisionare. Quando un export \xE8 pronto compare qui." }));
+  for (let p3 of L) items.append(el(
+    "button",
+    { class: "mission", type: "button", "aria-current": String(p3.id === S.cur), onclick: () => {
+      api3.setCur(p3.id), subscribe(), render();
+    } },
+    el("span", { class: "fmt " + p3.format, text: p3.format }),
+    el("span", { class: "t", text: p3.title || "" }),
+    el("span", { class: "m" }, el("span", { class: "st " + p3.status, text: STATUS[p3.status] || "" }))
+  ));
+  let p2 = cur(), v = p2 && curVer(p2);
+  $("revTitle").textContent = p2 && p2.title || "Revisione", $("revSt").replaceChildren(p2 ? el("span", { class: "st " + p2.status, text: STATUS[p2.status] || "" }) : "");
+  let vs = $("revVers");
+  if (vs.replaceChildren(), p2) for (let x of versions(p2)) vs.append(el("button", { class: "chip", type: "button", "aria-pressed": String(v && x.v === v.v), onclick: () => {
+    selVer = x.v, render();
+  } }, "v" + x.v + (x.label ? " \xB7 " + x.label : "")));
+  let src = v && v.assetId ? blobUrl(v.assetId) : "";
+  video().getAttribute("src") !== src && (src ? video().src = src : video().removeAttribute("src"));
+  let acts = $("revActs");
+  acts.replaceChildren(), p2 && v && (acts.append(el("button", { class: "btn pri sm", type: "button", onclick: () => exportVer(p2, v) }, "Esporta")), S.canWrite && p2.status !== "approvato" && acts.append(el("button", { class: "btn ok sm", type: "button", onclick: () => setStatus(p2, "approvato", "Approvato. Pronto da esportare.") }, "Approva")), S.canWrite && p2.status !== "lavorazione" && acts.append(el("button", { class: "btn warn sm", type: "button", onclick: () => setStatus(p2, "lavorazione", "Modifiche richieste: Jarvis legge le tue note.") }, "Richiedi modifiche")), acts.append(el("button", { class: "btn sm", type: "button", onclick: () => api3.go("editor") }, "Apri in editor")), v.master && /^https:\/\//.test(v.master) && acts.append(el("a", { class: "btn sm", href: v.master, target: "_blank", rel: "noopener" }, "Master HD"))), $("noteAdd").disabled = !(p2 && v && S.canWrite), renderNotes(), renderMarks();
+}
+function renderMarks() {
+  let bar = $("revScrub");
+  bar.querySelectorAll("i").forEach((i) => i.remove());
+  let p2 = cur(), v = p2 && curVer(p2), d = video().duration;
+  if (!(!d || !v))
+    for (let n of notes) !n.done && (n.v == null || n.v === v.v) && bar.append(el("i", { style: { left: Math.min(100, (n.t || 0) / d * 100) + "%" }, title: n.text }));
+}
+function renderNotes() {
+  let box = $("noteList");
+  box.replaceChildren();
+  let p2 = cur(), v = p2 && curVer(p2), mine = notes.filter((n) => !v || n.v == null || n.v === v.v).sort((a, b) => (a.t || 0) - (b.t || 0));
+  if (!mine.length) {
+    box.append(el("div", { class: "empty", text: v ? "Nessuna nota su questa versione." : "Le note compariranno qui." }));
+    return;
+  }
+  for (let n of mine) box.append(el(
+    "div",
+    { class: "note" + (n.done ? " done" : "") },
+    el("button", { class: "chip", type: "button", title: "Vai a questo punto", onclick: () => {
+      video().currentTime = n.t || 0, video().pause();
+    } }, tc(n.t)),
+    el("div", { class: "tx", text: n.text || "" }),
+    S.canWrite ? el("button", { class: "chip", type: "button", "aria-pressed": String(!!n.done), onclick: () => toggleNote(n) }, n.done ? "Fatto" : "Da fare") : null
+  ));
+}
+async function addNote() {
+  let p2 = cur(), v = p2 && curVer(p2), text = $("noteIn").value.trim();
+  if (!p2 || !v || !text) return;
+  let b = $("noteAdd");
+  b.disabled = !0;
+  try {
+    await S.db.collection("projects/" + p2.id + "/notes").add({ t: Math.round(video().currentTime * 10) / 10, text: text.slice(0, 2e3), v: v.v, done: !1, createdAt: now() }), $("noteIn").value = "", toast("Nota salvata"), feed("Nota a " + tc(video().currentTime) + " su " + p2.title), p2.status === "approvato" && await setStatus(p2, "revisione");
+  } catch (e) {
+    toast(writeErr(e));
+  } finally {
+    b.disabled = !1;
+  }
+}
+async function toggleNote(n) {
+  try {
+    await S.db.doc("projects/" + cur().id + "/notes/" + n.id).update({ done: !n.done });
+  } catch (e) {
+    toast(writeErr(e));
+  }
+}
+async function setStatus(p2, st, msg) {
+  try {
+    await S.db.doc("projects/" + p2.id).update({ status: st, updatedAt: now() }), msg && toast(msg), feed(STATUS[st] + " \xB7 " + p2.title);
+  } catch (e) {
+    toast(writeErr(e));
+  }
+}
+async function exportVer(p2, v) {
+  if (!S.downloads) {
+    toast("Export non disponibile in questa vista: apri Jarvis da browser o computer.");
+    return;
+  }
+  try {
+    let r = await fetch(blobUrl(v.assetId));
+    if (!r.ok) throw { code: "fetch" };
+    let blob = await r.blob(), base = v.filename || (p2.title || "video").normalize("NFKD").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").toLowerCase() + "-v" + v.v;
+    (await S.downloads.save({ filename: base + ".mp4", data: blob })).status === "saved" && toast("Salvato: " + base + ".mp4");
+  } catch (e) {
+    let c = e && e.code;
+    toast(c === "declined" ? "Export annullato." : c === "rate_limited" ? "Un salvataggio \xE8 gi\xE0 in corso." : c === "fetch" ? "Non riesco a leggere il video: usa Master HD." : "Export non riuscito.");
+  }
+}
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/lib.js
+var lib_exports = {};
+__export(lib_exports, {
+  enter: () => enter4,
+  init: () => init4
+});
+var audio = null;
+function init4() {
+  let box = $("sfxList");
+  for (let s of SFX) box.append(el(
+    "div",
+    { class: "sfx" },
+    el("button", { class: "btn sm", type: "button", "aria-label": "Ascolta " + s.name, onclick: (e) => play(s, e.currentTarget) }, "Play"),
+    el("div", {}, el("div", { text: s.name }), el("div", { class: "lbl", text: s.use })),
+    el("span", { class: "mono lbl", text: s.dur.toFixed(1) + " s" })
+  ));
+  let r = $("rules");
+  for (let [k, f] of Object.entries(RULES))
+    r.append(el("h3", {}, el("span", { class: "fmt " + k, text: k }), " ", f.name)), r.append(el("ul", {}, f.rules.map((x) => el("li", { text: x }))));
+}
+function play(s, btn) {
+  if (audio && (audio.pause(), audio = null), !s.assetId) {
+    toast("Suono non ancora caricato in questa installazione.");
+    return;
+  }
+  audio = new Audio(s.url || "/_blob/" + s.assetId), audio.play().catch(() => toast("Tocca di nuovo per ascoltare."));
+}
+function enter4() {
+}
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/jarvis.js
+var jarvis_exports = {};
+__export(jarvis_exports, {
+  enterEditor: () => enterEditor,
+  init: () => init5,
+  retryLive: () => retryLive
+});
+var api4, ctl = null, queue = [], running = !1, liveUnsub = null, liveFor = null, applied = 0, startedUndo = !1, STEP_MS = 420;
+function init5(a) {
+  api4 = a, $("aiBuild").addEventListener("click", () => run("build")), $("aiSend").addEventListener("click", () => {
+    let t = $("aiIn").value.trim();
+    t && ($("aiIn").value = "", run("command", t));
+  }), $("aiIn").addEventListener("keydown", (e) => {
+    e.key === "Enter" && (e.preventDefault(), $("aiSend").click());
+  }), $("aiStop").addEventListener("click", stop), on("cur", () => subscribeLive()), on("projects", () => subscribeLive());
+}
+function enterEditor() {
+  subscribeLive(), $("aiLog").children.length || log("say", "Pronto. Premi \u201CJarvis, monta tu\u201D o dammi un comando: lo vedi montare qui in diretta.");
+}
+function log(kind, text, strong) {
+  let box = $("aiLog"), row = el("div", { class: "l " + kind }, strong ? el("b", { text: strong + " " }) : null, text);
+  for (box.append(row); box.children.length > 120; ) box.firstChild.remove();
+  box.scrollTop = box.scrollHeight;
+}
+function busy2(on_) {
+  $("aiDot").className = "dot" + (on_ ? " busy" : ""), $("aiStop").hidden = !on_, $("aiBuild").disabled = on_ || !ed.canEdit(), $("aiSend").disabled = on_, api4.sys(on_ ? "busy" : "ok", on_ ? "Jarvis monta" : "Online");
+}
+function prompt(mode, command) {
+  let p2 = api4.curP(), r = RULES[p2.format] || RULES.B, mats = E.materials.filter((m) => m.status === "ok" || !m.status).map((m, i) => `[${m.id}] ${m.kind} \xB7 ruolo ${m.role || "-"} \xB7 ${m.dur ? m.dur.toFixed(2) + " s" : "immagine"} \xB7 ordine ${i + 1} \xB7 "${m.name}"`).join(`
+`) || "(nessuno)", tl = E.clips.slice().sort((a, b) => a.start - b.start).map((c) => `{id:"${c.id}", track:"${c.track}", ${c.kind === "text" ? 'text:"' + (c.text || "").slice(0, 40) + '"' : 'what:"' + ed.labelOf(c).slice(0, 40) + '"'}, start:${c.start}, dur:${c.dur}${c.trans && c.trans !== "none" ? ', trans:"' + c.trans + '"' : ""}}`).join(`
+`) || "(vuota)";
+  return `Sei Jarvis, montatore video professionista. Monti la missione "${p2.title}" formato ${p2.format} (${r.name}), video ${p2.aspect || "9:16"}.
+REGOLE DEL FORMATO: ${r.rules.join("; ")}.
+BRIEF: obiettivo="${p2.goal || ""}", durata="${p2.duration || ""}", gancio="${p2.hook || ""}", CTA="${p2.cta || ""}".
+MATERIALI (usa SOLO questi id, nell'ordine dato quando ha senso):
+${mats}
+TIMELINE ATTUALE:
+${tl}
+SUONI disponibili (name): ${SFX.filter((s) => s.assetId).map((s) => s.key + " (" + s.use + ")").join(", ") || "nessuno"}.
+STILI DI TESTO: ${TEXT_STYLES.map((s) => s.key).join(", ")}. TRANSIZIONI: ${TRANSITIONS.map((t) => t.key).join(", ")}. COLORI: red, lime, orange, white, gold, cyan.
+TRACCE: V1 video/immagini principali (in sequenza, senza buchi), V2 testi/immagini sovrapposte/zoom, A1 voce/audio, A2 effetti sonori.
+${mode === "build" ? 'COMPITO: crea il primo montaggio completo da zero (se la timeline non \xE8 vuota, prima {"op":"clear"}). La voce (A1) parte a 0 e guida la durata; copri tutta la voce con V1 senza buchi; un testo sulle frasi chiave; uno zoom sugli impatti; un effetto sonoro sui tagli importanti, mai troppi.' : "COMANDO DELL'UTENTE: " + command}
+RISPONDI SOLO con OPERAZIONI, UNA PER RIGA, ognuna un oggetto JSON su una sola riga, nessun altro testo, nessun markdown. Operazioni possibili:
+{"op":"say","text":"frase breve su cosa stai facendo"}
+{"op":"clear"}
+{"op":"add_clip","track":"V1|V2|A1|A2","mat":"<id materiale>","start":secondi,"dur":secondi,"in":secondi_nel_file,"trans":"none|fade|window|flash|whip|zoom","zoom":1.0,"kenburns":true}
+{"op":"add_text","text":"...","sub":"riga piccola opzionale","style":"keyword|apple|caption|title|label","color":"red","start":s,"dur":s,"y":0.66}
+{"op":"add_zoom","start":s,"dur":0.6,"scale":1.15}
+{"op":"add_sfx","name":"whoosh","at":s,"vol":0.8}
+{"op":"set","id":"<id clip>","start":s,"dur":s,"trans":"...","text":"...","vol":0.8}
+{"op":"delete","id":"<id clip>"}
+Inizia con un "say" e chiudi con un "say" che riassume. Tempi in secondi con al massimo 2 decimali.`;
+}
+async function run(mode, command) {
+  let p2 = api4.curP();
+  if (!p2 || running) return;
+  if (!ed.canEdit()) {
+    toast("Non hai i permessi per modificare questa missione.");
+    return;
+  }
+  if (!S.sample) {
+    toast("Jarvis non pu\xF2 montare in questa vista: apri l'app su claude.ai.");
+    return;
+  }
+  if (!E.materials.some((m) => m.status === "ok" || !m.status) && mode === "build") {
+    toast("Carica prima i materiali nel Briefing.");
+    return;
+  }
+  ed.stop(), ctl = new AbortController(), busy2(!0), startedUndo = !1, queue = [], log("op", mode === "build" ? "Analizzo brief e materiali\u2026" : command, mode === "build" ? "JARVIS" : "TU"), feed(mode === "build" ? "Jarvis sta montando " + p2.title : "Comando a Jarvis: " + command.slice(0, 40));
+  let pending = "", got = 0, eat = (delta) => {
+    let lines = (pending + delta).split(`
+`);
+    pending = lines.pop();
+    for (let l of lines) {
+      let op = parse(l);
+      op && (got++, enqueue(op));
+    }
+  };
+  try {
+    await S.sample(prompt(mode, command), { cache: !1, signal: ctl.signal, modelTier: mode === "build" ? "default" : "quick", onText: ({ delta }) => eat(delta) });
+    let op = parse(pending);
+    op && (got++, enqueue(op)), got || log("say", "Non ho ricevuto operazioni valide: riprova con un comando pi\xF9 semplice.");
+  } catch (e) {
+    e && e.code !== "cancelled" && log("say", e.code === "not_granted" ? "Per montare devo poter usare Claude: consenti l'accesso quando richiesto." : e.code === "rate_limited" ? "Troppe richieste ora: riprova tra poco." : "Interrotto: " + (e.code || "errore") + ". Quello gi\xE0 montato resta (puoi annullare).");
+  }
+  await drain(), busy2(!1), ctl = null;
+}
+function stop() {
+  ctl && ctl.abort(), queue = [];
+}
+function parse(line) {
+  let s = (line || "").trim().replace(/^```\w*|```$/g, "").replace(/,$/, "");
+  if (!s.startsWith("{")) return null;
+  try {
+    let o = JSON.parse(s);
+    return o && typeof o.op == "string" ? o : null;
+  } catch {
+    return null;
+  }
+}
+function enqueue(op) {
+  queue.push(op), running || pump();
+}
+var drainRes = null;
+function drain() {
+  return running || queue.length ? new Promise((r) => drainRes = r) : Promise.resolve();
+}
+async function pump() {
+  for (running = !0; queue.length; ) {
+    let op = queue.shift();
+    try {
+      await apply(op);
+    } catch (e) {
+      log("l", "Operazione saltata: " + (e.message || e));
+    }
+  }
+  if (running = !1, touch("jarvis"), hideCursor(), drainRes) {
+    let r = drainRes;
+    drainRes = null, r();
+  }
+}
+var num2 = (v, d = 0) => {
+  let n = Number(v);
+  return isFinite(n) ? n : d;
+}, wait = (ms) => new Promise((r) => setTimeout(r, ms));
+async function apply(op) {
+  switch (!startedUndo && op.op !== "say" && (ed.pushUndo(), startedUndo = !0), op.op) {
+    case "say":
+      log("say", String(op.text || "").slice(0, 300)), await wait(250);
+      return;
+    case "clear":
+      E.clips = [], ed.select(null), ed.renderTL(), ed.draw(), log("op", "Svuoto la timeline", "PULISCO"), await wait(STEP_MS);
+      return;
+    case "add_clip": {
+      let m = matById(String(op.mat));
+      if (!m) throw new Error("materiale " + op.mat + " non trovato");
+      let track = String(op.track || "");
+      ed.fits(track, m.kind) || (track = m.kind === "audio" ? "A1" : "V1");
+      let start = Math.max(0, num2(op.start)), inn = Math.max(0, num2(op.in)), dur = Math.max(0.2, num2(op.dur, m.dur || 3));
+      m.kind !== "image" && m.dur && (dur = Math.min(dur, Math.max(0.2, m.dur - inn)));
+      let c = ed.mkClip({ track, kind: m.kind, mat: m.id, start, dur, in: inn, trans: TRANSITIONS.some((t) => t.key === op.trans) ? op.trans : "none", zoom: Math.min(2, Math.max(1, num2(op.zoom, 1))), kenburns: !!op.kenburns });
+      await fly(libPoint(m.id), c), E.clips.push(c), show(c, `${m.name} su ${track} a ${tc(start)}`, "AGGIUNGO");
+      return;
+    }
+    case "add_text": {
+      let style = TEXT_STYLES.some((s) => s.key === op.style) ? op.style : "keyword", c = ed.mkClip({ track: "V2", kind: "text", text: String(op.text || "").slice(0, 200), sub: op.sub ? String(op.sub).slice(0, 120) : void 0, style, color: String(op.color || (style === "keyword" ? "red" : "white")), start: num2(op.start), dur: Math.max(0.3, num2(op.dur, 2)), y: Math.min(0.95, Math.max(0.05, num2(op.y, style === "caption" ? 0.72 : style === "label" ? 0.14 : 0.62))) });
+      await fly(null, c), E.clips.push(c), show(c, `\u201C${c.text}\u201D a ${tc(c.start)}`, "TESTO");
+      return;
+    }
+    case "add_zoom": {
+      let c = ed.mkClip({ track: "V2", kind: "zoom", start: num2(op.start), dur: Math.max(0.2, num2(op.dur, 0.6)), zoom: Math.min(1.6, Math.max(1.02, num2(op.scale, 1.15))) });
+      await fly(null, c), E.clips.push(c), show(c, `${Math.round(c.zoom * 100)}% a ${tc(c.start)}`, "ZOOM");
+      return;
+    }
+    case "add_sfx": {
+      let s = SFX.find((x) => x.key === String(op.name));
+      if (!s || !s.assetId) throw new Error("suono " + op.name + " non disponibile");
+      let c = ed.mkClip({ track: "A2", kind: "audio", mat: "sfx:" + s.key, start: num2(op.at ?? op.start), dur: s.dur, vol: Math.min(1.2, Math.max(0, num2(op.vol, 0.8))) });
+      await fly(null, c), E.clips.push(c), show(c, `${s.name} a ${tc(c.start)}`, "SUONO");
+      return;
+    }
+    case "set": {
+      let c = ed.clipById(String(op.id));
+      if (!c) throw new Error("clip " + op.id + " non trovata");
+      op.start != null && (c.start = Math.max(0, num2(op.start, c.start))), op.dur != null && (c.dur = Math.max(0.1, num2(op.dur, c.dur))), op.trans && TRANSITIONS.some((t) => t.key === op.trans) && (c.trans = op.trans), op.text != null && c.kind === "text" && (c.text = String(op.text).slice(0, 200)), op.vol != null && (c.vol = Math.min(1.5, Math.max(0, num2(op.vol, 1)))), await fly(null, c), show(c, ed.labelOf(c), "MODIFICO");
+      return;
+    }
+    case "delete": {
+      let c = ed.clipById(String(op.id));
+      if (!c) throw new Error("clip " + op.id + " non trovata");
+      await fly(null, c), E.clips = E.clips.filter((x) => x !== c), ed.select(null), ed.renderTL(), ed.draw(), log("op", ed.labelOf(c), "ELIMINO"), await wait(STEP_MS / 2);
+      return;
+    }
+    default:
+      throw new Error("operazione sconosciuta " + op.op);
+  }
+}
+function show(c, text, verb) {
+  return ed.renderTL(), ed.select(c.id), ed.born(c.id), ed.seek(c.start + Math.min(0.4, c.dur / 2)), log("op", text, verb), wait(STEP_MS);
+}
+function libPoint(matId) {
+  let items = [...document.querySelectorAll("#libBody .libItem")], i = E.materials.filter((m) => !m.status || m.status === "ok").findIndex((m) => m.id === matId), it = items[i];
+  if (!it) return null;
+  let r = it.getBoundingClientRect();
+  return r.width ? { x: r.left + 20, y: r.top + r.height / 2 } : null;
+}
+async function fly(from, c) {
+  let cur2 = $("aiCursor");
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  ed.reveal(c.start), await wait(30);
+  let tr = ed.trackRect(c.track);
+  if (!tr || !tr.width) return;
+  let x = ed.timeX(c.start) + Math.min(30, c.dur * 10), y = tr.top + tr.height / 2 - 11;
+  cur2.style.opacity = "1", from && (cur2.style.transition = "none", cur2.style.left = from.x + "px", cur2.style.top = from.y + "px", cur2.offsetWidth, cur2.style.transition = "", await wait(60)), cur2.style.left = x + "px", cur2.style.top = y + "px", await wait(460);
+}
+function hideCursor() {
+  $("aiCursor").style.opacity = "0";
+}
+function subscribeLive() {
+  let p2 = api4.curP();
+  !S.db || !p2 || liveFor !== p2.id && (liveUnsub && liveUnsub(), liveFor = p2.id, applied = null, liveUnsub = S.db.doc("projects/" + p2.id + "/state/live").onSnapshot((snap2) => {
+    let d = snap2.exists ? snap2.data() : null;
+    if (!d) {
+      applied = applied ?? 0;
+      return;
+    }
+    d.message && d.message !== subscribeLive.lastMsg && (subscribeLive.lastMsg = d.message, feed("Jarvis (sessione): " + String(d.message).slice(0, 80)), S.room === "editor" && log("say", String(d.message).slice(0, 300)));
+    let ops = Array.isArray(d.ops) ? d.ops : [];
+    applied === null && (applied = Number(d.applied || 0));
+    let fresh = ops.filter((o) => Number(o.n) > applied).sort((a, b) => a.n - b.n);
+    if (fresh.length) {
+      if (S.room !== "editor" || !E.loaded || E.pid !== p2.id) {
+        feed("Jarvis ha " + fresh.length + " modifiche pronte: apri l'editor per vederle");
+        return;
+      }
+      applied = Math.max(...fresh.map((o) => Number(o.n))), startedUndo = !1, busy2(!0), log("op", "Applico " + fresh.length + " modifiche dalla sessione", "JARVIS");
+      for (let o of fresh) enqueue(o);
+      drain().then(() => {
+        busy2(!1), ed.canEdit() && S.db.doc("projects/" + p2.id + "/state/live").update({ applied, appliedAt: now() }).catch(() => {
+        });
+      });
+    }
+  }, () => {
+  }));
+}
+function retryLive() {
+  liveFor = null, subscribeLive();
+}
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/exporter.js
+var exporter_exports = {};
+__export(exporter_exports, {
+  init: () => init6
+});
+var api5, abort = !1, working = !1;
+function init6(a) {
+  api5 = a, $("exportBtn").addEventListener("click", open), $("exGo").addEventListener("click", go), $("exCancel").addEventListener("click", () => {
+    working ? (abort = !0, $("exMsg").textContent = "Annullo\u2026") : $("exportDlg").close();
+  }), $("exportDlg").addEventListener("cancel", (e) => {
+    working && e.preventDefault();
+  });
+}
+function open() {
+  if (!E.clips.length) {
+    toast("La timeline \xE8 vuota: monta qualcosa prima di esportare.");
+    return;
+  }
+  $("exMsg").textContent = support() ? "" : "Questo browser non sa codificare video: usa Chrome, Edge o Safari aggiornati.", $("exProgWrap").hidden = !0, $("exGo").disabled = !support(), $("exCancel").textContent = "Chiudi", $("exAfter").querySelector('[value="both"]').disabled = !S.assets, $("exportDlg").showModal();
+}
+var support = () => typeof VideoEncoder < "u" && typeof VideoFrame < "u";
+function dims(aspect, res) {
+  let [w, h] = ASPECTS[aspect] || ASPECTS["9:16"], s = res / Math.min(w, h);
+  return [Math.round(w * s / 2) * 2, Math.round(h * s / 2) * 2];
+}
+async function pickVideo(fmt, W, H, fps) {
+  let bitrate = Math.round(W * H * fps * 0.12), cands = fmt === "mp4" ? [["avc", "avc1.640034"], ["avc", "avc1.4d0034"], ["avc", "avc1.42003e"], ["vp9", "vp09.00.50.08"]] : [["V_VP9", "vp09.00.50.08"], ["V_VP8", "vp8"]];
+  for (let [mux, codec] of cands) {
+    let cfg = { codec, width: W, height: H, bitrate, framerate: fps, latencyMode: "quality", ...codec.startsWith("avc") ? { avc: { format: "avc" } } : {} };
+    try {
+      let r = await VideoEncoder.isConfigSupported(cfg);
+      if (r.supported) return { mux, cfg: r.config || cfg };
+    } catch {
+    }
+  }
+  return null;
+}
+async function pickAudio(fmt) {
+  if (typeof AudioEncoder > "u") return null;
+  let cands = fmt === "mp4" ? [["aac", "mp4a.40.2"], ["opus", "opus"]] : [["A_OPUS", "opus"]];
+  for (let [mux, codec] of cands) {
+    let cfg = { codec, sampleRate: 48e3, numberOfChannels: 2, bitrate: 192e3 };
+    try {
+      if ((await AudioEncoder.isConfigSupported(cfg)).supported) return { mux, cfg };
+    } catch {
+    }
+  }
+  return null;
+}
+var decoded = /* @__PURE__ */ new Map();
+async function decodeAudio(key, ac) {
+  if (decoded.has(key)) return decoded.get(key);
+  let e = get(key);
+  if (!e) return null;
+  try {
+    let buf = await (await fetch(e.src)).arrayBuffer(), ab = await ac.decodeAudioData(buf);
+    return decoded.set(key, ab), ab;
+  } catch {
+    return decoded.set(key, null), null;
+  }
+}
+async function mixAudio(dur) {
+  let len = Math.max(1, Math.ceil(dur * 48e3)), oc = new OfflineAudioContext(2, len, 48e3), comp = oc.createDynamicsCompressor();
+  comp.threshold.value = -6, comp.knee.value = 6, comp.ratio.value = 12, comp.attack.value = 3e-3, comp.release.value = 0.15, comp.connect(oc.destination);
+  for (let c of E.clips) {
+    if (!c.mat || c.kind !== "audio" && c.kind !== "video" || c.track === "V2") continue;
+    let ab = await decodeAudio(c.mat, oc);
+    if (!ab) continue;
+    let src = oc.createBufferSource();
+    src.buffer = ab, src.playbackRate.value = c.speed || 1;
+    let g = oc.createGain();
+    g.gain.value = Math.max(0, c.vol ?? 1), src.connect(g).connect(comp);
+    let off = Math.max(0, c.in || 0);
+    off >= ab.duration || src.start(Math.max(0, c.start), off, Math.min(c.dur * (c.speed || 1), ab.duration - off));
+  }
+  let out = await oc.startRendering(), pk = 0;
+  for (let ch = 0; ch < 2; ch++) {
+    let d = out.getChannelData(ch);
+    for (let i = 0; i < d.length; i++) {
+      let v = Math.abs(d[i]);
+      v > pk && (pk = v);
+    }
+  }
+  let lim = Math.pow(10, -1 / 20);
+  if (pk > lim) {
+    let k = lim / pk;
+    for (let ch = 0; ch < 2; ch++) {
+      let d = out.getChannelData(ch);
+      for (let i = 0; i < d.length; i++) d[i] *= k;
+    }
+  }
+  return out;
+}
+function setProg(k, msg) {
+  $("exProg").style.width = Math.round(k * 100) + "%", msg && ($("exMsg").textContent = msg);
+}
+async function go() {
+  let p2 = api5.curP();
+  if (!p2 || working) return;
+  let fmt = $("exFmt").value, res = +$("exRes").value, fps = +$("exFps").value, after = $("exAfter").value, [W, H] = dims(p2.aspect || "9:16", res), dur = timelineEnd(E.clips), N = Math.ceil(dur * fps), vsel = await pickVideo(fmt, W, H, fps);
+  if (!vsel) {
+    $("exMsg").textContent = "Questo browser non supporta questa combinazione: prova WebM o una risoluzione pi\xF9 bassa.";
+    return;
+  }
+  let asel = await pickAudio(fmt);
+  working = !0, abort = !1, $("exGo").disabled = !0, $("exCancel").textContent = "Annulla", $("exProgWrap").hidden = !1, setProg(0, "Preparo i materiali\u2026"), api5.sys("busy", "Export"), await flush();
+  let out = null;
+  try {
+    for (let c of E.clips) c.mat && c.kind !== "audio" && await whenReady((get(c.mat) || {}).el);
+    pauseAll(), setProg(0.02, "Mixo l'audio\u2026");
+    let audio2 = asel ? await mixAudio(dur) : null, Mux = fmt === "mp4" ? window.Mp4Muxer : window.WebMMuxer;
+    if (!Mux) throw new Error("muxer");
+    let target = new Mux.ArrayBufferTarget(), muxer = new Mux.Muxer({ target, video: { codec: vsel.mux, width: W, height: H, frameRate: fps }, ...audio2 ? { audio: { codec: asel.mux, numberOfChannels: 2, sampleRate: 48e3 } } : {}, ...fmt === "mp4" ? { fastStart: "in-memory" } : {} }), encErr = null, venc = new VideoEncoder({ output: (ch, meta) => muxer.addVideoChunk(ch, meta), error: (e) => encErr = e });
+    venc.configure(vsel.cfg);
+    let cv = document.createElement("canvas");
+    cv.width = W, cv.height = H;
+    let g = cv.getContext("2d", { alpha: !1 });
+    for (let i = 0; i < N; i++) {
+      if (abort) throw new Error("abort");
+      if (encErr) throw encErr;
+      let t = i / fps, need = /* @__PURE__ */ new Map();
+      for (let c of E.clips) c.kind === "video" && t >= c.start - 0.5 && t < c.start + c.dur && need.set(c.mat, srcTime(c, Math.max(c.start, Math.min(t, c.start + c.dur - 0.01))));
+      await Promise.all([...need].map(([k, st]) => {
+        let e = get(k);
+        return e ? seekTo(e.el, st) : null;
+      })), drawFrame(g, W, H, t, E.clips, media);
+      let fr = new VideoFrame(cv, { timestamp: Math.round(i * 1e6 / fps), duration: Math.round(1e6 / fps) });
+      for (venc.encode(fr, { keyFrame: i % (fps * 2) === 0 }), fr.close(); venc.encodeQueueSize > 6; ) await new Promise((r) => setTimeout(r, 4));
+      i % 5 === 0 && (setProg(0.05 + 0.85 * (i / N), `Frame ${i + 1} di ${N} \xB7 ${W}\xD7${H}`), await new Promise((r) => setTimeout(r, 0)));
+    }
+    if (await venc.flush(), venc.close(), audio2) {
+      setProg(0.92, "Codifico l'audio\u2026");
+      let aErr = null, aenc = new AudioEncoder({ output: (ch, meta) => muxer.addAudioChunk(ch, meta), error: (e) => aErr = e });
+      aenc.configure(asel.cfg);
+      let L = audio2.getChannelData(0), R = audio2.getChannelData(1), block = 4800;
+      for (let o = 0; o < audio2.length; o += block) {
+        let n = Math.min(block, audio2.length - o), data = new Float32Array(n * 2);
+        data.set(L.subarray(o, o + n), 0), data.set(R.subarray(o, o + n), n);
+        let ad = new AudioData({ format: "f32-planar", sampleRate: 48e3, numberOfFrames: n, numberOfChannels: 2, timestamp: Math.round(o / 48e3 * 1e6), data });
+        if (aenc.encode(ad), ad.close(), aErr) throw aErr;
+      }
+      await aenc.flush(), aenc.close();
+    }
+    muxer.finalize(), out = new Blob([target.buffer], { type: fmt === "mp4" ? "video/mp4" : "video/webm" });
+  } catch (e) {
+    working = !1, $("exGo").disabled = !1, $("exCancel").textContent = "Chiudi", api5.sys("ok", "Online"), setProg(0, e && e.message === "abort" ? "Export annullato." : "Export non riuscito: " + (e && e.message || "errore") + ". Prova una risoluzione pi\xF9 bassa o WebM.");
+    return;
+  }
+  let name = (p2.title || "video").normalize("NFKD").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").toLowerCase() + "-" + res + "p." + fmt;
+  if (setProg(1, `Pronto: ${(out.size / 1048576).toFixed(1)} MB${vsel.mux === "vp9" && fmt === "mp4" ? " (codec VP9: questo browser non codifica H.264)" : ""}`), feed("Export pronto: " + name), S.downloads)
+    try {
+      (await S.downloads.save({ filename: name, data: out })).status === "saved" && toast("Salvato: " + name);
+    } catch (e) {
+      toast(e.code === "declined" ? "Salvataggio annullato." : e.code === "too_large" ? "File troppo grande per questa destinazione." : "Salvataggio non riuscito.");
+    }
+  else toast("Salvataggio non disponibile in questa vista.");
+  after === "both" && await toReview(p2, out, name, W, H, dur), working = !1, $("exGo").disabled = !1, $("exCancel").textContent = "Chiudi", api5.sys("ok", "Online");
+}
+async function toReview(p2, blob, name, W, H, dur) {
+  if (S.assets) {
+    if (blob.size > 20 * 1024 * 1024) {
+      toast("Troppo grande per la revisione nell'app (max 20 MB): esporta in 720p per mandarlo in revisione.", 6e3);
+      return;
+    }
+    try {
+      let r = await S.assets.upload(blob, { type: blob.type }), vs = (p2.versions || []).slice(), v = vs.reduce((m, x) => Math.max(m, x.v || 0), 0) + 1;
+      vs.push({ v, assetId: r.id, label: W + "\xD7" + H, date: (/* @__PURE__ */ new Date()).toLocaleDateString("it-IT"), durationSec: +dur.toFixed(2), filename: name.replace(/\.\w+$/, "") }), await S.db.doc("projects/" + p2.id).update({ versions: vs, status: "revisione", updatedAt: now() }), toast("Versione v" + v + " in revisione."), feed("v" + v + " di " + p2.title + " in revisione");
+    } catch (e) {
+      toast(e && e.code === "too_large" ? "File troppo grande per la revisione." : writeErr(e));
+    }
+  }
+}
+
+// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/app.js
+var ROOMS = { hub: null, brief: brief_exports, editor: editor_exports, review: review_exports, lib: lib_exports }, NEEDS_MISSION = { brief: !0, editor: !0 }, core = null, coreLoading = !1;
+function boot() {
+  let lines = ["> JARVIS STUDIO v2.0", "> collegamento al nucleo dati\u2026", "> moduli: hub \xB7 briefing \xB7 editor \xB7 revisione \xB7 libreria", "> motore di render pronto", "> benvenuto."], seen = sessionStorage && (() => {
+    try {
+      return sessionStorage.getItem("jv.boot");
+    } catch {
+      return null;
+    }
+  })(), box = $("boot");
+  if (seen || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    box.remove();
+    return;
+  }
+  let i = 0, log2 = $("bootLog"), bar = $("bootBar"), step = () => {
+    box.isConnected && (i < lines.length ? (log2.textContent += lines[i] + `
+`, bar.style.width = (i + 1) / lines.length * 100 + "%", i++, setTimeout(step, 260)) : setTimeout(close, 300));
+  }, close = () => {
+    try {
+      sessionStorage.setItem("jv.boot", "1");
+    } catch {
+    }
+    box.classList.add("gone"), setTimeout(() => box.remove(), 600);
+  };
+  $("bootSkip").addEventListener("click", close), step();
+}
+function go2(room, opts = {}) {
+  room in ROOMS || (room = "hub"), NEEDS_MISSION[room] && !curP() && (toast("Scegli o crea prima una missione."), room = "hub");
+  let prev = S.room;
+  if (prev && prev !== room && ROOMS[prev] && ROOMS[prev].leave && ROOMS[prev].leave(), S.room = room, document.querySelectorAll(".room").forEach((r) => r.classList.toggle("on", r.id === "v-" + room)), document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-current", b.dataset.room === room ? "page" : "false")), location.hash !== "#" + room && !opts.fromHash)
+    try {
+      history.replaceState(null, "", "#" + room);
+    } catch {
+      location.hash = room;
+    }
+  room === "hub" ? (ensureCore(), core && core.start()) : core && core.stop(), ROOMS[room] && ROOMS[room].enter && ROOMS[room].enter(opts), room === "editor" && enterEditor();
+}
+window.addEventListener("hashchange", () => {
+  let r = location.hash.slice(1);
+  r && r !== S.room && go2(r, { fromHash: !0 });
+});
+document.querySelectorAll("#tabs button").forEach((b) => b.addEventListener("click", () => go2(b.dataset.room)));
+function curP() {
+  return S.projects.find((p2) => p2.id === S.cur) || null;
+}
+function setCur(id) {
+  S.cur = id, store.set("cur", id || ""), emit("cur", id), renderMissions();
+}
+function clock() {
+  let d = /* @__PURE__ */ new Date();
+  $("clockT").textContent = d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) + " \xB7 " + d.toLocaleDateString("it-IT", { day: "2-digit", month: "short" }).toUpperCase();
+}
+setInterval(clock, 15e3);
+clock();
+function sys(state, txt2) {
+  let d = $("sysDot");
+  d.className = "dot" + (state === "off" ? " off" : state === "busy" ? " busy" : ""), $("sysTxt").textContent = txt2;
+}
+function renderMissions() {
+  let list2 = $("missionList");
+  if (list2.replaceChildren(), $("missionCount").textContent = S.projects.length + " missioni", !S.db) {
+    list2.append(el("div", { class: "empty", text: "Dati non disponibili in questa vista. Apri Jarvis su claude.ai." }));
+    return;
+  }
+  if (!S.projects.length) {
+    list2.append(el("div", { class: "empty", text: "Nessuna missione. Scegli un formato qui sotto per crearne una." }));
+    return;
+  }
+  for (let p2 of S.projects) {
+    let n = (p2.versions || []).length;
+    list2.append(el(
+      "button",
+      { class: "mission", type: "button", "aria-current": String(p2.id === S.cur), onclick: () => openMission(p2.id) },
+      el("span", { class: "fmt " + p2.format, text: p2.format }),
+      el("span", { class: "t", text: p2.title || "Missione senza titolo" }),
+      el("span", { class: "m" }, el("span", { class: "st " + p2.status, text: STATUS[p2.status] || p2.status }), n ? n + (n === 1 ? " versione" : " versioni") : "nessun video")
+    ));
+  }
+}
+function renderStats() {
+  let s = $("hubStats");
+  s.replaceChildren();
+  let c = (k) => S.projects.filter((p2) => p2.status === k).length;
+  [["revisione", "Da revisionare"], ["lavorazione", "In lavorazione"], ["approvato", "Approvate"], ["brief", "In briefing"]].forEach(([k, l]) => s.append(el("div", { class: "stat" }, el("span", { class: "lbl", text: l }), el("b", { text: String(c(k)) }))));
+}
+var feedItems = [];
+on("feed", (f) => {
+  feedItems.unshift(f), feedItems.length = Math.min(feedItems.length, 30), renderFeed();
+});
+function renderFeed() {
+  let f = $("feed");
+  f.replaceChildren();
+  let items = feedItems.length ? feedItems : S.projects.slice(0, 8).map((p2) => ({ text: (STATUS[p2.status] || "") + " \xB7 " + (p2.title || ""), at: Date.parse(p2.updatedAt || "") || 0 }));
+  if (!items.length) {
+    f.append(el("div", { class: "empty", text: "Qui vedi cosa fa Jarvis, in tempo reale." }));
+    return;
+  }
+  for (let it of items) f.append(el("div", { class: "ev" }, el("span", { class: "mono", text: it.at ? new Date(it.at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) + "  " : "" }), el("b", { text: it.text })));
+}
+function openMission(id) {
+  setCur(id), core && core.highlight(id);
+  let p2 = curP();
+  p2 && (p2.status === "revisione" || p2.status === "approvato" ? go2("review") : (p2.versions || []).length || p2.hasEdit ? go2("editor") : go2("brief"));
+}
+async function createMission(fmt) {
+  if (!S.db) {
+    toast("Dati non disponibili in questa vista.");
+    return;
+  }
+  if (!S.canWrite) {
+    toast("Non hai i permessi per creare missioni.");
+    return;
+  }
+  let n = S.projects.filter((p2) => p2.format === fmt).length + 1;
+  try {
+    let ref = await S.db.collection("projects").add({ title: `Missione ${fmt}-${String(n).padStart(2, "0")}`, format: fmt, status: "brief", aspect: fmt === "A" ? "16:9" : "9:16", goal: "", duration: "", cta: "", hook: "", brief: "", versions: [], createdAt: now(), updatedAt: now() });
+    feed(`Nuova missione ${fmt} creata`), S.cur = ref.id, store.set("cur", ref.id);
+    for (let i = 0; i < 40 && !curP(); i++) await new Promise((r) => setTimeout(r, 50));
+    go2("brief", { fresh: !0 });
+  } catch (e) {
+    toast(writeErr(e));
+  }
+}
+document.querySelectorAll(".door").forEach((d) => d.addEventListener("click", () => createMission(d.dataset.fmt)));
+async function ensureCore() {
+  if (!(core || coreLoading)) {
+    coreLoading = !0;
+    try {
+      core = (await Promise.resolve().then(() => (init_core3d(), core3d_exports))).createCore($("core"), $("coreLabels"), { onPick: openMission }), core ? (core.setMissions(S.projects), S.room === "hub" && core.start()) : $("coreHint").textContent = "Grafica 3D non disponibile su questo dispositivo";
+    } catch (e) {
+      console.warn("core3d", e), $("coreHint").textContent = "Grafica 3D non disponibile su questo dispositivo";
+    }
+    coreLoading = !1;
+  }
+}
+on("projects", () => {
+  renderMissions(), renderStats(), renderFeed(), core && core.setMissions(S.projects);
+});
+document.addEventListener("visibilitychange", () => {
+  core && (document.hidden ? core.stop() : S.room === "hub" && core.start());
+});
+async function initRuntime() {
+  let c = window.claude;
+  if (!c || !c.use) {
+    sys("off", "Offline"), renderMissions();
+    return;
+  }
+  let names = ["db", "user", "assets", "downloads", "sample", "dictation", "tts"], got = await Promise.all(names.map((n) => c.use(n).catch(() => null)));
+  if (names.forEach((n, i) => S[n] = got[i]), emit("caps"), !S.db) {
+    sys("off", "Dati non disponibili"), renderMissions();
+    return;
+  }
+  try {
+    (S.user && await S.user.can("data.write")) === !1 && (S.canWrite = !1);
+  } catch {
+  }
+  try {
+    S.uid = S.user && await S.user.id();
+  } catch {
+  }
+  sys("busy", "Sincronizzo");
+  let timer2 = setTimeout(() => sys("off", "Dati non raggiungibili"), 1e4), first = !0;
+  S.db.collection("projects").orderBy("updatedAt", "desc").onSnapshot((snap2) => {
+    if (snap2.metadata.fromCache || (clearTimeout(timer2), sys("ok", "Online")), S.projects = snap2.docs.map((d) => ({ id: d.id, ...d.data() })), first) {
+      first = !1;
+      let saved = store.get("cur");
+      saved && S.projects.some((p2) => p2.id === saved) && (S.cur = saved);
+    }
+    emit("projects"), first === !1 && S.room && ROOMS[S.room] && ROOMS[S.room].refresh && ROOMS[S.room].refresh();
+  }, (e) => {
+    clearTimeout(timer2), sys("off", "Dati non disponibili");
+  });
+}
+boot();
+for (let m of [...Object.values(ROOMS), jarvis_exports, exporter_exports]) m && m.init && m.init({ go: go2, curP, setCur, sys });
+var startRoom = (location.hash || "#hub").slice(1);
+go2(startRoom in ROOMS && !NEEDS_MISSION[startRoom] ? startRoom : "hub", { fromHash: !0 });
+initRuntime();
+window.addEventListener("keydown", (e) => {
+  e.key === "Escape" && document.getElementById("boot") && document.getElementById("bootSkip").click();
+});
+export {
+  curP,
+  go2 as go,
+  openMission,
+  setCur,
+  sys
+};
+
+</script>
