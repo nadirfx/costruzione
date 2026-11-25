@@ -1,5 +1,5 @@
 // Revisione: player, note al secondo con marcatori sulla barra, versioni, approva / richiedi modifiche, export.
-import { S, $, el, toast, tc, now, writeErr, feed, blobUrl, STATUS } from './state.js';
+import { S, $, el, toast, tc, now, writeErr, feed, blobUrl, STATUS , plain } from './state.js';
 let api, unNotes = null, notes = [], selVer = null, notesFor = null;
 const video = () => $('revVideo');
 
@@ -22,7 +22,7 @@ function subscribe() {
   const p = cur(); if (!p || !S.db) return;
   if (notesFor === p.id) return; notesFor = p.id; selVer = null;
   if (unNotes) unNotes(); notes = [];
-  unNotes = S.db.collection('projects/' + p.id + '/notes').onSnapshot((s) => { notes = s.docs.map(d => ({ id: d.id, ...d.data() })); renderNotes(); renderMarks(); }, () => { });
+  unNotes = S.db.collection('projects/' + p.id + '/notes').onSnapshot((s) => { notes = s.docs.map(d => ({ id: d.id, ...plain(d.data()) })); renderNotes(); renderMarks(); }, () => { });
 }
 function versions(p) { return (p.versions || []).slice().sort((a, b) => a.v - b.v); }
 function curVer(p) { const vs = versions(p); return vs.find(v => v.v === selVer) || vs[vs.length - 1] || null; }

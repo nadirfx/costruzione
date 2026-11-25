@@ -1,5 +1,5 @@
 // Briefing: chat with Jarvis (fills the mission card), materials in sequence, format checklist.
-import { S, $, el, toast, now, writeErr, feed, uid, emit, on, STATUS, FORMAT } from './state.js';
+import { S, $, el, toast, now, writeErr, feed, uid, emit, on, STATUS, FORMAT , plain } from './state.js';
 import { E, openEdit, touch, flush } from './proj.js';
 import { FORMAT_CHECK, RULES } from './data.js';
 import { audioToContainer } from './audioconv.js';
@@ -53,7 +53,7 @@ function greeting(pr) {
 async function loadChat(pr) {
   chatFor = pr.id; turns = []; renderChat();
   if (!S.db) return;
-  try { const d = await S.db.doc('projects/' + pr.id + '/state/chat').get(); if (chatFor !== pr.id) return; turns = (d.exists && d.data().turns) || []; } catch (e) { }
+  try { const d = await S.db.doc('projects/' + pr.id + '/state/chat').get(); if (chatFor !== pr.id) return; turns = (d.exists && plain(d.data()).turns) || []; } catch (e) { }
   renderChat();
 }
 function renderChat(streamText) {

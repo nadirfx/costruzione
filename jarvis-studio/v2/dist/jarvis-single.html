@@ -350,7 +350,7 @@ var __export = (target, all2) => {
     __defProp(target, name, { get: all2[name], enumerable: !0 });
 };
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/core3d.js
+// app/core3d.js
 var core3d_exports = {};
 __export(core3d_exports, {
   createCore: () => createCore
@@ -546,12 +546,12 @@ function createCore(canvas, labelsEl, { onPick } = {}) {
   };
 }
 var STATUS_COL, init_core3d = __esm({
-  "../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/core3d.js"() {
+  "app/core3d.js"() {
     STATUS_COL = { brief: 7315374, lavorazione: 16758344, revisione: 16735055, approvato: 3924876 };
   }
 });
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/state.js
+// app/state.js
 var S = {
   db: null,
   user: null,
@@ -606,8 +606,9 @@ var bus = new EventTarget(), emit = (name, detail) => bus.dispatchEvent(new Cust
 function feed(text, kind = "") {
   emit("feed", { text, kind, at: Date.now() });
 }
+var plain = (o) => o == null ? o : JSON.parse(JSON.stringify(o));
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/brief.js
+// app/brief.js
 var brief_exports = {};
 __export(brief_exports, {
   enter: () => enter,
@@ -616,7 +617,7 @@ __export(brief_exports, {
   refresh: () => refresh
 });
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/proj.js
+// app/proj.js
 var E = { pid: null, materials: [], clips: [], rev: 0, loaded: !1 }, unsub = null, timer = null, writing = !1, again = !1, lastSaved = 0;
 function editPath(pid) {
   return "projects/" + pid + "/state/edit";
@@ -624,7 +625,7 @@ function editPath(pid) {
 function openEdit(pid) {
   E.pid === pid && unsub || (unsub && (unsub(), unsub = null), Object.assign(E, { pid, materials: [], clips: [], rev: 0, loaded: !1 }), emit("edit", { remote: !0 }), !(!S.db || !pid) && (unsub = S.db.doc(editPath(pid)).onSnapshot((snap2) => {
     if (E.pid !== pid) return;
-    let d = snap2.exists ? snap2.data() : null;
+    let d = snap2.exists ? plain(snap2.data()) : null;
     d && (d.rev || 0) <= lastSaved && E.loaded || d && (writing || timer) && E.loaded || (E.materials = d && d.materials || [], E.clips = d && d.clips || [], E.rev = d && d.rev || 0, E.loaded = !0, lastSaved = E.rev, emit("edit", { remote: !0 }));
   }, () => {
     E.loaded = !0, emit("edit", { remote: !0 });
@@ -659,7 +660,7 @@ function matById(id) {
   return E.materials.find((m) => m.id === id) || null;
 }
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/data.js
+// app/data.js
 var SFX = [
   { key: "whoosh", name: "Whoosh pulito", use: "Tagli e transizioni grandi", dur: 0.6, assetId: "760380d5f5d36dc687aca27670fa058d" },
   { key: "hit", name: "Colpo cinematico", use: "Parola chiave, impatto", dur: 1.85, assetId: "f0d082a542612de009fd78baf3593393" },
@@ -721,7 +722,7 @@ var SFX = [
   C: ["Titolo e obiettivo", "Facecam caricata", "Durata", "B-roll o grafiche", "CTA"]
 };
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/audioconv.js
+// app/audioconv.js
 async function audioToContainer(file, onProg) {
   let buf = await file.arrayBuffer(), ab = await new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 48e3, 48e3).decodeAudioData(buf.slice(0)), len = Math.ceil(ab.duration * 48e3), oc = new OfflineAudioContext(2, Math.max(1, len), 48e3), src = oc.createBufferSource();
   src.buffer = ab, src.connect(oc.destination), src.start(0);
@@ -756,7 +757,7 @@ async function audioToContainer(file, onProg) {
   return rec.start(500), s.start(), await new Promise((r) => s.onended = r), rec.stop(), await done, ctx2.close(), { blob: new Blob(chunks, { type: "video/webm" }), dur: ab.duration };
 }
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/brief.js
+// app/brief.js
 var api, turns = [], chatFor = null, busy = null, saveT = null, MAX = 20 * 1024 * 1024, ROLES = { voce: "Voce", facecam: "Facecam", broll: "B-roll", foto: "Foto", logo: "Logo", musica: "Musica", sfx: "Effetto" };
 function init(a) {
   api = a, $("chatSend").addEventListener("click", send), $("chatIn").addEventListener("keydown", (e) => {
@@ -820,7 +821,7 @@ async function loadChat(pr) {
     try {
       let d = await S.db.doc("projects/" + pr.id + "/state/chat").get();
       if (chatFor !== pr.id) return;
-      turns = d.exists && d.data().turns || [];
+      turns = d.exists && plain(d.data()).turns || [];
     } catch {
     }
     renderChat();
@@ -1058,7 +1059,7 @@ function renderCheck() {
   (FORMAT_CHECK[pr.format] || []).forEach((t, i) => box.append(el("li", { class: checks[i] ? "ok" : "", text: t })));
 }
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/editor.js
+// app/editor.js
 var editor_exports = {};
 __export(editor_exports, {
   ed: () => ed,
@@ -1069,7 +1070,7 @@ __export(editor_exports, {
   seek: () => seek
 });
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/render.js
+// app/render.js
 var TD = 0.45, clamp2 = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 var e4o = (k) => 1 - Math.pow(1 - k, 4), eio = (k) => k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2, visualAt = (clips, track, t) => clips.filter((c) => c.track === track && t >= c.start && t < c.start + c.dur).sort((a, b) => a.start - b.start), end = (c) => c.start + c.dur, timelineEnd = (clips) => clips.reduce((m, c) => Math.max(m, c.start + c.dur), 0), col = (k) => COLORS[k] || k || COLORS.white;
 function srcOf(c, media2) {
@@ -1217,7 +1218,7 @@ function drawFrame(ctx2, W, H, t, clips, media2) {
 }
 var srcTime = (c, t) => (c.in || 0) + (t - c.start) * (c.speed || 1);
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/media.js
+// app/media.js
 var els = /* @__PURE__ */ new Map();
 function srcFor(key) {
   if (key.startsWith("sfx:")) {
@@ -1289,7 +1290,7 @@ function whenReady(el3) {
   });
 }
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/editor.js
+// app/editor.js
 var api2, pps = 70, T = 0, playing = !1, playStart = 0, playT0 = 0, raf = 0, sel = null, libTab = "mat", undo = [], redo = [], lastUndoKey = "", lastUndoAt = 0, TRACKS = ["V2", "V1", "A1", "A2"], FPS = 30, ctx = null, PW = 540, PH = 960, audioCtx = null, analyser = null, meterBuf = null, ed = {};
 function init2(a) {
   api2 = a, ctx = $("preview").getContext("2d"), $("playBtn").addEventListener("click", togglePlay), $("stepB").addEventListener("click", () => seek(T - 1 / FPS)), $("stepF").addEventListener("click", () => seek(T + 1 / FPS)), $("undoBtn").addEventListener("click", doUndo), $("redoBtn").addEventListener("click", doRedo), $("splitBtn").addEventListener("click", split), $("delBtn").addEventListener("click", del), $("dupBtn").addEventListener("click", dup), $("zoomIn").addEventListener("input", (e) => {
@@ -1766,7 +1767,7 @@ Object.assign(ed, {
   }
 });
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/review.js
+// app/review.js
 var review_exports = {};
 __export(review_exports, {
   enter: () => enter3,
@@ -1807,7 +1808,7 @@ function leave3() {
 function subscribe() {
   let p2 = cur();
   !p2 || !S.db || notesFor !== p2.id && (notesFor = p2.id, selVer = null, unNotes && unNotes(), notes = [], unNotes = S.db.collection("projects/" + p2.id + "/notes").onSnapshot((s) => {
-    notes = s.docs.map((d) => ({ id: d.id, ...d.data() })), renderNotes(), renderMarks();
+    notes = s.docs.map((d) => ({ id: d.id, ...plain(d.data()) })), renderNotes(), renderMarks();
   }, () => {
   }));
 }
@@ -1911,7 +1912,7 @@ async function exportVer(p2, v) {
   }
 }
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/lib.js
+// app/lib.js
 var lib_exports = {};
 __export(lib_exports, {
   enter: () => enter4,
@@ -1941,7 +1942,7 @@ function play(s, btn) {
 function enter4() {
 }
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/jarvis.js
+// app/jarvis.js
 var jarvis_exports = {};
 __export(jarvis_exports, {
   enterEditor: () => enterEditor,
@@ -2142,7 +2143,7 @@ function hideCursor() {
 function subscribeLive() {
   let p2 = api4.curP();
   !S.db || !p2 || liveFor !== p2.id && (liveUnsub && liveUnsub(), liveFor = p2.id, applied = null, liveUnsub = S.db.doc("projects/" + p2.id + "/state/live").onSnapshot((snap2) => {
-    let d = snap2.exists ? snap2.data() : null;
+    let d = snap2.exists ? plain(snap2.data()) : null;
     if (!d) {
       applied = applied ?? 0;
       return;
@@ -2170,7 +2171,7 @@ function retryLive() {
   liveFor = null, subscribeLive();
 }
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/exporter.js
+// app/exporter.js
 var exporter_exports = {};
 __export(exporter_exports, {
   init: () => init6
@@ -2343,7 +2344,7 @@ async function toReview(p2, blob, name, W, H, dur) {
   }
 }
 
-// ../../../tmp/claude-0/-home-user-costruzione/f8f5e66a-bca6-52b8-a8d5-01ec917fceb6/scratchpad/jv/app/app.js
+// app/app.js
 var ROOMS = { hub: null, brief: brief_exports, editor: editor_exports, review: review_exports, lib: lib_exports }, NEEDS_MISSION = { brief: !0, editor: !0 }, core = null, coreLoading = !1;
 function boot() {
   let lines = ["> JARVIS STUDIO v2.0", "> collegamento al nucleo dati\u2026", "> moduli: hub \xB7 briefing \xB7 editor \xB7 revisione \xB7 libreria", "> motore di render pronto", "> benvenuto."], seen = sessionStorage && (() => {
@@ -2506,7 +2507,7 @@ async function initRuntime() {
   sys("busy", "Sincronizzo");
   let timer2 = setTimeout(() => sys("off", "Dati non raggiungibili"), 1e4), first = !0;
   S.db.collection("projects").orderBy("updatedAt", "desc").onSnapshot((snap2) => {
-    if (snap2.metadata.fromCache || (clearTimeout(timer2), sys("ok", "Online")), S.projects = snap2.docs.map((d) => ({ id: d.id, ...d.data() })), first) {
+    if (snap2.metadata.fromCache || (clearTimeout(timer2), sys("ok", "Online")), S.projects = snap2.docs.map((d) => ({ id: d.id, ...plain(d.data()) })), first) {
       first = !1;
       let saved = store.get("cur");
       saved && S.projects.some((p2) => p2.id === saved) && (S.cur = saved);

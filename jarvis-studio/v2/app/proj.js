@@ -1,6 +1,6 @@
 // One edit document per mission (materials + timeline), shared by Briefing and Editor.
 // Path: projects/<id>/state/edit. Saves are debounced and serialized (one write at a time per doc).
-import { S, emit, now, toast, writeErr } from './state.js';
+import { S, emit, now, toast, writeErr , plain } from './state.js';
 
 export const E = { pid: null, materials: [], clips: [], rev: 0, loaded: false };
 let unsub = null, timer = null, writing = false, again = false, lastSaved = 0;
@@ -16,7 +16,7 @@ export function openEdit(pid) {
   if (!S.db || !pid) return;
   unsub = S.db.doc(editPath(pid)).onSnapshot((snap) => {
     if (E.pid !== pid) return;
-    const d = snap.exists ? snap.data() : null;
+    const d = snap.exists ? plain(snap.data()) : null;
     if (d && (d.rev || 0) <= lastSaved && E.loaded) return; // our own echo or older
     if (d && (writing || timer) && E.loaded) return; // local edits pending win
     E.materials = (d && d.materials) || []; E.clips = (d && d.clips) || []; E.rev = (d && d.rev) || 0; E.loaded = true;

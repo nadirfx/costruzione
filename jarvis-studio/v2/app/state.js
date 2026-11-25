@@ -39,3 +39,6 @@ export const bus = new EventTarget();
 export const emit = (name, detail) => bus.dispatchEvent(new CustomEvent(name, { detail }));
 export const on = (name, fn) => bus.addEventListener(name, (e) => fn(e.detail));
 export function feed(text, kind = '') { emit('feed', { text, kind, at: Date.now() }); }
+
+// Snapshot data can be frozen by the runtime (Safari reports 'readonly property'): always work on a copy.
+export const plain = (o) => (o == null ? o : JSON.parse(JSON.stringify(o)));

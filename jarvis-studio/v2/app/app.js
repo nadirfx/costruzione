@@ -1,5 +1,5 @@
 // Jarvis Studio — bootstrap, router, data subscription, Hub.
-import { S, $, el, toast, tc, now, store, writeErr, emit, on, feed, STATUS, FORMAT } from './state.js';
+import { S, $, el, toast, tc, now, store, writeErr, emit, on, feed, STATUS, FORMAT , plain } from './state.js';
 import * as Brief from './brief.js';
 import * as Editor from './editor.js';
 import * as Review from './review.js';
@@ -121,7 +121,7 @@ async function initRuntime() {
   let first = true;
   S.db.collection('projects').orderBy('updatedAt', 'desc').onSnapshot((snap) => {
     if (!snap.metadata.fromCache) { clearTimeout(timer); sys('ok', 'Online'); }
-    S.projects = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    S.projects = snap.docs.map(d => ({ id: d.id, ...plain(d.data()) }));
     if (first) { first = false; const saved = store.get('cur'); if (saved && S.projects.some(p => p.id === saved)) S.cur = saved; }
     emit('projects');
     if (first === false && S.room && ROOMS[S.room] && ROOMS[S.room].refresh) ROOMS[S.room].refresh();

@@ -1,6 +1,6 @@
 // Jarvis live editing. Claude (in the page via `sample`, or a Claude session writing to projects/<id>/state/live)
 // streams one JSON operation per line; each operation is applied to the timeline as it arrives, animated.
-import { S, $, el, toast, tc, on, feed, emit, now } from './state.js';
+import { S, $, el, toast, tc, on, feed, emit, now , plain } from './state.js';
 import { E, touch, matById } from './proj.js';
 import { ed } from './editor.js';
 import { SFX, RULES, TEXT_STYLES, TRANSITIONS } from './data.js';
@@ -143,7 +143,7 @@ function subscribeLive() {
   const p = api.curP(); if (!S.db || !p) return; if (liveFor === p.id) return;
   if (liveUnsub) liveUnsub(); liveFor = p.id; applied = null;
   liveUnsub = S.db.doc('projects/' + p.id + '/state/live').onSnapshot((snap) => {
-    const d = snap.exists ? snap.data() : null; if (!d) { applied = applied ?? 0; return; }
+    const d = snap.exists ? plain(snap.data()) : null; if (!d) { applied = applied ?? 0; return; }
     if (d.message && d.message !== subscribeLive.lastMsg) { subscribeLive.lastMsg = d.message; feed('Jarvis (sessione): ' + String(d.message).slice(0, 80)); if (S.room === 'editor') log('say', String(d.message).slice(0, 300)); }
     const ops = Array.isArray(d.ops) ? d.ops : [];
     if (applied === null) applied = Number(d.applied || 0); // first read: anything already applied is skipped
