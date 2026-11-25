@@ -1,0 +1,189 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Guida ManyChat · Commenta CLAUDE</title>
+<style>
+@font-face{font-family:Int;font-weight:100 900;src:url(../t3d/www/fonts/Inter.ttf)}
+@page{size:A4;margin:16mm 15mm 18mm}@page:first{margin:0}
+:root{--ink:#141414;--mute:#5b5a55;--line:#dedcd4;--paper:#fbfaf7;--org:#D97757;--org-t:#fbe9e2;--lime:#C8F25A;--ok:#1f9d5c;--warn:#c9821b}
+*{box-sizing:border-box}
+body{font-family:Int,system-ui,sans-serif;color:var(--ink);font-size:10.4pt;line-height:1.5;margin:0}
+h1{font-size:30pt;letter-spacing:-.03em;line-height:1.05;margin:0 0 6mm;font-weight:900}
+h2{font-size:15pt;letter-spacing:-.015em;margin:7mm 0 3mm;font-weight:800;break-after:avoid}
+h2 .n{display:inline-block;width:8mm;height:8mm;border-radius:50%;background:var(--org);color:#fff;font-size:10.5pt;text-align:center;line-height:8mm;margin-right:2.5mm;vertical-align:2px}
+h3{font-size:11pt;margin:5mm 0 2mm;font-weight:700;break-after:avoid}
+p{margin:0 0 2.5mm}
+.cover{height:297mm;display:flex;flex-direction:column;justify-content:space-between;background:var(--ink);color:#fff;margin:0;padding:26mm 20mm;break-after:page}
+.cover .k{color:var(--org);font-weight:800;letter-spacing:.18em;font-size:9pt;text-transform:uppercase}
+.cover h1{font-size:40pt;color:#fff;margin-top:8mm}
+.cover h1 b{color:var(--org)}
+.cover .sub{font-size:13pt;color:#cfcdc6;max-width:140mm}
+.cover .meta{font-size:9pt;color:#9a988f}
+.lead{font-size:12pt;color:var(--ink);margin-bottom:4mm}
+.box{border:1px solid var(--line);border-radius:3mm;padding:4mm 5mm;margin:3mm 0;background:var(--paper);break-inside:avoid}
+.box.org{background:var(--org-t);border-color:#f0c9b8}
+.box.warn{background:#fff6e5;border-color:#f1d9a6}
+.tag{display:inline-block;font-size:8pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--org);margin-bottom:1mm}
+ol,ul{margin:0 0 3mm;padding-left:7mm}
+li{margin:0 0 1.5mm}
+table{width:100%;border-collapse:collapse;margin:2mm 0 4mm;font-size:9.6pt}tr{break-inside:avoid}
+th{text-align:left;font-size:8.4pt;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);border-bottom:1.5px solid var(--ink);padding:2mm 2mm}
+td{border-bottom:1px solid var(--line);padding:1.8mm 2mm;vertical-align:top}
+code,.k2{font-family:ui-monospace,Menlo,monospace;font-size:9pt;background:#efede6;padding:.4mm 1.5mm;border-radius:1mm}
+pre{font-family:ui-monospace,Menlo,monospace;font-size:9pt;background:var(--ink);color:#f2efe8;padding:3.5mm 4mm;border-radius:2.5mm;white-space:pre-wrap;margin:2mm 0 3mm;break-inside:avoid}
+.msg{border-radius:4mm;padding:3mm 4.5mm;break-inside:avoid;background:#fff;border:1px solid var(--line);margin:2mm 0 1mm;white-space:pre-wrap;break-inside:avoid}
+.btn{display:inline-block;margin-top:2mm;background:var(--ink);color:#fff;border-radius:6mm;padding:1.4mm 4mm;font-weight:700;font-size:9pt}
+.lab{font-size:8pt;color:var(--mute);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:4mm}
+.check li{list-style:none;margin-left:-7mm;padding-left:7mm;position:relative}
+.check li::before{content:"";position:absolute;left:0;top:1.2mm;width:3.6mm;height:3.6mm;border:1.4px solid var(--ink);border-radius:.8mm}
+.src{font-size:7.8pt;color:var(--mute);line-height:1.4}
+.src a{color:var(--mute)}
+.pb{break-before:page}
+svg text{font-family:Int,sans-serif}
+.foot{font-size:8pt;color:var(--mute);margin-top:6mm}
+</style></head><body>
+
+<section class="cover">
+  <div><div class="k">Guida operativa · Instagram</div>
+  <h1>Commenta <b>CLAUDE</b>.<br>Il link arriva da solo.</h1>
+  <p class="sub">Come impostare su ManyChat l'automazione che manda il link della skill in DM a chi commenta: configurazione passo passo, testi pronti da copiare, regole di Instagram e test prima di pubblicare.</p></div>
+  <div class="meta">Aggiornata al 25 novembre 2026 · Preparata per nadirfx · Prezzi e limiti da ricontrollare su manychat.com prima di pagare</div>
+</section>
+
+<h2><span class="n">1</span>Come funziona</h2>
+<p class="lead">Chi commenta <b>CLAUDE</b> sotto il Reel riceve in automatico un DM. Tocca un pulsante e riceve il link alla guida. Tu non scrivi niente a mano.</p>
+<svg viewBox="0 0 760 250" width="100%" role="img" aria-label="Flusso: commento, risposta pubblica, DM con pulsante, controllo follow, link">
+ <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8a887f"/></marker></defs>
+ <g fill="none" stroke="#8a887f" stroke-width="1.3">
+  <path d="M146 70H176" marker-end="url(#a)"/><path d="M322 70H352" marker-end="url(#a)"/><path d="M498 70H528" marker-end="url(#a)"/>
+  <path d="M600 104V146" marker-end="url(#a)"/><path d="M528 180H322" marker-end="url(#a)"/><path d="M672 180H700V70H676" marker-end="url(#a)"/>
+ </g>
+ <g><rect x="16" y="40" width="130" height="64" rx="10" fill="#fbe9e2" stroke="#D97757" stroke-width="2"/><text x="81" y="66" text-anchor="middle" font-size="13" font-weight="700">Commento</text><text x="81" y="84" text-anchor="middle" font-size="11.5" fill="#5b5a55">"CLAUDE"</text></g>
+ <g><rect x="176" y="40" width="146" height="64" rx="10" fill="#fff" stroke="#8a887f"/><text x="249" y="66" text-anchor="middle" font-size="13" font-weight="700">Risposta pubblica</text><text x="249" y="84" text-anchor="middle" font-size="11.5" fill="#5b5a55">"Ti ho scritto in DM"</text></g>
+ <g><rect x="352" y="40" width="146" height="64" rx="10" fill="#fff" stroke="#8a887f"/><text x="425" y="66" text-anchor="middle" font-size="13" font-weight="700">DM di apertura</text><text x="425" y="84" text-anchor="middle" font-size="11.5" fill="#5b5a55">pulsante "Mandami il link"</text></g>
+ <g><polygon points="528,70 600,36 672,70 600,104" fill="#fff" stroke="#8a887f"/><text x="600" y="66" text-anchor="middle" font-size="12.5" font-weight="700">Ti segue?</text><text x="600" y="82" text-anchor="middle" font-size="11" fill="#5b5a55">(facoltativo)</text></g>
+ <g><rect x="528" y="146" width="144" height="64" rx="10" fill="#fff" stroke="#8a887f"/><text x="600" y="172" text-anchor="middle" font-size="13" font-weight="700">Chiedi il follow</text><text x="600" y="190" text-anchor="middle" font-size="11.5" fill="#5b5a55">pulsante "Ti seguo"</text></g>
+ <g><rect x="176" y="146" width="146" height="64" rx="10" fill="#141414"/><text x="249" y="172" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">DM con il link</text><text x="249" y="190" text-anchor="middle" font-size="11.5" fill="#C8F25A">pulsante "Apri la guida"</text></g>
+ <text x="590" y="128" text-anchor="end" font-size="11" fill="#5b5a55">no</text><text x="694" y="140" text-anchor="end" font-size="11" fill="#5b5a55">dopo il follow</text><text x="430" y="172" font-size="11" fill="#5b5a55">sì</text>
+ <text x="249" y="236" text-anchor="middle" font-size="11" fill="#5b5a55">+ promemoria se non apre il link (entro 24 ore)</text>
+</svg>
+<p><b>Perché funziona:</b></p>
+<ul>
+<li><b>Più commenti:</b> l'algoritmo spinge il Reel.</li>
+<li><b>Una conversazione aperta con ogni persona:</b> potrai riscriverle nelle 24 ore successive.</li>
+<li><b>Una lista di contatti interessati all'AI:</b> sono i tuoi futuri clienti.</li>
+</ul>
+
+<h2><span class="n">2</span>Cosa serve prima di iniziare</h2>
+<ul class="check">
+<li><b>Account Instagram professionale</b> (Creator o Business): Impostazioni → Tipo di account e strumenti.</li>
+<li><b>Accesso ai messaggi per le app collegate:</b> Impostazioni → Messaggi e risposte alle storie → Strumenti collegati → attiva "Consenti l'accesso ai messaggi". Senza questo ManyChat non può scrivere in DM.</li>
+<li><b>Account ManyChat</b> collegato a Instagram, su manychat.com, con "Accedi con Instagram".</li>
+<li><b>La pagina della guida pronta</b> (sezione 5), con il suo link.</li>
+</ul>
+<h3>Quale piano</h3>
+<table><tr><th>Piano</th><th>Prezzo</th><th>Contatti attivi al mese</th><th>Per te</th></tr>
+<tr><td><b>Free</b></td><td>0 €</td><td>25</td><td>Solo per provare: un Reel che va bene li supera in un'ora, e mostra il marchio ManyChat</td></tr>
+<tr><td><b>Pro</b></td><td>39 $/mese, o 29 $/mese pagando l'anno</td><td>2.500 (poi 0,05 $ a contatto)</td><td><b>Quello giusto</b> per i Reel virali</td></tr></table>
+<p class="src">Dal 2 marzo 2026 ManyChat conta i "contatti attivi" del mese, non più tutti i contatti. Cifre da guide aggiornate (vedi Fonti): ricontrolla su manychat.com/pricing prima di pagare.</p>
+
+<h2 class="pb"><span class="n">3</span>Configurazione passo passo</h2>
+<ol>
+<li><b>Apri ManyChat</b> → <span class="k2">Automazioni</span> → <span class="k2">+ Nuova automazione</span>.</li>
+<li><b>Scegli il modello</b> <span class="k2">Auto-DM links from comments</span> (oppure <span class="k2">Start from scratch</span> → trigger <span class="k2">Post or Reel Comments</span>).</li>
+<li><b>Quale post:</b> scegli il Reel specifico. Se lo programmi, puoi impostarlo prima che esca con l'opzione "prossimo post", dove disponibile.</li>
+<li><b>Parole chiave:</b> <span class="k2">CLAUDE</span>, <span class="k2">Claude</span>, <span class="k2">claude</span>, più le varianti scritte male più comuni: <span class="k2">CLOUD</span>, <span class="k2">CLAUD</span>. Lascia "il commento contiene la parola", non "è esattamente la parola".</li>
+<li><b>Risposta pubblica:</b> attiva <span class="k2">Reply to their comments</span> e inserisci 3 o 4 varianti diverse (testi alla sezione 4). Le varianti evitano che Instagram veda risposte tutte uguali.</li>
+<li><b>DM di apertura:</b> attivalo, con un pulsante <b>"Mandami il link 🔗"</b>.
+  <div class="box warn"><span class="tag">Importante</span><br>Il pulsante del primo DM deve essere un pulsante normale o una risposta rapida, <b>non</b> "Apri sito web". Solo il tocco su un pulsante normale apre la conversazione e permette di mandare il link e il promemoria.</div></li>
+<li><b>Controllo follow</b> (facoltativo): dopo il pulsante aggiungi una <span class="k2">Condizione</span> → "Segue il tuo account". Se è falso, manda il messaggio "seguimi" con il pulsante <b>"Ti seguo ✅"</b>, poi ricontrolla. Se è vero, vai al link.</li>
+<li><b>DM con il link:</b> testo più un pulsante <b>"Apri la guida"</b> con azione "Apri sito web" e il link della tua guida.</li>
+<li><b>Promemoria:</b> se il link non viene aperto, aggiungi un messaggio dopo 2–3 ore, sempre entro 24 ore dall'ultimo messaggio della persona.</li>
+<li><b>Attiva:</b> clicca <span class="k2">Go Live</span> in alto a destra, poi fai il test (sezione 7) <b>prima</b> di pubblicare il Reel.</li>
+</ol>
+<div class="box org"><span class="tag">Consiglio</span><br>Il controllo follow porta più follower, ma una parte delle persone si ferma lì. Per i primi Reel lascialo <b>spento</b> e guarda quanti aprono il link. Poi prova ad accenderlo e confronta.</div>
+
+<h2><span class="n">4</span>Testi pronti da copiare</h2>
+<div class="lab">Risposte pubbliche al commento (varianti a rotazione)</div>
+<div class="msg">Ti ho appena scritto in DM 📩</div>
+<div class="msg">Fatto! Controlla i messaggi 🔗</div>
+<div class="msg">Mandato in DM, buon divertimento 🎮</div>
+<div class="msg">Arrivato in DM! Se non lo vedi, guarda nelle richieste 👀</div>
+
+<div class="lab">DM di apertura</div>
+<div class="msg">Ciao! 👋 Ecco la skill che trasforma Claude in uno studio di videogiochi.
+Tocca qui sotto e ti mando subito il link e i passi per installarla 👇<br><span class="btn">Mandami il link 🔗</span></div>
+
+<div class="lab">Se non ti segue (solo con il controllo follow attivo)</div>
+<div class="msg">Ultimo passo: seguimi per ricevere il link 🙏
+Ogni settimana porto skill e strumenti AI che quasi nessuno conosce.<br><span class="btn">Ti seguo ✅</span></div>
+
+<div class="lab">DM con il link</div>
+<div class="msg">Eccola! 🎮 Claude Code Game Studios: descrivi un gioco, Claude ti fa due domande, scrive il progetto e te lo costruisce nel browser.
+Dentro la guida trovi il link GitHub, cosa ti serve e i comandi per installarla in 5 minuti.<br><span class="btn">Apri la guida</span></div>
+
+<div class="lab">Promemoria (dopo 2–3 ore, solo se non ha aperto)</div>
+<div class="msg">Hai visto la guida? 👀 Il primo gioco lo crei con un comando solo: /prototype più la tua idea.
+Se ti blocchi da qualche parte, rispondimi qui.<br><span class="btn">Apri la guida</span></div>
+
+<h2 class="pb"><span class="n">5</span>La guida che riceve chi commenta</h2>
+<p class="lead">È la pagina dietro il pulsante "Apri la guida". Corta, utile, con il tuo nome: è lei che trasforma chi commenta in qualcuno che si ricorda di te.</p>
+<p><b>Dove metterla:</b> una pagina Notion pubblica, oppure una pagina sul tuo sito. Ecco il contenuto pronto:</p>
+<div class="box">
+<h3 style="margin-top:0">Claude Code Game Studios: installala in 5 minuti</h3>
+<p><b>Cos'è:</b> una skill gratuita su GitHub che trasforma Claude Code in uno studio di videogiochi. Descrivi un gioco: ti fa qualche domanda, scrive una pagina di progetto e costruisce un gioco che si apre nel browser con un doppio clic. Dentro ci sono 49 agenti organizzati come uno studio vero.</p>
+<p><b>Link:</b> github.com/Donchitos/Claude-Code-Game-Studios</p>
+<p><b>Cosa ti serve:</b></p>
+<ul>
+<li><b>Claude Code</b>, con un piano Claude a pagamento. Non è l'app normale di Claude: è lo strumento da computer.</li>
+<li><b>Git, Python 3 e Chrome</b> (o Edge). Node.js è consigliato.</li>
+</ul>
+<p><b>Installazione:</b></p>
+<pre>git clone https://github.com/Donchitos/Claude-Code-Game-Studios.git mio-gioco
+cd mio-gioco
+claude</pre>
+<p><b>Il primo gioco:</b> dentro Claude Code scrivi <span class="k2">/prototype</span> seguito dalla tua idea, oppure <span class="k2">/start</span> per farti guidare.</p>
+<pre>/prototype un gioco di pesca dove i pesci rari abboccano solo al tramonto</pre>
+<p><b>Consiglio:</b> giocalo, poi chiedigli le modifiche a parole ("rendilo più difficile", "aggiungi un boss"). Ogni modifica che accetti diventa un punto a cui puoi tornare.</p>
+<p style="margin:0">Ti è piaciuta? Seguimi per la prossima skill. — nadirfx</p>
+</div>
+<p class="src">I passi vengono dal README ufficiale del progetto, letto il 25/11/2026. L'esempio del gioco di pesca è quello del README.</p>
+
+<h2><span class="n">6</span>Regole di Instagram, per non farti bloccare</h2>
+<table><tr><th>Regola</th><th>Cosa significa per te</th></tr>
+<tr><td><b>Scrivi solo a chi ti scrive prima</b></td><td>L'automazione parte solo da un commento o da un messaggio. Niente DM a freddo.</td></tr>
+<tr><td><b>Finestra di 24 ore</b></td><td>Dopo l'ultimo messaggio della persona hai 24 ore per scriverle in automatico, promemoria compreso.</td></tr>
+<tr><td><b>Commenti vecchi</b></td><td>La risposta privata a un commento funziona solo per pochi giorni (circa 7) dal commento.</td></tr>
+<tr><td><b>Limite orario</b></td><td>Meta indica fino a 750 risposte private all'ora per account. Se il Reel esplode, i DM partono in coda: è normale.</td></tr>
+<tr><td><b>Varia i testi</b></td><td>Più varianti di risposta pubblica, e nessun link nei commenti pubblici: il link va solo in DM.</td></tr>
+<tr><td><b>Solo app ufficiali</b></td><td>ManyChat usa l'API ufficiale di Meta. Non usare bot "non ufficiali" sullo stesso account.</td></tr></table>
+<p class="src">Limiti da guide 2026 basate sulla documentazione Meta (vedi Fonti). Meta li cambia: in caso di dubbio vale quello che dice ManyChat nel tuo account.</p>
+
+<h2><span class="n">7</span>Test prima di pubblicare, numeri da guardare dopo</h2>
+<h3>Test (5 minuti)</h3>
+<ul class="check">
+<li>Dal profilo di un amico (o da un tuo secondo account) commenta "claude" in minuscolo sul Reel.</li>
+<li>Arriva la risposta pubblica? Arriva il DM? Funziona il pulsante?</li>
+<li>Il link si apre dal telefono? La guida si legge bene in verticale?</li>
+<li>Prova anche "CLOUD": deve partire lo stesso.</li>
+<li>Se hai il controllo follow, prova con un account che non ti segue.</li>
+</ul>
+<h3>Numeri da segnare dopo 48 ore (in ManyChat → Automazioni → statistiche)</h3>
+<table><tr><th>Numero</th><th>Cosa ti dice</th></tr>
+<tr><td>Commenti con la parola chiave</td><td>Quanto il gancio ha convinto</td></tr>
+<tr><td>DM inviati / pulsante toccato</td><td>Quanto il primo DM convince a proseguire</td></tr>
+<tr><td>Link aperti</td><td>Quanto la promessa è forte</td></tr>
+<tr><td>Nuovi follower dal Reel</td><td>Quanto il controllo follow (se attivo) ti fa crescere</td></tr></table>
+<p>Tieni questi numeri Reel per Reel: dopo 3 o 4 video vedi quali skill e quali ganci funzionano meglio, e lì costruisci i prossimi.</p>
+
+<h3>Fonti</h3>
+<p class="src">
+ManyChat, <a href="https://help.manychat.com/hc/en-us/articles/16654065283100-Quick-Automation-Auto-DM-links-from-comments">Quick Automation: Auto-DM links from comments</a> ·
+<a href="https://manychat.com/blog/instagram-quick-automation-comment-to-dm-guide/">Comment-to-DM guide</a> ·
+<a href="https://help.manychat.com/hc/en-us/articles/20310878273692-Quick-Automation-Grow-followers-from-comments">Grow followers from comments</a> ·
+<a href="https://www.saasorskip.com/guides/instagram-comment-automation">SaaS or Skip, comment automation</a> ·
+<a href="https://www.manysetter.com/guides/manychat-instagram-automation">ManySetter, comment-to-DM setup</a> ·
+<a href="https://www.chatbot.com/blog/manychat-pricing/">ChatBot.com, ManyChat pricing 2026</a> ·
+<a href="https://dmchamp.com/resources/manychat-pricing-2026/">DMChamp, pricing 2026</a> ·
+<a href="https://www.blotato.com/blog/instagram-dm-limits">Blotato, Instagram DM limits</a> ·
+<a href="https://creatorlanehq.com/blog/instagram-dm-auto-reply-rate-limits-2026">Creator Lane, rate limits 2026</a> ·
+<a href="https://github.com/Donchitos/Claude-Code-Game-Studios">README Claude Code Game Studios</a>.
+Le pagine di manychat.com non erano raggiungibili da qui: i nomi dei menu possono essere leggermente diversi nella tua lingua.</p>
+</body></html>
