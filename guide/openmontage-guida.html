@@ -1,0 +1,174 @@
+<title>OpenMontage</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one narrow reading column on a night-studio ground; a hero with a pixel-built game screen,
+   then the steps in order, each command in a copyable block. Deliberately single dark look. */
+:root{
+  --bg:#0B0C10;--card:#14161D;--card-2:#1A1D26;--line:rgba(238,234,226,.10);
+  --text:#EEEAE2;--soft:#B8B4AA;--mute:#86827A;
+  --ember:#EC8A5E;--ember-2:#F6B48F;--lime:#C8F25A;--sky:#7DB6FF;
+  --f-display:"Bricolage Grotesque","Inter",system-ui,sans-serif;--f-body:"Inter",system-ui,-apple-system,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font:16px/1.6 var(--f-body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:720px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:44px}
+a{color:var(--ember-2)}
+h1,h2,h3{font-family:var(--f-display);letter-spacing:-.02em;text-wrap:balance;margin:0}
+h1{font-size:clamp(36px,8vw,58px);line-height:1;font-weight:800}
+h1 em{font-style:normal;color:var(--ember-2)}
+h2{font-size:clamp(24px,4.6vw,30px);line-height:1.1;font-weight:800;margin-bottom:12px}
+h3{font-size:18px;font-weight:600}
+p{margin:0 0 10px;color:var(--soft)}
+p b,li b{color:var(--text);font-weight:600}
+.eyebrow{font:600 12px var(--f-body);letter-spacing:.18em;text-transform:uppercase;color:var(--ember)}
+.hero{display:grid;gap:18px}
+.lead{font-size:18.5px;color:var(--soft);max-width:58ch}
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border-radius:999px;font-weight:600;text-decoration:none;border:1px solid var(--line);color:var(--text);background:rgba(255,255,255,.04)}
+.btn.pri{background:var(--ember);color:#1a0d07;border-color:transparent;box-shadow:0 10px 28px rgba(236,138,94,.28)}
+/* the game screen in the hero: built from pixels, the kind of browser game the skill makes */
+.screen{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#07080A;aspect-ratio:16/9;max-width:100%}
+.screen canvas{display:block;width:100%;height:100%}
+.screen .bar{position:absolute;left:0;right:0;top:0;display:flex;gap:6px;align-items:center;padding:8px 12px;background:rgba(10,11,14,.55);font:500 11.5px var(--f-mono);color:var(--soft)}
+.screen .bar i{width:9px;height:9px;border-radius:50%;background:#ff5f57}.screen .bar i:nth-child(2){background:#febc2e}.screen .bar i:nth-child(3){background:#28c840;margin-right:8px}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.fact{padding:14px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.fact b{display:block;font:800 28px/1.1 var(--f-display);color:var(--text)}
+.fact span{font-size:13px;color:var(--mute)}
+.need{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.need li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--soft)}
+.need li::before{content:"";width:16px;height:16px;margin-top:4px;border-radius:5px;border:1.6px solid var(--lime)}
+.steps{display:grid;gap:14px;margin:0;padding:0;list-style:none;counter-reset:s}
+.steps>li{counter-increment:s;display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px}
+.steps>li::before{content:counter(s);width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--ember);color:#1a0d07;font:800 18px var(--f-display)}
+.steps>li>div{min-width:0}
+.code{position:relative;margin:8px 0 4px;border-radius:12px;background:#07080A;border:1px solid var(--line)}
+.code pre{margin:0;padding:14px 92px 14px 16px;overflow-x:auto;font:500 13.5px/1.6 var(--f-mono);color:#E9E4D8;white-space:pre-wrap;word-break:break-word}
+.code button{position:absolute;top:8px;right:8px;border:1px solid var(--line);background:var(--card-2);color:var(--text);border-radius:999px;padding:6px 12px;font:600 12px var(--f-body);cursor:pointer}
+.code button.ok{background:var(--lime);color:#111;border-color:transparent}
+.tip{padding:14px 16px;border-radius:14px;background:rgba(236,138,94,.10);border:1px solid rgba(236,138,94,.3);color:var(--soft);font-size:15px}
+.tip b{color:var(--ember-2)}
+.ideas{display:grid;gap:8px}
+.tiers{display:grid;gap:10px}
+.tier{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;padding:14px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.tier b{font:800 15px var(--f-display);color:var(--c)}
+.tier span{color:var(--soft);font-size:14.5px}
+.after{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.after div{padding:14px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.after div p{margin:4px 0 0;font-size:14.5px}
+footer{display:grid;gap:6px;padding-top:24px;border-top:1px solid var(--line);color:var(--mute);font-size:13.5px}
+footer b{color:var(--text);font-family:var(--f-display);font-size:17px}
+:focus-visible{outline:2px solid var(--ember);outline-offset:3px;border-radius:8px}
+@media (max-width:560px){.facts{grid-template-columns:minmax(0,1fr)}.after{grid-template-columns:minmax(0,1fr)}.tier{grid-template-columns:minmax(0,1fr);gap:4px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <span class="eyebrow">Guida · progetto gratuito per Claude Code</span>
+    <h1>Descrivi un video. <em>Claude lo produce.</em></h1>
+    <p class="lead">OpenMontage trasforma Claude Code in uno studio di produzione video. Gli scrivi un'idea: fa le ricerche, scrive lo script, progetta le scene, crea immagini e clip, aggiunge voce e musica e monta tutto con i sottotitoli. E prima di ogni fase importante ti chiede di approvare.</p>
+    <div class="screen" aria-label="La pellicola delle fasi di produzione"><div class="bar"><i></i><i></i><i></i>projects/il-tuo-video/renders/final.mp4</div><canvas id="film" width="640" height="360"></canvas></div>
+    <div class="btns"><a class="btn pri" href="https://github.com/OpenMontageInc/OpenMontage" target="_blank" rel="noopener">Apri OpenMontage su GitHub</a><a class="btn" href="#installazione">Vai all'installazione</a></div>
+    <div class="facts">
+      <div class="fact"><b>83k</b><span>stelle su GitHub</span></div>
+      <div class="fact"><b>100+</b><span>strumenti di produzione</span></div>
+      <div class="fact"><b>Gratis</b><span>open source (AGPLv3)</span></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>Cosa ti serve</h2>
+    <ul class="need">
+      <li><span><b>Claude Code</b>, lo strumento di Claude per computer (non l'app normale di chat). Serve un piano Claude a pagamento.</span></li>
+      <li><span><b>Git</b> e <b>Python 3.10</b> o più recente.</span></li>
+      <li><span><b>Node.js 22</b> o più recente (versioni aggiornate: 22.23.4+, 24.22.1+ o 26.12.1+).</span></li>
+      <li><span><b>FFmpeg</b>: su Mac <b>brew install ffmpeg</b>, su Linux <b>sudo apt install ffmpeg</b>, su Windows da ffmpeg.org.</span></li>
+    </ul>
+    <p style="margin-top:10px">Non serve una scheda grafica: serve solo se vuoi generare clip AI gratis sul tuo computer.</p>
+  </section>
+
+  <section id="installazione">
+    <h2>Installazione in 3 passi</h2>
+    <ol class="steps">
+      <li><div><h3>Scarica il progetto</h3><p>Apri il terminale e copia questi comandi. Il terzo installa tutto quello che serve, voce gratuita compresa.</p>
+        <div class="code"><pre>git clone https://github.com/OpenMontageInc/OpenMontage.git
+cd OpenMontage
+make setup</pre><button type="button">Copia</button></div>
+        <p>Se il comando <b>make</b> non c'è (succede spesso su Windows), sulla pagina GitHub trovi gli stessi passaggi uno per uno.</p></div></li>
+      <li><div><h3>Apri Claude Code nella cartella</h3><p>Sempre dentro la cartella <b>OpenMontage</b>, così Claude legge le istruzioni dello studio.</p>
+        <div class="code"><pre>claude</pre><button type="button">Copia</button></div></div></li>
+      <li><div><h3>Descrivi il video</h3><p>Scrivi cosa vuoi, anche in italiano. Un esempio che funziona senza nessuna chiave a pagamento:</p>
+        <div class="code"><pre>Fammi un video animato verticale di 45 secondi che spiega perché il cielo è blu, con voce e sottotitoli</pre><button type="button">Copia</button></div></div></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Cosa succede dopo</h2>
+    <ol class="steps">
+      <li><div><h3>Ricerca</h3><p>Prima di scrivere fa da 15 a 25 ricerche sul web: YouTube, Reddit, notizie, fonti accademiche.</p></div></li>
+      <li><div><h3>Proposta e script</h3><p>Ti propone l'idea e scrive lo script. Si ferma e ti chiede: approvi?</p></div></li>
+      <li><div><h3>Piano delle scene e materiali</h3><p>Progetta ogni scena, poi crea o cerca immagini, clip, voce e musica. Ti mostra un foglio con le anteprime prima di andare avanti.</p></div></li>
+      <li><div><h3>Montaggio</h3><p>Monta il video con i sottotitoli e lo ricontrolla da solo dopo il render.</p></div></li>
+    </ol>
+    <div class="tip" style="margin-top:14px"><b>Consiglio:</b> a ogni pausa puoi dire cosa cambiare con parole tue: "più corto", "tono più serio", "cambia la voce". Lui riparte da lì.</div>
+  </section>
+
+  <section>
+    <h2>Quanto costa</h2>
+    <div class="after">
+      <div><h3>Gratis</h3><p>Senza chiavi API: voce Piper gratuita, filmati d'archivio (Archive.org, NASA, Wikimedia), sottotitoli e montaggio.</p></div>
+      <div><h3>Con le chiavi API</h3><p>Le aggiungi nel file <b>.env</b>, tutte facoltative: clip AI (Kling, Veo, Runway…), voci ElevenLabs, musica. Si pagano a consumo.</p></div>
+      <div><h3>Ti avvisa prima</h3><p>Stima il costo prima di spendere. Di base chiede conferma per ogni azione sopra <b>0,50 $</b>.</p></div>
+      <div><h3>Tetto massimo</h3><p>Budget totale di base: <b>10 $</b>. Lo puoi cambiare.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Cosa sa fare</h2>
+    <div class="tiers">
+      <div class="tier" style="--c:#E9C46A"><b>Formati</b><span>Reels e TikTok 9:16, YouTube 16:9 e 4K, feed 1:1, cinema 21:9.</span></div>
+      <div class="tier" style="--c:var(--sky)"><b>Generi</b><span>Spiegoni animati, documentari con filmati veri, trailer, video prodotto, corti animati.</span></div>
+      <div class="tier" style="--c:var(--lime)"><b>Dove trovi il video</b><span>Nella cartella <b>projects</b> del progetto, dentro <b>renders</b>.</span></div>
+    </div>
+  </section>
+
+  <footer>
+    <b>Guida di nadirfx</b>
+    <span>Ogni settimana una skill o uno strumento AI che quasi nessuno conosce. Seguimi per la prossima.</span>
+    <span>Guida non ufficiale. Il progetto è di OpenMontageInc ed è su <a href="https://github.com/OpenMontageInc/OpenMontage" target="_blank" rel="noopener">GitHub</a>: lì trovi le istruzioni complete e sempre aggiornate.</span>
+  </footer>
+</div>
+
+<script>
+// copy buttons
+document.querySelectorAll('.code button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var pre = b.parentElement.querySelector('pre'); var txt = pre.textContent;
+    var done = function () { b.textContent = 'Copiato'; b.classList.add('ok'); setTimeout(function () { b.textContent = 'Copia'; b.classList.remove('ok'); }, 1600); };
+    var select = function () { var r = document.createRange(); r.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Selezionato'; };
+    try { navigator.clipboard.writeText(txt).then(done, select); } catch (e) { select(); }
+  });
+});
+// the production line in the hero: six frames of film lighting up one after the other
+(function () {
+  var c = document.getElementById('film'); if (!c) return; var x = c.getContext('2d'); var W = 640, H = 360;
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; var L = ['Ricerca', 'Script', 'Scene', 'Clip', 'Voce', 'Montaggio'];
+  function frame(T) {
+    x.fillStyle = '#07080A'; x.fillRect(0, 0, W, H); var off = (T * 40) % 120;
+    x.fillStyle = '#121216'; x.fillRect(0, 90, W, 190);
+    for (var k = -1; k < 24; k++) { x.fillStyle = '#d9d4cc'; x.fillRect(k * 30 - off / 4, 100, 14, 16); x.fillRect(k * 30 - off / 4, 254, 14, 16); }
+    var act = Math.floor(T / .9) % 7;
+    for (var i = 0; i < 6; i++) { var X = 20 + i * 104 - (off / 4) % 30 * 0, on = i < act; x.fillStyle = on ? '#2a1f1a' : '#1a1a20'; x.fillRect(X, 126, 92, 118);
+      if (on) { x.strokeStyle = '#EC8A5E'; x.lineWidth = 2; x.strokeRect(X + 1, 127, 90, 116); }
+      x.fillStyle = on ? '#F6B48F' : '#5a5852'; x.font = '600 13px Inter, sans-serif'; x.textAlign = 'center'; x.fillText(L[i], X + 46, 232);
+      x.fillStyle = on ? '#EC8A5E' : '#2c2c33'; x.font = '800 40px Inter, sans-serif'; x.fillText(String(i + 1), X + 46, 196); }
+    x.fillStyle = 'rgba(236,138,94,.9)'; x.font = '600 15px Inter, sans-serif'; x.textAlign = 'left'; x.fillText(act >= 6 ? '✓ Video pronto' : 'Approvi? ✓', 20, 320);
+  }
+  if (reduce) { frame(6); return; }
+  var t0 = performance.now(); (function loop(now) { frame((now - t0) / 1000); requestAnimationFrame(loop); })(t0);
+})();
+</script>
