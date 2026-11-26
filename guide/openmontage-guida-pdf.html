@@ -1,0 +1,149 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Guida OpenMontage</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Print layout: five 9:16 pages (phone-shaped, opened from ManyChat), one topic per page, one column, centred. */
+:root{--bg:#0B0C10;--card:#15171E;--card2:#1B1E27;--line:rgba(238,234,226,.10);--text:#F1EDE6;--soft:#BDB8AE;--mute:#8A867D;
+  --ember:#EC8A5E;--ember2:#F6B48F;--lime:#C8F25A;--sky:#7DB6FF;--gold:#E9C46A;
+  --fd:"Bricolage Grotesque",Inter,sans-serif;--fb:Inter,system-ui,sans-serif;--fm:"JetBrains Mono",ui-monospace,monospace}
+@page{size:540px 960px;margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font:15px/1.5 var(--fb);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:540px;height:960px;padding:44px 40px 36px;display:flex;flex-direction:column;position:relative;overflow:hidden;page-break-after:always;break-after:page;
+  background:radial-gradient(80% 45% at 50% 0%,rgba(236,138,94,.14),transparent 70%),var(--bg)}
+.page:last-child{page-break-after:auto;break-after:auto}
+.page:not(.cover)>h2:first-of-type{margin-top:auto}
+.page:not(.cover) .item{padding:16px 18px}.page:not(.cover) .item h3{font-size:17px}.page:not(.cover) .item p{font-size:14px}
+.top{display:flex;justify-content:space-between;align-items:center;font:600 11px var(--fb);letter-spacing:.18em;text-transform:uppercase;color:var(--mute)}
+.top b{color:var(--ember)}
+.foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--mute)}
+.foot b{color:var(--text);font-family:var(--fd);font-size:13px}
+h1{font:800 64px/.95 var(--fd);letter-spacing:-.035em}
+h2{font:800 36px/1.02 var(--fd);letter-spacing:-.025em;margin:26px 0 8px}
+h2 em,h1 em{font-style:normal;color:var(--ember2)}
+.lead{color:var(--soft);font-size:15.5px;line-height:1.55}
+.eyebrow{font:600 11.5px var(--fb);letter-spacing:.22em;text-transform:uppercase;color:var(--ember)}
+.stack{display:grid;gap:10px;margin-top:22px}
+.item{display:grid;grid-template-columns:38px 1fr;gap:14px;align-items:start;padding:14px 16px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(236,138,94,.14);color:var(--ember2);font:800 16px var(--fd)}
+.item h3{font:700 16px/1.25 var(--fd);margin-bottom:3px}
+.item p{color:var(--soft);font-size:13.5px;line-height:1.45}
+.item p b{color:var(--text);font-weight:600}
+.note{margin-top:14px;padding:13px 16px;border-radius:14px;background:rgba(200,242,90,.08);border:1px solid rgba(200,242,90,.25);color:var(--soft);font-size:13.5px}
+.note b{color:var(--lime)}
+.code{margin-top:8px;padding:12px 14px;border-radius:12px;background:#06070A;border:1px solid var(--line);font:600 12.5px/1.65 var(--fm);color:#EAE5D9;white-space:pre-wrap;word-break:break-word}
+.code .c{color:var(--ember2)}
+.step{display:grid;grid-template-columns:40px 1fr;gap:14px;padding:16px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.num{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--ember);color:#1a0d07;font:800 18px var(--fd)}
+.step h3{font:700 17px var(--fd);margin-bottom:2px}
+.step p{color:var(--soft);font-size:13.5px}
+/* cover */
+.cover{justify-content:flex-start}
+.reel{margin:30px 0 26px;border-radius:18px;background:#07080A;border:1px solid var(--line);padding:18px 0;position:relative}
+.holes{display:flex;gap:14px;padding:0 14px}.holes i{flex:1;height:10px;border-radius:3px;background:#d9d4cc;opacity:.85}
+.frames{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 16px}
+.fr{aspect-ratio:4/3;border-radius:8px;display:grid;place-items:center;align-content:center;gap:2px;background:#1c1714;border:1.5px solid rgba(236,138,94,.55)}
+.fr b{font:800 24px var(--fd);color:var(--ember)}.fr span{font:600 10.5px var(--fb);letter-spacing:.06em;text-transform:uppercase;color:var(--ember2)}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.fact{padding:14px 12px;border-radius:14px;background:var(--card);border:1px solid var(--line);text-align:center}
+.fact b{display:block;font:800 26px/1.1 var(--fd)}.fact span{font-size:11.5px;color:var(--mute)}
+.link{margin-top:18px;display:flex;align-items:center;justify-content:center;gap:10px;padding:15px;border-radius:999px;background:var(--ember);color:#1a0d07;font:700 15px var(--fb);text-decoration:none}
+.link small{font:600 12.5px var(--fm)}
+/* pipeline */
+.pipe{display:grid;gap:8px;margin-top:20px;position:relative}
+.pipe .item{grid-template-columns:38px 1fr;padding:12px 16px}
+.pipe .ic{background:var(--ember);color:#1a0d07}
+/* cost grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.box{padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.box h3{font:700 15.5px var(--fd);margin-bottom:4px}.box p{color:var(--soft);font-size:12.8px;line-height:1.45}.box p b{color:var(--text)}
+.box.ok{border-color:rgba(200,242,90,.3)}.box.ok h3{color:var(--lime)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{padding:8px 12px;border-radius:999px;background:var(--card2);border:1px solid var(--line);font:600 12.5px var(--fb);color:var(--text)}
+.chip i{font-style:normal;color:var(--ember2);margin-right:6px}
+.end{margin-top:18px;padding:20px;border-radius:18px;text-align:center;background:linear-gradient(135deg,rgba(236,138,94,.22),rgba(236,138,94,.06));border:1px solid rgba(236,138,94,.35)}
+.end h3{font:800 22px var(--fd);margin-bottom:4px}.end p{color:var(--soft);font-size:13.5px}
+</style></head><body>
+
+<!-- 1 · COVER -->
+<section class="page cover">
+  <div class="top"><span><b>Guida</b> · gratuita</span><span>1 / 5</span></div>
+  <div style="margin-top:46px">
+    <div class="eyebrow">Per Claude Code</div>
+    <h1 style="margin-top:12px">Open<br>Montage</h1>
+    <p class="lead" style="margin-top:16px">Descrivi un video. <b style="color:var(--text)">Claude lo produce</b>: ricerche, script, scene, clip, voce e montaggio con i sottotitoli.</p>
+  </div>
+  <div class="reel"><div class="holes"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="frames"><div class="fr"><b>1</b><span>Ricerca</span></div><div class="fr"><b>2</b><span>Script</span></div><div class="fr"><b>3</b><span>Scene</span></div><div class="fr"><b>4</b><span>Clip</span></div><div class="fr"><b>5</b><span>Voce</span></div><div class="fr"><b>6</b><span>Montaggio</span></div></div>
+    <div class="holes"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="facts"><div class="fact"><b>83k</b><span>stelle su GitHub</span></div><div class="fact"><b>100+</b><span>strumenti</span></div><div class="fact"><b>Gratis</b><span>open source</span></div></div>
+  <a class="link" href="https://github.com/OpenMontageInc/OpenMontage">Apri il progetto <small>github.com/OpenMontageInc/OpenMontage</small></a>
+  <div class="foot"><b>nadirfx</b><span>Guida non ufficiale</span></div>
+</section>
+
+<!-- 2 · COSA TI SERVE -->
+<section class="page">
+  <div class="top"><span><b>Prima di iniziare</b></span><span>2 / 5</span></div>
+  <h2>Cosa ti <em>serve</em></h2>
+  <p class="lead">Quattro cose sul computer. Le installi una volta sola.</p>
+  <div class="stack">
+    <div class="item"><div class="ic">1</div><div><h3>Claude Code</h3><p>Lo strumento di Claude per computer, non l'app di chat. Serve un <b>piano Claude a pagamento</b>.</p></div></div>
+    <div class="item"><div class="ic">2</div><div><h3>Git e Python 3.10+</h3><p>Per scaricare il progetto e far girare gli strumenti.</p></div></div>
+    <div class="item"><div class="ic">3</div><div><h3>Node.js 22 o più recente</h3><p>Serve per il montaggio. Versioni consigliate: <b>22.23.4+</b>, <b>24.22.1+</b> o <b>26.12.1+</b>.</p></div></div>
+    <div class="item"><div class="ic">4</div><div><h3>FFmpeg</h3><p>Mac: <b>brew install ffmpeg</b> · Linux: <b>sudo apt install ffmpeg</b> · Windows: da ffmpeg.org.</p></div></div>
+  </div>
+  <div class="note"><b>Niente scheda grafica?</b> Va bene lo stesso. Serve solo se vuoi creare clip AI gratis sul tuo computer.</div>
+  <div class="foot"><b>OpenMontage</b><span>Guida di nadirfx</span></div>
+</section>
+
+<!-- 3 · INSTALLAZIONE -->
+<section class="page">
+  <div class="top"><span><b>Installazione</b></span><span>3 / 5</span></div>
+  <h2>Pronto in <em>3 passi</em></h2>
+  <p class="lead">Apri il terminale e copia i comandi, uno alla volta.</p>
+  <div class="stack">
+    <div class="step"><div class="num">1</div><div><h3>Scarica e installa</h3><p>L'ultimo comando installa tutto, voce gratuita compresa.</p>
+      <div class="code">git clone https://github.com/OpenMontageInc/OpenMontage.git
+cd OpenMontage
+make setup</div></div></div>
+    <div class="step"><div class="num">2</div><div><h3>Apri Claude Code</h3><p>Sempre dentro la cartella OpenMontage.</p><div class="code">claude</div></div></div>
+    <div class="step"><div class="num">3</div><div><h3>Descrivi il video</h3><p>Anche in italiano. Questo esempio è gratis:</p>
+      <div class="code"><span class="c">&gt;</span> Fammi un video animato verticale di 45 secondi che spiega perché il cielo è blu, con voce e sottotitoli</div></div></div>
+  </div>
+  <div class="note"><b>Su Windows</b> il comando make spesso manca: sulla pagina GitHub trovi gli stessi passaggi uno per uno.</div>
+  <div class="foot"><b>OpenMontage</b><span>Guida di nadirfx</span></div>
+</section>
+
+<!-- 4 · COSA FA DA SOLO -->
+<section class="page">
+  <div class="top"><span><b>Come lavora</b></span><span>4 / 5</span></div>
+  <h2>Cosa fa <em>da solo</em></h2>
+  <p class="lead">Dall'idea al video finale, in sei fasi.</p>
+  <div class="pipe">
+    <div class="item"><div class="ic">1</div><div><h3>Ricerca</h3><p>Da 15 a 25 ricerche sul web prima di scrivere una riga.</p></div></div>
+    <div class="item"><div class="ic">2</div><div><h3>Script</h3><p>Ti propone l'idea e scrive il testo.</p></div></div>
+    <div class="item"><div class="ic">3</div><div><h3>Scene</h3><p>Progetta ogni scena del video.</p></div></div>
+    <div class="item"><div class="ic">4</div><div><h3>Immagini e clip</h3><p>Le crea con l'AI o le prende da archivi gratuiti.</p></div></div>
+    <div class="item"><div class="ic">5</div><div><h3>Voce narrante</h3><p>Gratis con Piper, oppure ElevenLabs e altre.</p></div></div>
+    <div class="item"><div class="ic">6</div><div><h3>Montaggio</h3><p>Monta tutto con i sottotitoli e ricontrolla il risultato.</p></div></div>
+  </div>
+  <div class="note"><b>Decidi tu:</b> si ferma su proposta, script, scene e materiali e ti chiede se approvi. Puoi dire "più corto", "tono più serio".</div>
+  <div class="foot"><b>OpenMontage</b><span>Guida di nadirfx</span></div>
+</section>
+
+<!-- 5 · COSTI E FORMATI -->
+<section class="page">
+  <div class="top"><span><b>Costi e formati</b></span><span>5 / 5</span></div>
+  <h2>Quanto <em>costa</em></h2>
+  <div class="grid2">
+    <div class="box ok"><h3>Gratis</h3><p>Il programma è gratis. Senza abbonamenti: voce Piper, filmati d'archivio (NASA, Wikimedia, Archive.org), sottotitoli e montaggio.</p></div>
+    <div class="box"><h3>A consumo</h3><p>Solo se colleghi servizi esterni nel file <b>.env</b>: clip AI (Kling, Veo, Runway), voci ElevenLabs, musica.</p></div>
+    <div class="box"><h3>Ti avvisa prima</h3><p>Stima il costo prima di spendere e chiede conferma per le spese sopra <b>0,50 $</b>.</p></div>
+    <div class="box"><h3>Tetto massimo</h3><p>Di base non supera <b>10 $</b> in totale. Puoi cambiarlo.</p></div>
+  </div>
+  <h2 style="font-size:28px;margin-top:24px">Cosa puoi <em>fare</em></h2>
+  <div class="chips"><span class="chip"><i>▶</i>Reels e TikTok 9:16</span><span class="chip"><i>▶</i>YouTube 16:9 e 4K</span><span class="chip"><i>▶</i>Trailer</span><span class="chip"><i>▶</i>Documentari</span><span class="chip"><i>▶</i>Spot</span><span class="chip"><i>▶</i>Video animati</span></div>
+  <p class="lead" style="margin-top:12px;font-size:13.5px">Il video finito lo trovi nella cartella <b style="color:var(--text)">projects</b>, dentro <b style="color:var(--text)">renders</b>.</p>
+  <div class="end"><h3>Seguimi per la prossima</h3><p>Ogni settimana una skill di Claude che quasi nessuno conosce.</p></div>
+  <div class="foot"><b>nadirfx</b><span>Progetto di OpenMontageInc su GitHub</span></div>
+</section>
+</body></html>
