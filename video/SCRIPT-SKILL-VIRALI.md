@@ -91,26 +91,30 @@ Commenta CLAUDE, e ti mando il link per installarlo.
 **Da sapere:** serve Blender. La generazione di oggetti 3D nuovi (Hyper3D Rodin) è un servizio esterno.
 
 ## 4. OpenMontage: uno studio di produzione video dentro Claude
-**Visivo:** i corti della loro pagina (trailer di fantascienza, il corto animato con la banana e il kiwi); le fasi che scorrono: ricerca, script, materiali, montaggio.
+**Verificato il 26/11/2026** sul README di OpenMontageInc/OpenMontage: 83.500 stelle, open source (AGPLv3), funziona con Claude Code.
+Pipeline: ricerca (15-25 ricerche sul web) → proposta → script → piano scene → materiali → montaggio → render. Si ferma per farti approvare ogni fase.
+"THE LAST BANANA": corto animato stile Pixar di 60 s (banana solitaria che trova un amico kiwi), costo totale dichiarato **1,33 $**. Esiste anche il trailer di fantascienza "SIGNAL FROM TOMORROW".
 
 ```
-Sapevi che con una sola idea… Claude può produrti un trailer da cinema?
+Un dollaro e trentatré centesimi. È quanto è costato questo cortometraggio animato.
 
-Si chiama OpenMontage. È gratis, open source, ed è su GitHub.
+L'ha fatto Claude, con una cosa che si chiama OpenMontage. Open source, su GitHub, ottantatremila stelle.
 
-Gli descrivi il video. E lui fa tutto: la ricerca, lo script, le immagini, le clip, il montaggio finale.
+Gli dai un'idea. E lui parte.
 
-Sulla loro pagina c'è un trailer di fantascienza fatto così. E un corto animato, stile Pixar, su una banana solitaria che trova un amico kiwi.
+Fa la ricerca: venti ricerche sul web prima di scrivere una riga. Scrive lo script. Disegna le scene. Genera le clip, la voce, la musica. E monta tutto.
 
-Ma la cosa assurda?
+Ma la parte assurda?
 
-Per ogni video pubblicano il prompt e quanto è costato. Così puoi rifarlo uguale.
+Prima di spendere un centesimo, si ferma e ti chiede: approvi?
 
-Una casa di produzione intera… dentro un assistente.
+Lo script, le scene, i materiali. Decidi tu, lui esegue.
 
-Commenta CLAUDE, e ti mando il link.
+Una casa di produzione intera… dentro Claude.
+
+Commenta CLAUDE, e ti mando il link con la guida.
 ```
-**Da sapere:** le clip generate passano da servizi esterni come Veo o Kling, che costano.
+**Da sapere:** il software è gratis; le clip generate (Kling, Veo…) si pagano a consumo, da qui il costo di 1,33 $. Con zero chiavi API si possono fare video con voce Piper gratuita e filmati d'archivio.
 
 ## 5. Unity MCP: Claude sviluppa il tuo gioco in Unity
 **Visivo:** l'editor di Unity con oggetti che compaiono e si muovono da soli; codice C# che si scrive.
