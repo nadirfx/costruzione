@@ -1,6 +1,6 @@
 # Jarvis Studio 4 — centro di comando
 
-Artifact: https://claude.ai/artifact/Ma63czakJB3PiddquNqfX5 (stesso link di prima, nuova versione).
+Artifact: https://claude.ai/artifact/Ma63czakJB3PiddquNqfX5 (stesso link di prima, versione 9).
 
 ## Cosa cambia rispetto a Jarvis 3
 - **Tutto schermo.** Niente barra laterale: le stanze sono in alto, lo Studio usa l'intero schermo.
@@ -20,7 +20,7 @@ Artifact: https://claude.ai/artifact/Ma63czakJB3PiddquNqfX5 (stesso link di prim
 - Produzione: il tasto Elimina sulle card non si sovrappone più a "Sposta".
 
 ## Collaudo
-20 scenari, desktop + telefono (Chromium + simulazione Safari: dati congelati, niente AudioEncoder, video via blob).
+20 scenari (429 controlli, tutti verdi), desktop + telefono (Chromium + simulazione Safari: dati congelati, niente AudioEncoder, video via blob).
 Nuovo test `t18_hud.js`: anelli, catena, agenti, grafico, fari, layout senza tagli, reparto che si accende, import del render in timeline.
 
 Limite onesto: qui non c'è un vero Safari. La simulazione copre i bug Safari trovati finora; per la prova finale va aperto su iPhone/Mac.
