@@ -459,4 +459,4 @@ Commenta CLAUDE, e ti mando il link.
 Per ogni video preparo anche la pagina guida in PDF da mandare con ManyChat, come per Game Studios.
 
 ## Fonti (pagine ufficiali su GitHub)
-ahujasid/ableton-mcp · rehan-remade/universal-modder · ahujasid/blender-mcp · calesthio/OpenMontage · IvanMurzak/Unity-MCP · heygen-com/hyperframes · digitalsamba/claude-code-video-toolkit · TranHoaiHung/figma-ui-mcp · thedotmack/claude-mem · htdt/godogen · mvanhorn/last30days-skill · tt-a1i/archify · cathrynlavery/diagram-design · Nutlope/hallmark · Leonxlnx/taste-skill · nextlevelbuilder/ui-ux-pro-max-skill · JimLiu/baoyu-skills · remotion-dev/skills · JuliusBrussee/caveman
+ahujasid/ableton-mcp · rehan-remade/universal-modder · ahujasid/mcp-for-blender · OpenMontageInc/OpenMontage · IvanMurzak/Unity-MCP · heygen-com/hyperframes · digitalsamba/claude-code-video-toolkit · TranHoaiHung/figma-ui-mcp · thedotmack/claude-mem · htdt/godogen · mvanhorn/last30days-skill · tt-a1i/archify · cathrynlavery/diagram-design · Nutlope/hallmark · Leonxlnx/taste-skill · nextlevelbuilder/ui-ux-pro-max-skill · JimLiu/baoyu-skills · remotion-dev/skills · JuliusBrussee/caveman
