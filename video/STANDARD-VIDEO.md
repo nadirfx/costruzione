@@ -37,3 +37,14 @@ Riferimento base: `LweCraMDrRxrBzrd0HgQ_g.mp4` e le immagini nella cartella prin
 - **Salite:** il riser si usa solo se porta a un colpo; negli altri suoni la salita prima del colpo si taglia.
 - **Corpo:** un solo colpo grande per sezione, con i bassi. Niente tappeti di fondo lunghi.
 - **Volume:** gli effetti restano almeno 6 dB sotto la voce (controllo su finestre di 100 ms).
+
+## Template script formato B (obbligatorio, dal video Game Studios)
+Prima di scrivere uno script si parte SEMPRE da qui, mai a memoria:
+1. **Gancio 0–3 s:** "Sapevi che c'è una skill di Claude che [promessa folle e concreta]…?" La promessa si capisce senza audio. Mai numeri o prezzi da soli come gancio.
+2. **Nome e dove si trova:** "Si chiama X. È gratis, ed è su GitHub."
+3. **Come funziona, a passi brevi:** come si installa/apre e cosa fa, un verbo per frase (ogni frase = un'animazione diversa).
+4. **Anello aperto:** "Ma la parte assurda?" e pausa riempita di movimento.
+5. **Twist:** la cosa più spettacolare e vera, mostrata.
+6. **Prova sociale o urgenza vera:** stelle, risultati.
+7. **CTA:** "Commenta CLAUDE, e ti mando il link e la guida."
+Ritmo: un evento visivo e sonoro almeno ogni 1–2 s, niente secondi fermi. Tutto verificato sulla pagina ufficiale.
