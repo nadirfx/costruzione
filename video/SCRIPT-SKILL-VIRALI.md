@@ -1,6 +1,6 @@
 # 19 script: skill assurde per Claude (formato B)
 
-**Aggiornato:** 26 novembre 2026, per nadirfx.
+**Aggiornato:** 26 novembre 2026, per @nadirdesign.ai.
 
 Ogni affermazione viene dalla pagina ufficiale della skill su GitHub, letta il 25–26 novembre 2026.
 
