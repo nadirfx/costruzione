@@ -61,8 +61,8 @@ const MPATH=[[-1,0,6,.35],[.38,0,.31,.35],[2.6,0,.31,.35],[3.05,1.15,1.78,.3],[4
  [8.0,1.2,1.78,.3],[8.45,1.25,2.98,.3],[11.7,1.25,2.98,.3],[11.95,.9,2.98,.3],[12.2,.55,2.98,.3],[12.45,.2,2.98,.3],[13.3,.2,2.98,.3],[13.7,.2,2.0,-1.2],
  [15.55,-.5,5.5,2.0],[16.05,-.5,-.14,2.0],[17.05,-.5,-.14,2.0],[17.5,1.2,.53,.3],[17.6,1.2,.53,.3],[17.98,-1.12,.53,.35],[18.6,-1.12,.53,.35],[19.0,1.25,.53,.3],
  [23.1,1.25,.53,.3],[23.62,-1.12,-.72,.35],[23.95,-1.12,-.72,.35],[24.2,-1.12,-.72,.35],[24.45,-1.12,-.72,.35],
- [28.5,1.2,5,.3],[28.85,1.2,2.03,.3],[34.2,1.2,2.03,.3],[34.6,.3,2.32,.3],[34.85,.3,2.32,.3],[35.35,.3,2.32,.3],[35.6,.3,2.32,.3],[38.9,.3,2.32,.3]];
-const MHIDE=[[13.72,15.55],[19.1,22.95],[24.85,28.55]];
+ [27.5,0,6,.6],[27.78,0,0,.6],[28.45,0,0,.6],[28.85,1.2,2.03,.3],[34.2,1.2,2.03,.3],[34.6,.3,2.32,.3],[34.85,.3,2.32,.3],[35.35,.3,2.32,.3],[35.6,.3,2.32,.3],[38.9,.3,2.32,.3]];
+const MHIDE=[[13.72,15.55],[19.1,22.95],[24.85,27.5]];
 const _v=new THREE.Vector3();
 function mascot(T,react=0){if(MHIDE.some(([a,b])=>T>a&&T<b)){MAS.visible=false;shadow.visible=false;return}MAS.visible=true;shadow.visible=true;let i=0;while(i<MPATH.length-1&&T>=MPATH[i+1][0])i++;const a=MPATH[i],b=MPATH[Math.min(i+1,MPATH.length-1)];
   const gap=b[0]-a[0];let x=a[1],y=a[2],z=a[3],sq=0,air=false;
@@ -193,6 +193,13 @@ function drawGauge(T){const x=GAUGE.x,w=GAUGE.W,h=GAUGE.H;x.fillStyle=PANEL;x.fi
   if(k>=.98){rr(x,cx-120,cy-150,240,64,32,GREEN);txt(x,'✓ FEDELE',cx,cy-118,'900 30px Int',INK,'center')}GAUGE.t.needsUpdate=true}
 const RINGS=[];for(let i=0;i<5;i++){const m=new THREE.Mesh(new THREE.TorusGeometry(1,.025,8,128),new THREE.MeshBasicMaterial({color:i%2?0x6FD6FF:0xF0A27F,transparent:true,opacity:0,toneMapped:false}));scene.add(m);RINGS.push(m)}
 
+/* spotlight for the twist: a cone of light and a glowing floor disc */
+const SPOT=new THREE.Group();scene.add(SPOT);
+{const [cc,cx]=cnv(64,256);const gr=cx.createLinearGradient(0,0,0,256);gr.addColorStop(0,'rgba(255,214,186,.0)');gr.addColorStop(1,'rgba(255,214,186,.55)');cx.fillStyle=gr;cx.fillRect(0,0,64,256);
+ const cone=new THREE.Mesh(new THREE.ConeGeometry(.95,4.2,48,1,true),new THREE.MeshBasicMaterial({map:texOf(cc),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,toneMapped:false}));cone.position.set(0,2.1,.6);SPOT.add(cone);SPOT.userData.cone=cone;
+ const disc=new THREE.Mesh(new THREE.CircleGeometry(1.3,48),new THREE.MeshBasicMaterial({map:glowTex,color:0xF0A27F,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false}));disc.rotation.x=-Math.PI/2;disc.position.set(0,.01,.6);SPOT.add(disc);SPOT.userData.disc=disc}
+const sLight=new THREE.PointLight(0xffd6b8,0,8);sLight.position.set(0,2.2,1.4);scene.add(sLight);
+
 /* ---------------- 2D helpers ---------------- */
 function Z(x,sc,cx=W/2,cy=620,rot=0){x.translate(cx,cy);x.rotate(rot);x.scale(sc,sc);x.translate(-cx,-cy)}
 function card(x,cx,cy,w,h,rr,fill='#fff',sh=.18){x.save();x.shadowColor=`rgba(0,0,0,${sh})`;x.shadowBlur=60;x.shadowOffsetY=24;x.fillStyle=fill;x.beginPath();x.roundRect(cx-w/2,cy-h/2,w,h,rr);x.fill();x.restore()}
@@ -224,13 +231,13 @@ function camAct(act,T){switch(act){
    P.lerp(V(-.6,0,1.2),dive);Lk.lerp(V(-.6,0,-2),dive);if(T>=19.2){P=V(Math.sin(T*.7)*.5,.5,L(8.2,4.4,fly));Lk=V(Math.sin(T*.5)*.4,.35,-3)}return [P,Lk]}
  case 'rs':{const k=eio(p(T,22.85,23.35));const m=eio(p(T,24.7,25.2));const z=eio(p(T,26.3,26.75))*(1-eio(p(T,27.25,27.6)));
    const P=V(.9,.1,14.5).lerp(V(.5,-.6,11),k).lerp(V(0,-.55,11.2),m).lerp(V(0,-2.05,4.6),z),Lk=V(0,-.17,0).lerp(V(0,-.7,0),k).lerp(V(0,-.6,0),m).lerp(V(0,-2.05,0),z);return [P,Lk]}
- case 'twist':{return [V(Math.sin(T*.5)*.5,.8,L(12.5,11.5,e4o(p(T,27.6,33)))),V(0,.7,0)]}
+ case 'twist':{const c=1-eio(p(T,28.5,29.15));const P=V(Math.sin(T*.5)*.5,.8,L(12.5,11.5,e4o(p(T,27.6,33)))).lerp(V(.35+Math.sin(T*1.3)*.25,.8,L(9.2,7.6,e4o(p(T,27.6,28.4)))),c);const Lk=V(0,.7,0).lerp(V(0,1.0,.6),c);return [P,Lk]}
  case 'cta':{return [V(Math.sin(T*1.1)*.9,1.2+Math.sin(T*.8)*.25,L(13.5,11.6,eio(p(T,34.3,38.8)))),V(Math.sin(T*.7)*.2,1.05,0)]}}}
 let prevAct='hook';
 function rig(T,act){const [P,Lk]=camAct(act,T);const i=SEG.findIndex(s=>s[0]===act);if(i>0&&act!=='ear'&&act!=='make'&&act!=='lib'&&act!=='ov'&&act!=='rs'){const t0=SEG[i][1];const b=eio(p(T,t0,t0+.45));if(b<1){const [P0,L0]=camAct(SEG[i-1][0],t0);P.lerp(P0,1-b);Lk.lerp(L0,1-b)}}
   cam.position.copy(P);cam.lookAt(Lk)}
 /* ---------------- frame ---------------- */
-function hideAll(){[DEV,CON,TOG,PROG,SRCH,SRCH2,TL,GAUGE,...MODS,...LIB,...SLABS].forEach(p=>p.g.visible=false);WALL.visible=false;MAS.visible=false;shadow.visible=false;RINGS.forEach(r=>r.visible=false)}
+function hideAll(){SPOT.visible=false;sLight.intensity=0;[DEV,CON,TOG,PROG,SRCH,SRCH2,TL,GAUGE,...MODS,...LIB,...SLABS].forEach(p=>p.g.visible=false);WALL.visible=false;MAS.visible=false;shadow.visible=false;RINGS.forEach(r=>r.visible=false)}
 function draw(T){const act=actAt(T);hideAll();darkBg(T,act==='rs'?'rgba(242,193,78,.13)':act==='lib'?'rgba(111,214,255,.10)':act==='twist'?'rgba(120,120,140,.08)':'rgba(217,119,87,.18)');
   const dim=act==='twist'?1-.55*eio(p(T,K.ma,K.assurda+.3))*(1-eio(p(T,K.se,K.se+.4))):1;
   bp.strength=.45;bp.threshold=.62;bp.radius=.5;key.intensity=1.2*dim;amb.intensity=.25*dim;
@@ -247,7 +254,8 @@ function draw(T){const act=actAt(T);hideAll();darkBg(T,act==='rs'?'rgba(242,193,
   if(act==='ov'&&T>=19.0){const ent=e4o(p(T,19.0,19.6));LIB.forEach(pn=>{pn.g.visible=true;drawLibCard(pn,T);const d=pn.i*.05;const k=back(clamp(p(T,19.0+d,19.5+d)));pn.g.scale.setScalar(Math.max(.001,k));pn.g.rotation.set(0,(pn.g.position.x)*-.06,0);
       const base=pn.g.userData.b||(pn.g.userData.b=pn.g.position.clone());pn.g.position.set(base.x+Math.sin(T*.6+pn.i)*.05*(pn.lay+1),base.y+(T-19)*.04*(pn.lay-1),base.z)});
     SRCH.g.visible=true;drawSearch(T);SRCH.g.position.set(Math.sin(T*.7)*.3,2.45,L(2.6,-1.2,p(T,19.2,22.85)));SRCH.g.scale.setScalar(back(clamp(p(T,19.0,19.45))))}
-  if(act==='twist'){const sk=back(clamp(p(T,K.se-.1,K.se+.3)));SRCH2.g.visible=sk>0;if(sk>0){drawSearch2(T);SRCH2.g.scale.setScalar(Math.max(.001,sk))}
+  if(act==='twist'){const sp=e4o(p(T,27.62,27.8))*(1-eio(p(T,28.6,29.2)));SPOT.visible=sp>0;SPOT.userData.cone.material.opacity=sp*.22;SPOT.userData.disc.material.opacity=sp*(.35+.08*Math.sin(T*9));sLight.intensity=sp*1.2;
+    const sk=back(clamp(p(T,K.se-.1,K.se+.3)));SRCH2.g.visible=sk>0;if(sk>0){drawSearch2(T);SRCH2.g.scale.setScalar(Math.max(.001,sk))}
     const asm=e4o(clamp(p(T,K.earshot2-.05,K.costruisce)));const merge=e4i(p(T,K.costruisce,K.costruisce+.25));const up=eio(p(T,K.valuta-.2,K.valuta+.3));
     if(T>K.earshot2-.1)SLABS.forEach((pn,i)=>{pn.g.visible=true;drawSlab(pn,T);const sp=L(.56,.17,merge);const fx=[-4.5,4.5,-4][i],fz=[-3,-2,-4][i];
       pn.g.position.set(L(fx,0,asm),L(i===1?2.5:-2.5,.95-i*sp,asm),L(fz,0,asm)-up*2);pn.g.rotation.set((1-asm)*1.5,(1-asm)*(i?-2:2),0);pn.g.scale.setScalar(Math.max(.001,L(1,.6,up)));pn.g.visible=up<.98});
@@ -277,7 +285,7 @@ function overlay(T,x){const act=actAt(T);
   if(act==='ear')topTitle(x,T,4.35,8.0,'STRUMENTO 1 / 3','EARSHOT');
   if(act==='ov'&&T<19.1)topTitle(x,T,17.25,19.0,'STRUMENTO 2 / 3','OPENVERSE');
   if(act==='rs'&&T<24.7)topTitle(x,T,22.9,24.6,'STRUMENTO 3 / 3','REAL SFX',GOLD);
-  if(act==='twist')topTitle(x,T,27.7,28.7,'MA LA PARTE','ASSURDA?');
+  if(act==='twist'){const q=back(clamp(p(T,K.assurda-.05,K.assurda+.3)))*(1-e4i(p(T,28.55,28.8)));if(q>0){const v=new THREE.Vector3(0,1.75,.6);v.project(cam);const sx=(v.x+1)/2*W,sy=(1-v.y)/2*H;x.save();x.translate(sx,sy-30);x.rotate(Math.sin(T*6)*.08);x.scale(q,q);x.font='900 220px Int';x.textAlign='center';x.textBaseline='middle';x.fillStyle=ORG;x.shadowColor=ORG;x.shadowBlur=50;x.fillText('?',0,0);x.restore()}}
   if(act==='lib')counter(x,T);
   if(act==='rs'){const c=Math.exp(-Math.abs(T-23.95)*5);if(c>.05){x.save();x.globalAlpha=c;x.font='900 120px Int';x.fillStyle=GOLD;x.textAlign='center';x.textBaseline='middle';x.shadowColor=GOLD;x.shadowBlur=40;x.fillText('3 / 3',W/2,620);x.restore()}}
   if(act==='cta'){hearts(x,T,K.mando+.1);cta(x,T)}

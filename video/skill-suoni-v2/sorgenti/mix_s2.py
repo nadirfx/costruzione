@@ -59,7 +59,7 @@ for i in range(4):A(25.39+i*.12+.15,f'lock_latch_{i%4+1}',-12,.15)
 for t in (25.5,25.95,26.4,26.85):A(t,'thump_soft_2',-13,.2,.02,900)
 A(26.3,'whoosh_low_1',-15,.5,.4,700);A(26.55,'stamp_press_1',-8,.3,.03);A(26.57,'tap_tone_5',-15,.15)
 # TWIST: silence, then build
-A(28.04,'impact_suck',-8,.5,.9,3000);A(28.1,'fall_sub',-14,.9,0,400)
+LAND(27.78,-9);A(28.04,'impact_suck',-8,.5,.9,3000);JUMP(28.47,2);A(28.1,'fall_sub',-14,.9,0,400)
 LAND(28.85,-10)
 for j in range(9):A(28.8+j*.065,f'keyboard_mechanical_{j%8+1}',-20,.08)
 A(29.4,'error_double',-11,.3)
