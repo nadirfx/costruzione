@@ -2,17 +2,17 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
 <style>
 /* Print layout: five 9:16 pages (phone-shaped, opened from ManyChat), one topic per page, one column, centred. */
-:root{--bg:#FAF7F2;--card:#FFFFFF;--card2:#F2EEE7;--line:rgba(20,20,20,.12);--text:#141414;--soft:#3d3b37;--mute:#76726a;
+:root{--bg:#FFFFFF;--card:#F6F6F6;--card2:#EEEEEE;--line:rgba(20,20,20,.12);--text:#141414;--soft:#3d3b37;--mute:#76726a;
   --ember:#C9603A;--ember2:#C9603A;--lime:#5E8C12;--sky:#2F6FC4;--gold:#B8860B;
   --fd:"Bricolage Grotesque",Inter,sans-serif;--fb:Inter,system-ui,sans-serif;--fm:"JetBrains Mono",ui-monospace,monospace}
 @page{size:540px 960px;margin:0}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:var(--bg);color:var(--text);font:15px/1.5 var(--fb);-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .page{width:540px;height:960px;padding:44px 40px 36px;display:flex;flex-direction:column;position:relative;overflow:hidden;page-break-after:always;break-after:page;
-  background:radial-gradient(80% 40% at 50% 0%,rgba(217,119,87,.16),transparent 70%),var(--bg)}
+  background:var(--bg)}
 .page:last-child{page-break-after:auto;break-after:auto}
 .page:not(.cover)>h2:first-of-type{margin-top:auto}
-.page:not(.cover) .item{box-shadow:0 2px 10px rgba(0,0,0,.05);padding:16px 18px}.page:not(.cover) .item h3{font-size:17px}.page:not(.cover) .item p{font-size:14px}
+.page:not(.cover) .item{box-shadow:none;padding:16px 18px}.page:not(.cover) .item h3{font-size:17px}.page:not(.cover) .item p{font-size:14px}
 .top{display:flex;justify-content:space-between;align-items:center;font:600 11px var(--fb);letter-spacing:.18em;text-transform:uppercase;color:var(--mute)}
 .top b{color:var(--ember)}
 .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--mute)}
@@ -23,16 +23,16 @@ h2 em,h1 em{font-style:normal;color:var(--ember2)}
 .lead{color:var(--soft);font-size:15.5px;line-height:1.55}
 .eyebrow{font:600 11.5px var(--fb);letter-spacing:.22em;text-transform:uppercase;color:var(--ember)}
 .stack{display:grid;gap:10px;margin-top:22px}
-.item{box-shadow:0 2px 10px rgba(0,0,0,.05);display:grid;grid-template-columns:38px 1fr;gap:14px;align-items:start;padding:14px 16px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
-.ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(201,96,58,.12);color:var(--ember);font:800 16px var(--fd)}
+.item{box-shadow:none;display:grid;grid-template-columns:38px 1fr;gap:14px;align-items:start;padding:14px 16px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#EEEEEE;color:var(--ember);font:800 16px var(--fd)}
 .item h3{font:700 16px/1.25 var(--fd);margin-bottom:3px}
 .item p{color:var(--soft);font-size:13.5px;line-height:1.45}
 .item p b{color:var(--text);font-weight:600}
-.note{margin-top:14px;padding:13px 16px;border-radius:14px;background:rgba(94,140,18,.08);border:1px solid rgba(94,140,18,.3);color:var(--soft);font-size:13.5px}
+.note{margin-top:14px;padding:13px 16px;border-radius:14px;background:#F6F6F6;border:1px solid rgba(20,20,20,.12);color:var(--soft);font-size:13.5px}
 .note b{color:var(--lime)}
 .code{margin-top:8px;padding:12px 14px;border-radius:12px;background:#1C1B19;border:1px solid var(--line);font:600 12.5px/1.65 var(--fm);color:#F5F1EA;white-space:pre-wrap;word-break:break-word}
 .code .c{color:#F0A27F}
-.step{box-shadow:0 2px 10px rgba(0,0,0,.05);display:grid;grid-template-columns:40px 1fr;gap:14px;padding:16px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.step{box-shadow:none;display:grid;grid-template-columns:40px 1fr;gap:14px;padding:16px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
 .num{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--ember);color:#fff;font:800 18px var(--fd)}
 .step h3{font:700 17px var(--fd);margin-bottom:2px}
 .step p{color:var(--soft);font-size:13.5px}
@@ -50,7 +50,7 @@ h2 em,h1 em{font-style:normal;color:var(--ember2)}
 .link small{font:600 12.5px var(--fm)}
 /* pipeline */
 .pipe{display:grid;gap:8px;margin-top:20px;position:relative}
-.pipe .item{box-shadow:0 2px 10px rgba(0,0,0,.05);grid-template-columns:38px 1fr;padding:12px 16px}
+.pipe .item{box-shadow:none;grid-template-columns:38px 1fr;padding:12px 16px}
 .pipe .ic{background:var(--ember);color:#fff}
 /* cost grid */
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
@@ -60,7 +60,7 @@ h2 em,h1 em{font-style:normal;color:var(--ember2)}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .chip{padding:8px 12px;border-radius:999px;background:var(--card2);border:1px solid var(--line);font:600 12.5px var(--fb);color:var(--text)}
 .chip i{font-style:normal;color:var(--ember2);margin-right:6px}
-.end{margin-top:18px;padding:20px;border-radius:18px;text-align:center;background:linear-gradient(135deg,rgba(217,119,87,.18),rgba(217,119,87,.05));border:1px solid rgba(201,96,58,.35)}
+.end{margin-top:18px;padding:20px;border-radius:18px;text-align:center;background:#F6F6F6;border:1px solid rgba(20,20,20,.12)}
 .end h3{font:800 22px var(--fd);margin-bottom:4px}.end p{color:var(--soft);font-size:13.5px}
 </style></head><body>
 <section class="page cover">
@@ -114,7 +114,7 @@ pip install "earshot @ git+https://github.com/Leonxlnx/earshot"</div></div></div
   <h2><em>Real SFX</em></h2>
   <p class="lead">Skill per Claude Code di Clipwing. Trova i momenti nel video (tagli, colpi, testo che si scrive, clic) e ci mette suoni registrati veri, sul fotogramma esatto.</p>
   <div class="stack">
-    <div class="step"><div class="num">1</div><div><h3>Installa la skill</h3><p>Serve Python 3.9+ e FFmpeg. Su Mac: <b style="color:var(--ember)">brew install ffmpeg-full</b>.</p>
+    <div class="step"><div class="num">1</div><div><h3>Installa la skill</h3><p>Serve Python 3.9+ e FFmpeg. Su Mac serve la versione completa: <b style="color:var(--ember)">ffmpeg-full</b>.</p>
       <div class="code">git clone https://github.com/Clipwing/skills.git clipwing-skills
 mkdir -p ~/.claude/skills
 cp -R clipwing-skills/skills/real-sfx ~/.claude/skills/</div></div></div>
